@@ -2334,13 +2334,13 @@ class Renderer {
     this.punch = 0; this.fever = false;
   }
 
-  /** size = bề rộng bàn; maxH = chiều cao tối đa (ô được kéo dài theo chiều dọc tới 1.16 lần nếu còn chỗ). */
+  /** size = bề rộng bàn; maxH = chiều cao tối đa (ô được kéo dài theo chiều dọc tới 1.28 lần nếu còn chỗ). */
   resize(size, maxH) {
     if (maxH) this.maxH = maxH; else maxH = this.maxH || size;
     this.size = size;
     const d = this.dpr;
     this.cell = (size - this.pad * 2) / this.n;
-    this.ch = Math.min(this.cell * 1.16, Math.max(this.cell, (maxH - this.pad * 2) / this.n));
+    this.ch = Math.min(this.cell * 1.28, Math.max(this.cell, (maxH - this.pad * 2) / this.n));
     this.H = Math.round(this.ch * this.n + this.pad * 2);
     this.cv.style.width = size + 'px';
     this.cv.style.height = this.H + 'px';
