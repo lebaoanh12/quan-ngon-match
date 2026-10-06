@@ -3068,6 +3068,12 @@ const Lives = {
       if (fb) fb.textContent = '💰 ' + this.COIN_FULL + ' xu: đầy tim';
     }
   },
+  /** Quà hằng ngày: lần đầu mở game / về menu mỗi ngày mà chưa đầy tim thì tặng +1 tim. */
+  dailyGift() {
+    const sv = this.sv(), L = this.sync(); if (!sv || !L) return;
+    const d = Daily.today(); if (L.gd === d || L.n >= this.MAX) return;
+    L.gd = d; this.add(1); UI.toast('🎁 Quà hằng ngày: +1 ❤️');
+  },
   videosLeft() { return 999; },                                        // xem video nhận tim: KHÔNG giới hạn
 
   /** Mở bảng "Hết tim". */
@@ -4110,6 +4116,7 @@ class Game {
 
   goMenu() {
     this.settleRun();
+    setTimeout(() => Lives.dailyGift(), 600);
     this.token++; Tween.clear();
     this.state = 'menu';
     UI.hideAll(); UI.hud(this); UI.show('menu');
@@ -4765,6 +4772,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   const game = window.game = new Game();
   if (game.save.run) { const lost = game.save.run === 2; game.save.run = 0; if (lost) Lives.spend(); Store.save(game.save); }   // lần trước đã thua mà chưa trừ tim -> trừ 1 tim
   UI.hud(game); UI.team(game);
+  setTimeout(() => Lives.dailyGift(), 1200);
   showBannerAd();                                   // banner cố định ở cạnh dưới
 
   const soundLabel = () => {
