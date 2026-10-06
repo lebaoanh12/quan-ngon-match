@@ -650,8 +650,11 @@ body.droid .lmbar { padding-top: 8px; }
 #etext { line-height: 12px; font-size: 9px; }
 .skill { padding: 7px 10px; font-size: 12px; }
 
-#starsNow { display:block; font-style:normal; font-size:11px; line-height:1; color:#ffd24a; letter-spacing:1px; text-shadow:0 1px 0 rgba(0,0,0,.4); }
-#starsNow[data-k="1"] { color:#ffb199; }
+.progress { overflow: visible !important; }
+#pfill { max-width: 100%; }
+#pstars { position: absolute; inset: 0; pointer-events: none; }
+#pstars i { position: absolute; top: 50%; transform: translate(-100%, -50%); font-style: normal; font-size: 15px; line-height: 1; color: rgba(255,255,255,.55); text-shadow: 0 0 2px #000, 0 1px 0 #000; transition: color .2s, transform .3s; }
+#pstars i.on { color: #ffd24a; transform: translate(-100%, -50%) scale(1.35); text-shadow: 0 0 6px #ff9a1a, 0 1px 0 #000; }
 
 </style>
 </head>
@@ -669,9 +672,9 @@ body.droid .lmbar { padding-top: 8px; }
     <div class="stats">
       <div class="stat"><span>ĐIỂM</span><b id="score">0</b></div>
       <div class="stat goals"><span>MỤC TIÊU</span><div id="goalChips"></div></div>
-      <div class="stat moves"><span>LƯỢT</span><b id="moves">0</b><em id="starsNow">★★★</em></div>
+      <div class="stat moves"><span>LƯỢT</span><b id="moves">0</b></div>
     </div>
-    <div class="progress"><div id="pfill"></div><span id="ptext">0%</span></div>
+    <div class="progress"><div id="pfill"></div><span id="ptext"></span><div id="pstars"><i>★</i><i>★</i><i>★</i></div></div>
     <div id="extra">
       <div id="order" title="Đơn hàng VIP"><img id="orderImg" alt=""><span>Đơn VIP <b id="orderCount">0/0</b></span><em>+⭐</em></div>
       <div class="fever"><div id="ffill"></div><span id="ftext">🔥 0%</span></div>
@@ -3080,12 +3083,12 @@ const UI = {
     $('#coins').textContent = g.save.coins;
     $('#stars').textContent = g.save.stars;
     $('#moves').textContent = g.moves;
-    { const n = g.starNeed ? g.starNeed() : null, e = $('#starsNow');
-      if (n && e) { const k = g.starsFor(g.moves); e.textContent = '★'.repeat(k) + '☆'.repeat(3 - k); e.dataset.k = k; } }
     $('.stat.moves').classList.toggle('low', g.moves <= 5 && g.moves > 0);
-    const pct = Math.min(100, Math.floor((g.goalProgress ? g.goalProgress() : 0) * 100));
-    $('#pfill').style.width = pct + '%';
-    $('#ptext').textContent = pct + '%';
+    { const n = g.starNeed(), sc = g.score || 0, p = Math.min(1, sc / n.s3), k = sc >= n.s3 ? 3 : sc >= n.s2 ? 2 : sc >= n.s1 ? 1 : 0;
+      $('#pfill').style.width = (p * 100) + '%';
+      $('#ptext').textContent = '';
+      document.querySelectorAll('#pstars i').forEach((el, i) => el.classList.toggle('on', i < k));
+      const pos = [n.s1 / n.s3, n.s2 / n.s3, 1]; document.querySelectorAll('#pstars i').forEach((el, i) => { el.style.left = (pos[i] * 100) + '%'; }); }
     UI.goals(g);
     for (const k of CONFIG.ITEM_DEFS.map(d => d.id)) {
       const n = g.save.items[k] || 0, el = $('#cnt-' + k);
@@ -3142,7 +3145,7 @@ const UI = {
     const d = g.levelDef;
     $('#introTitle').textContent = 'Màn ' + g.level;
     $('#introMoves').textContent = d.moves;
-    { const n = g.starNeed(); $('#introStars').innerHTML = '★★★ còn ≥ ' + n.s3 + ' lượt · ★★ còn ≥ ' + n.s2 + ' lượt · ★ thắng là có'; }
+    { const n = g.starNeed(); $('#introStars').innerHTML = '★ ' + n.s1 + ' · ★★ ' + n.s2 + ' · ★★★ ' + n.s3 + ' điểm'; }
     $('#introGoals').innerHTML = g.goals.map(x => UI._chipHtml(x, g)).join('');
     const tips = [], sv = g.save;
     const kinds = new Set(g.goals.map(x => x.t));
@@ -4811,16 +4814,16 @@ class Game {
   }
 
   /* ------------------------------ THẮNG / THUA ------------------------------ */
-  /** Số lượt phải CÒN LẠI khi thắng: 3★ >= 40% tổng lượt, 2★ >= 15%, còn lại 1★. */
-  starNeed() { const t = (this.levelDef && this.levelDef.moves) || 1; return { s3: Math.ceil(t * .4), s2: Math.ceil(t * .15) }; }
-  starsFor(left) { const n = this.starNeed(); return left >= n.s3 ? 3 : left >= n.s2 ? 2 : 1; }
+  /** Mốc điểm theo số lượt của màn: 1★ = 20 điểm/lượt, 2★ = 40, 3★ = 60 (thắng màn luôn được ít nhất 1★). */
+  starNeed() { const t = (this.levelDef && this.levelDef.moves) || 1; return { s1: t * 20, s2: t * 40, s3: t * 60 }; }
+  starsFor(score) { const n = this.starNeed(); return score >= n.s3 ? 3 : score >= n.s2 ? 2 : 1; }
 
   async win() {
     this.state = 'over'; const tk = this.token;
     this.save.run = 0;                                // thắng màn: không mất tim
     Sfx.win(); this.renderer.confetti();
     UI.toast('Hoàn thành màn ' + this.level + '!', 2000);
-    const stars = this.starsFor(this.moves);
+    const stars = this.starsFor(this.score);
     Voice.say('win' + stars, 5);
     { const bp = this._boardCenter(); Fx.edgeGlow('#ffd24a', 1400); Fx.shockwave(bp.x, bp.y, '#fff2a8', 3, 320); }
     const old = this.save.levelStars[this.level] || 0, replay = old > 0;
