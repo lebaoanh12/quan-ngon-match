@@ -770,7 +770,7 @@ body.droid .lmbar { padding-top: 8px; }
       <div id="loseGoals" class="goalrow"></div>
       <div class="hearts" id="loseLives"></div>
       <p class="coinline">Điểm: <b id="loseScore">0</b><span id="loseTarget" hidden></span></p>
-      <button class="btn video" id="btnRevive">▶ Xem video: +5 lượt (−1 ❤️)</button>
+      <button class="btn video" id="btnRevive">▶ Xem video: +5 lượt</button>
       <button class="btn secondary" id="btnRetry">Chơi lại</button>
       <button class="btn ghost" id="btnLoseMenu">Về Menu</button>
     </div>
@@ -4318,7 +4318,7 @@ class Game {
   /** Chuẩn bị màn (tạo bàn, mục tiêu). skipIntro=true: vào chơi luôn, không hiện bảng giới thiệu. */
   /** Bỏ dở / thua màn đang chơi = mất 1 tim (gọi trước khi vào màn mới hoặc về menu). */
   settleRun() {
-    if (this.save.run) { const lost = this.save.run === 2 || this.save.run === 4; this.save.run = 0; if (lost) Lives.spend(); Store.save(this.save); }   // 2: đã thua; 4: bỏ dở sau khi đã đi nước đầu -> trừ tim; 1: chưa đi nước nào -> không mất; 3: đã trừ khi hồi sinh
+    if (this.save.run) { const lost = this.save.run === 2 || this.save.run === 4; this.save.run = 0; if (lost) Lives.spend(); Store.save(this.save); }   // 2: đã thua; 4: bỏ dở sau khi đã đi nước đầu -> trừ tim; 1: chưa đi nước nào -> không mất; 
   }
 
   async startLevel(n, skipIntro = false) {
@@ -4888,7 +4888,7 @@ class Game {
   lose() {
     this.state = 'over'; Sfx.lose(); Voice.say('lose', 5);
     { const bp = this._boardCenter(); Fx.edgeGlow('#3a5bd9', 1500); Fx.shake($('#stage'), 8); Fx.shockwave(bp.x, bp.y, '#7a8cff', 2, 260); Fx.sweep('rgba(40,50,110,.55)'); }
-    if (this.save.run !== 3) this.save.run = 2;        // thua màn: sẽ trừ 1 tim (run 3 = đã trừ lúc hồi sinh)
+    this.save.run = 2;                                 // thua màn: sẽ trừ 1 tim
     Store.save(this.save);
     $('#loseScore').textContent = this.score; $('#loseTarget').textContent = this.target;
     UI.loseGoals(this);
@@ -4901,7 +4901,7 @@ class Game {
     showRewardedAd(async ok => {
       if (!ok) return UI.toast('Cần xem hết video để nhận thêm lượt');
       this.revives++; this.moves += CONFIG.REVIVE_MOVES;
-      if (this.save.run !== 3) { Lives.spend(); this.save.run = 3; }   // hồi sinh: trừ 1 tim (chỉ 1 lần mỗi màn), thua tiếp không trừ thêm
+      this.save.run = 4;   // hồi sinh (kiểu Candy Crush): chơi tiếp, không trừ tim; sau đó thua hoặc bỏ dở thì mới mất 1 tim
       Store.save(this.save);
       UI.hide('lose'); UI.hud(this);
       this.state = 'busy';
