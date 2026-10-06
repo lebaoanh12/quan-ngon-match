@@ -1884,6 +1884,9 @@ const Levels = (() => {
       if (!cands.length) { const ok = [2, 3, 4, 5].filter(q => !rows[q].some(ch => 'PVT'.includes(ch))); if (ok.length) { const rr = ok[rnd(ok.length)]; rows[rr] = rows[rr].map(() => '.'); cands = [rr]; } }   // dọn sạch 1 hàng cho băng chuyền
       if (cands.length) { const rr = cands[rnd(cands.length)]; extra.belts = [{ row: rr, dir: r() < .5 ? 1 : -1 }]; }
     }
+    { const m = rows.map(x => x.join('')).join('');          // bỏ mục tiêu của vật cản đã bị dọn khỏi bản đồ (VD: hàng nhường chỗ cho băng chuyền)
+      const has = { ice: /[iI]/.test(m), crate: /[#=]/.test(m), rope: /r/.test(m) };
+      for (let i = g2.length - 1; i >= 0; i--) if (has[g2[i].t] === false) g2.splice(i, 1); }
     if (!g2.some(g => g.t !== 'pot' && g.t !== 'cart')) g2.push(r() < .5 ? S(2000 + (n > 50 ? 500 : 0)) : C(rnd(6), 14 + rnd(6)));
     return { map: rows.map(x => x.join('')), goals: g2, extra };
   }
