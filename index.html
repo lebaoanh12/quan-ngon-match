@@ -650,6 +650,9 @@ body.droid .lmbar { padding-top: 8px; }
 #etext { line-height: 12px; font-size: 9px; }
 .skill { padding: 7px 10px; font-size: 12px; }
 
+#starsNow { display:block; font-style:normal; font-size:11px; line-height:1; color:#ffd24a; letter-spacing:1px; text-shadow:0 1px 0 rgba(0,0,0,.4); }
+#starsNow[data-k="1"] { color:#ffb199; }
+
 </style>
 </head>
 <body>
@@ -666,7 +669,7 @@ body.droid .lmbar { padding-top: 8px; }
     <div class="stats">
       <div class="stat"><span>ĐIỂM</span><b id="score">0</b></div>
       <div class="stat goals"><span>MỤC TIÊU</span><div id="goalChips"></div></div>
-      <div class="stat moves"><span>LƯỢT</span><b id="moves">0</b></div>
+      <div class="stat moves"><span>LƯỢT</span><b id="moves">0</b><em id="starsNow">★★★</em></div>
     </div>
     <div class="progress"><div id="pfill"></div><span id="ptext">0%</span></div>
     <div id="extra">
@@ -780,6 +783,7 @@ body.droid .lmbar { padding-top: 8px; }
       <h2 id="introTitle">Màn 1</h2>
       <div class="hearts" id="introLives"></div>
       <p class="coinline">Số lượt: <b id="introMoves">0</b></p>
+      <p class="coinline" id="introStars" style="font-size:.85em"></p>
       <div id="introGoals" class="goalrow"></div>
       <div id="introTips"></div>
       <button class="btn video" id="btnIntroVideo">▶ Xem video: +3 lượt</button>
@@ -3076,6 +3080,8 @@ const UI = {
     $('#coins').textContent = g.save.coins;
     $('#stars').textContent = g.save.stars;
     $('#moves').textContent = g.moves;
+    { const n = g.starNeed ? g.starNeed() : null, e = $('#starsNow');
+      if (n && e) { const k = g.starsFor(g.moves); e.textContent = '★'.repeat(k) + '☆'.repeat(3 - k); e.dataset.k = k; } }
     $('.stat.moves').classList.toggle('low', g.moves <= 5 && g.moves > 0);
     const pct = Math.min(100, Math.floor((g.goalProgress ? g.goalProgress() : 0) * 100));
     $('#pfill').style.width = pct + '%';
@@ -3136,6 +3142,7 @@ const UI = {
     const d = g.levelDef;
     $('#introTitle').textContent = 'Màn ' + g.level;
     $('#introMoves').textContent = d.moves;
+    { const n = g.starNeed(); $('#introStars').innerHTML = '★★★ còn ≥ ' + n.s3 + ' lượt · ★★ còn ≥ ' + n.s2 + ' lượt · ★ thắng là có'; }
     $('#introGoals').innerHTML = g.goals.map(x => UI._chipHtml(x, g)).join('');
     const tips = [], sv = g.save;
     const kinds = new Set(g.goals.map(x => x.t));
@@ -4804,13 +4811,16 @@ class Game {
   }
 
   /* ------------------------------ THẮNG / THUA ------------------------------ */
+  /** Số lượt phải CÒN LẠI khi thắng: 3★ >= 40% tổng lượt, 2★ >= 15%, còn lại 1★. */
+  starNeed() { const t = (this.levelDef && this.levelDef.moves) || 1; return { s3: Math.ceil(t * .4), s2: Math.ceil(t * .15) }; }
+  starsFor(left) { const n = this.starNeed(); return left >= n.s3 ? 3 : left >= n.s2 ? 2 : 1; }
+
   async win() {
     this.state = 'over'; const tk = this.token;
     this.save.run = 0;                                // thắng màn: không mất tim
     Sfx.win(); this.renderer.confetti();
     UI.toast('Hoàn thành màn ' + this.level + '!', 2000);
-    const ratio = this.moves / this.levelDef.moves;
-    const stars = ratio >= .4 ? 3 : ratio >= .15 ? 2 : 1;
+    const stars = this.starsFor(this.moves);
     Voice.say('win' + stars, 5);
     { const bp = this._boardCenter(); Fx.edgeGlow('#ffd24a', 1400); Fx.shockwave(bp.x, bp.y, '#fff2a8', 3, 320); }
     const old = this.save.levelStars[this.level] || 0, replay = old > 0;
