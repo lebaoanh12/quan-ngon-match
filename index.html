@@ -656,6 +656,16 @@ body.droid .lmbar { padding-top: 8px; }
 #pstars i { position: absolute; top: 50%; transform: translate(-100%, -50%); font-style: normal; font-size: 15px; line-height: 1; color: rgba(255,255,255,.55); text-shadow: 0 0 2px #000, 0 1px 0 #000; transition: color .2s, transform .3s; }
 #pstars i.on { color: #ffd24a; transform: translate(-100%, -50%) scale(1.35); text-shadow: 0 0 6px #ff9a1a, 0 1px 0 #000; }
 
+/* V6: điểm & lượt dùng hết ô (số to hơn), mục tiêu 1 hàng nếu đủ chỗ */
+.stats { grid-template-columns: minmax(0,.8fr) minmax(0,1.7fr) minmax(0,.8fr); }
+.stat { display: flex; flex-direction: column; justify-content: center; align-items: center; }
+.stat span { font-size: 11px; }
+.stat b#score { font-size: 30px; line-height: 1.1; }
+.stat.moves b { font-size: 40px; line-height: 1.05; }
+.stat.goals #goalChips { justify-content: center; }
+.stat.goals #goalChips .gchip { padding: 2px 6px; font-size: 15px; }
+#goalChips[data-n="3"] .gchip { font-size: 14px; padding: 2px 5px; }
+
 </style>
 </head>
 <body>
@@ -946,6 +956,7 @@ body.droid .lmbar { padding-top: 8px; }
  * QUÁN NGON MATCH: xếp món ăn Việt, nhận sao xây quán, đồng đội tung chiêu.
  * ========================================================================== */
 const CONFIG = {
+  SIDE_GAP: 10,   // chừa lề 2 bên bàn chơi (px)
   ROWS: 8,
   COLS: 8,
   SQUEEZE7: false,                   // thu gọn các màn 8x8 thành 7x7 (icon to hơn)
@@ -2319,28 +2330,32 @@ class Renderer {
     this.shake = 0;
     this.time = 0;
     this.sprites = {};
-    this.size = 0; this.cell = 0; this.pad = 6; this.n = CONFIG.COLS; this.off = 0;
+    this.size = 0; this.H = 0; this.ch = 0; this.cell = 0; this.pad = 6; this.n = CONFIG.COLS; this.off = 0;
     this.punch = 0; this.fever = false;
   }
 
-  resize(size) {
+  /** size = bề rộng bàn; maxH = chiều cao tối đa (ô được kéo dài theo chiều dọc tới 1.16 lần nếu còn chỗ). */
+  resize(size, maxH) {
+    if (maxH) this.maxH = maxH; else maxH = this.maxH || size;
     this.size = size;
     const d = this.dpr;
-    this.cv.style.width = size + 'px';
-    this.cv.style.height = size + 'px';
-    this.cv.width = Math.round(size * d);
-    this.cv.height = Math.round(size * d);
     this.cell = (size - this.pad * 2) / this.n;
+    this.ch = Math.min(this.cell * 1.16, Math.max(this.cell, (maxH - this.pad * 2) / this.n));
+    this.H = Math.round(this.ch * this.n + this.pad * 2);
+    this.cv.style.width = size + 'px';
+    this.cv.style.height = this.H + 'px';
+    this.cv.width = Math.round(size * d);
+    this.cv.height = Math.round(this.H * d);
     this.buildSprites();
   }
 
   /** Bàn nhỏ ở các màn đầu: chỉ phóng to vùng n x n ở giữa (phần ngoài là ô khuyết). */
   setView(n) {
     n = Math.max(3, Math.min(CONFIG.COLS, n | 0)); this.n = n; this.off = ((CONFIG.COLS - n) / 2) | 0;
-    if (this.size) this.resize(this.size);
+    if (this.size) this.resize(this.size, this.maxH);
   }
   cellX(c) { return this.pad + (c - this.off) * this.cell + this.cell / 2; }
-  cellY(r) { return this.pad + (r - this.off) * this.cell + this.cell / 2; }
+  cellY(r) { return this.pad + (r - this.off) * this.ch + this.ch / 2; }
 
   /* ------------------------------ SPRITES ------------------------------ */
   buildSprites() {
@@ -2531,7 +2546,7 @@ class Renderer {
     this.punch *= Math.pow(.002, dt / 1000);
     const s = dt / 1000;
     if (this.fever && Math.random() < dt / 35) {
-      this.fx.push({ t: 'ember', x: this.pad + Math.random() * (this.size - this.pad * 2), y: this.size + 4, vx: (Math.random() - .5) * 30,
+      this.fx.push({ t: 'ember', x: this.pad + Math.random() * (this.size - this.pad * 2), y: this.H + 4, vx: (Math.random() - .5) * 30,
         vy: -50 - Math.random() * 80, life: 0, max: 1100 + Math.random() * 600, size: 1.5 + Math.random() * 2.5 });
     }
     for (const f of this.fx) {
@@ -2552,13 +2567,13 @@ class Renderer {
   }
 
   draw(grid, view) {
-    const ctx = this.ctx, d = this.dpr, S = this.size, cell = this.cell;
+    const ctx = this.ctx, d = this.dpr, S = this.size, H = this.H, cell = this.cell, ch = this.ch;
     ctx.setTransform(d, 0, 0, d, 0, 0);
-    ctx.clearRect(0, 0, S, S);
+    ctx.clearRect(0, 0, S, H);
     if (this.shake > .3) ctx.translate((Math.random() - .5) * this.shake, (Math.random() - .5) * this.shake);
-    if (this.punch > .002) { ctx.translate(S / 2, S / 2); ctx.scale(1 + this.punch, 1 + this.punch); ctx.translate(-S / 2, -S / 2); }
+    if (this.punch > .002) { ctx.translate(S / 2, H / 2); ctx.scale(1 + this.punch, 1 + this.punch); ctx.translate(-S / 2, -H / 2); }
 
-    this.rr(ctx, 0, 0, S, S, 18);
+    this.rr(ctx, 0, 0, S, H, 18);
     ctx.fillStyle = this.fever ? '#ffd6a0' : '#fff3d4'; ctx.fill();
     if (this.fever) {
       ctx.save(); ctx.shadowColor = '#ff7a1a'; ctx.shadowBlur = 14 + 8 * Math.sin(this.time * 9);
@@ -2566,13 +2581,13 @@ class Renderer {
     } else { ctx.strokeStyle = 'rgba(138,75,30,.35)'; ctx.lineWidth = 1.5; ctx.stroke(); }
 
     ctx.save();
-    this.rr(ctx, 0, 0, S, S, 18); ctx.clip();
+    this.rr(ctx, 0, 0, S, H, 18); ctx.clip();
     for (let r = 0; r < CONFIG.ROWS; r++) for (let c = 0; c < CONFIG.COLS; c++) {
-      if (grid && grid.blocks[r][c] === -1) { ctx.clearRect(this.pad + (c - this.off) * cell - 1, this.pad + (r - this.off) * cell - 1, cell + 2, cell + 2); continue; }   // ô khuyết
-      if ((r + c) % 2) { ctx.fillStyle = 'rgba(214,160,90,.2)'; ctx.fillRect(this.pad + (c - this.off) * cell, this.pad + (r - this.off) * cell, cell, cell); }
+      if (grid && grid.blocks[r][c] === -1) { ctx.clearRect(this.pad + (c - this.off) * cell - 1, this.pad + (r - this.off) * ch - 1, cell + 2, ch + 2); continue; }   // ô khuyết
+      if ((r + c) % 2) { ctx.fillStyle = 'rgba(214,160,90,.2)'; ctx.fillRect(this.pad + (c - this.off) * cell, this.pad + (r - this.off) * ch, cell, ch); }
     }
     if (view.exit) {                                   // vạch xanh ở đáy: nơi dừa rơi ra
-      ctx.fillStyle = 'rgba(90,230,130,.55)'; ctx.fillRect(this.pad, S - this.pad + 1, S - this.pad * 2, 4);
+      ctx.fillStyle = 'rgba(90,230,130,.55)'; ctx.fillRect(this.pad, H - this.pad + 1, S - this.pad * 2, 4);
     }
 
     if (grid) {
@@ -2592,12 +2607,12 @@ class Renderer {
   }
 
   drawObstacles(ctx, grid) {
-    const cell = this.cell;
+    const cell = this.cell, ch = this.ch;
     for (let r = 0; r < grid.rows; r++) for (let c = 0; c < grid.cols; c++) {
-      const x = this.pad + (c - this.off) * cell, y = this.pad + (r - this.off) * cell;
+      const x = this.pad + (c - this.off) * cell, y = this.pad + (r - this.off) * ch;
       const ice = grid.ice[r][c];
       if (ice > 0) {                                    // băng phủ lên ô (nhìn xuyên thấy món bên dưới)
-        this.rr(ctx, x + 1.5, y + 1.5, cell - 3, cell - 3, 7);
+        this.rr(ctx, x + 1.5, y + 1.5, cell - 3, ch - 3, 7);
         ctx.fillStyle = ice >= 2 ? 'rgba(60,160,235,.55)' : 'rgba(90,190,255,.38)'; ctx.fill();
         ctx.strokeStyle = ice >= 2 ? '#2f8fe0' : '#5bb8f5'; ctx.lineWidth = ice >= 2 ? 2.6 : 1.5; ctx.stroke();
         ctx.strokeStyle = 'rgba(255,255,255,.65)'; ctx.lineWidth = 2; ctx.beginPath();
@@ -2607,7 +2622,7 @@ class Renderer {
       const hp = grid.blocks[r][c];
       if (hp > 0) {
         const sp = this.sprites['crate|' + Math.min(hp, 2)], w = sp.width / this.dpr;
-        ctx.drawImage(sp, x + cell / 2 - w / 2, y + cell / 2 - w / 2, w, w);
+        ctx.drawImage(sp, x + cell / 2 - w / 2, y + ch / 2 - w / 2, w, w);
       }
     }
   }
@@ -2673,22 +2688,22 @@ class Renderer {
   }
 
   drawLive(ctx, grid) {
-    const cell = this.cell, t = this.time;
+    const cell = this.cell, ch = this.ch, t = this.time;
     for (const b of grid.belts || []) {
-      const y = this.pad + (b.row - this.off) * cell;
+      const y = this.pad + (b.row - this.off) * ch;
       ctx.save();
-      ctx.fillStyle = 'rgba(80,80,90,.18)'; ctx.fillRect(this.pad, y, cell * grid.cols, cell);
+      ctx.fillStyle = 'rgba(80,80,90,.18)'; ctx.fillRect(this.pad, y, cell * grid.cols, ch);
       ctx.strokeStyle = 'rgba(60,60,70,.6)'; ctx.lineWidth = 2.5; ctx.setLineDash([8, 6]); ctx.lineDashOffset = -b.dir * t * 24;
       ctx.beginPath(); ctx.moveTo(this.pad, y + 2); ctx.lineTo(this.pad + cell * grid.cols, y + 2);
-      ctx.moveTo(this.pad, y + cell - 2); ctx.lineTo(this.pad + cell * grid.cols, y + cell - 2); ctx.stroke();
+      ctx.moveTo(this.pad, y + ch - 2); ctx.lineTo(this.pad + cell * grid.cols, y + ch - 2); ctx.stroke();
       ctx.setLineDash([]); ctx.fillStyle = 'rgba(40,40,50,.8)'; ctx.font = 'bold ' + Math.round(cell * .3) + 'px sans-serif';
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      const a = b.dir > 0 ? '»' : '«'; ctx.fillText(a, this.pad + cell * .18, y + cell / 2); ctx.fillText(a, this.pad + cell * (grid.cols - .18), y + cell / 2);
+      const a = b.dir > 0 ? '»' : '«'; ctx.fillText(a, this.pad + cell * .18, y + ch / 2); ctx.fillText(a, this.pad + cell * (grid.cols - .18), y + ch / 2);
       ctx.restore();
     }
     for (let r = 0; r < grid.rows; r++) for (let c = 0; c < grid.cols; c++) {
       if (!grid.pot[r][c]) continue;
-      const x = this.pad + (c - this.off + .5) * cell, y = this.pad + (r - this.off + .5) * cell, ph = .5 + .5 * Math.sin(t * 4 + c);
+      const x = this.pad + (c - this.off + .5) * cell, y = this.pad + (r - this.off + .5) * ch, ph = .5 + .5 * Math.sin(t * 4 + c);
       ctx.save();
       ctx.fillStyle = 'rgba(255,110,40,' + (.35 + .2 * ph) + ')'; ctx.beginPath(); ctx.arc(x, y, cell * .46, 0, 7); ctx.fill();
       ctx.font = Math.round(cell * .56) + 'px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('🍲', x, y + 1);
@@ -2795,7 +2810,7 @@ class Renderer {
           const g = f.orient === 'h' ? ctx.createLinearGradient(0, f.pos - th / 2, 0, f.pos + th / 2) : ctx.createLinearGradient(f.pos - th / 2, 0, f.pos + th / 2, 0);
           g.addColorStop(0, 'rgba(255,240,150,0)'); g.addColorStop(.5, f.color); g.addColorStop(1, 'rgba(255,240,150,0)');
           ctx.fillStyle = g;
-          if (f.orient === 'h') ctx.fillRect(0, f.pos - th / 2, this.size, th); else ctx.fillRect(f.pos - th / 2, 0, th, this.size); }
+          if (f.orient === 'h') ctx.fillRect(0, f.pos - th / 2, this.size, th); else ctx.fillRect(f.pos - th / 2, 0, th, this.H); }
         break;
       case 'zap':
         ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 1 - p; ctx.strokeStyle = f.color; ctx.lineWidth = 4;
@@ -4282,8 +4297,9 @@ class Game {
 
   layout() {
     const st = $('#stage');
-    const size = Math.floor(Math.max(120, Math.min(st.clientWidth - 2, st.clientHeight - 4)));
-    this.renderer.resize(size);
+    const maxH = Math.max(120, st.clientHeight - 4);
+    const size = Math.floor(Math.max(120, Math.min(st.clientWidth - 2 - 2 * (CONFIG.SIDE_GAP || 0), maxH)));
+    this.renderer.resize(size, maxH);
     if (this.grid) this.snapGems();
     UI.logo(this.renderer);
   }
@@ -4333,7 +4349,7 @@ class Game {
     this.state = 'busy';
     // đặt tạm toàn bộ viên phía trên bàn; hoạt ảnh rơi vào chạy khi bấm BẮT ĐẦU
     const R = this.renderer;
-    this.grid.cells.forEach((row, r) => row.forEach((gem, c) => { if (gem) { gem.x = R.cellX(c); gem.y = R.cellY(r) - R.size * 1.3; } }));
+    this.grid.cells.forEach((row, r) => row.forEach((gem, c) => { if (gem) { gem.x = R.cellX(c); gem.y = R.cellY(r) - R.H * 1.3; } }));
     if (skipIntro) return this.beginLevel(tk);
     UI.intro(this);
   }
@@ -4385,7 +4401,7 @@ class Game {
   pt(e) { const b = this.canvas.getBoundingClientRect(); return { x: e.clientX - b.left, y: e.clientY - b.top }; }
   cellAt(p) {
     const R = this.renderer;
-    const c = Math.floor((p.x - R.pad) / R.cell) + R.off, r = Math.floor((p.y - R.pad) / R.cell) + R.off;
+    const c = Math.floor((p.x - R.pad) / R.cell) + R.off, r = Math.floor((p.y - R.pad) / R.ch) + R.off;
     return this.grid && this.grid.inb(r, c) ? { r, c } : null;
   }
 
