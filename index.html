@@ -2735,7 +2735,7 @@ const Store = {
     } catch (e) {}
     return def;
   },
-  save(d) { try { localStorage.setItem(this.key, JSON.stringify(d)); } catch (e) {} if (window.Auth) Auth.queue(d); }
+  save(d) { try { localStorage.setItem(this.key, JSON.stringify(d)); } catch (e) {} if (typeof Auth !== 'undefined') Auth.queue(d); }
 };
 
 /* -------------------------------- Âm thanh --------------------------------- */
@@ -3149,7 +3149,7 @@ const Fx = {
     const t = this.at(el);
     for (let i = 0; i < n; i++) setTimeout(() => {
       this.list.push({ k: 'fly', x, y, sx: x, sy: y, tx: t.x, ty: t.y, cx: x + (Math.random() - .5) * 160, cy: y - 60 - Math.random() * 90, life: 0, max: 750, r: 8 });
-      if (i % 3 === 0 && window.Sfx) Sfx.coin();
+      if (i % 3 === 0 && typeof Sfx !== 'undefined') Sfx.coin();
     }, i * 55);
   },
   /** Viền màn hình sáng lên (vignette) — dùng khi combo lớn. */
