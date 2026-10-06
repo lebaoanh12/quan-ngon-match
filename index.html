@@ -985,7 +985,7 @@ const CONFIG = {
   SKILL_MAX_CASTS: 999,                // không giới hạn số lần tung chiêu (chỉ tốn năng lượng, mỗi lần sau đắt hơn)
   SKILL_GAIN: 0.55,                    // năng lượng nhận được cho mỗi món bị phá
   skillEnergy(base, n, cast) { return Math.round(base * (1.5 + Math.min(n, 60) * 0.04) * (1 + Math.min(cast, 6) * .5)); },   // mua bằng xu ở màn Quán
-  IDLE_HINT_MS: 7000,
+  IDLE_HINT_MS: 4500,
   ENERGY_ADS_PER_LEVEL: 2,             // số lần xem video nạp đầy năng lượng đồng đội / màn
 
   /* ----------------------------- QUẢNG CÁO ------------------------------ */
@@ -2604,6 +2604,7 @@ class Renderer {
       if (top) this.drawGem2(ctx, top, view, view.selected.r, view.selected.c, true);
       this.drawObstacles(ctx, grid);
       this.drawLive(ctx, grid);
+      if (view.hint) this.drawHint(ctx, view.hint);
     }
     for (const f of this.fx) this.drawFx(ctx, f);
     ctx.restore();
@@ -2640,7 +2641,7 @@ class Renderer {
     if (selected) sc *= 1.1 + .04 * Math.sin(this.time * 10);
     const h = view.hint;
     const hinted = h && ((h.a.r === r && h.a.c === c) || (h.b.r === r && h.b.c === c));
-    if (hinted) sc *= 1 + .1 * Math.abs(Math.sin(this.time * 6));
+    if (hinted) sc *= 1.04 + .2 * Math.abs(Math.sin(this.time * 5));
     const w = sp.width / this.dpr;
     ctx.save();
     ctx.globalAlpha = g.alpha;
@@ -2659,6 +2660,27 @@ class Renderer {
       const blink = ((this.time * 1000 + g.id * 937) % 3400) < 120;
       this.drawFace(ctx, g.type, dying ? 'happy' : (selected || hinted) ? 'wow' : blink ? 'blink' : 'normal');
     }
+    ctx.restore();
+  }
+
+  /** Gợi ý nổi bật: 2 ô sáng viền vàng nhấp nháy + bàn tay trượt từ ô này sang ô kia. */
+  drawHint(ctx, h) {
+    const t = this.time, cell = this.cell, ch = this.ch, ph = .5 + .5 * Math.sin(t * 7);
+    const ax = this.cellX(h.a.c), ay = this.cellY(h.a.r), bx = this.cellX(h.b.c), by = this.cellY(h.b.r);
+    ctx.save();
+    for (const [x, y] of [[ax, ay], [bx, by]]) {
+      this.rr(ctx, x - cell / 2 + 2, y - ch / 2 + 2, cell - 4, ch - 4, 10);
+      ctx.fillStyle = 'rgba(255,240,120,' + (.25 + .3 * ph) + ')'; ctx.fill();
+      ctx.shadowColor = '#ffb800'; ctx.shadowBlur = 10 + 14 * ph;
+      ctx.strokeStyle = 'rgba(255,196,0,' + (.7 + .3 * ph) + ')'; ctx.lineWidth = 3.5; ctx.stroke();
+    }
+    ctx.shadowBlur = 0;
+    const p = (t * 1.4) % 1.6, k = Math.min(1, p / 1.1), e = k * k * (3 - 2 * k);   // tay trượt rồi nghỉ một nhịp
+    const hx = ax + (bx - ax) * e, hy = ay + (by - ay) * e;
+    ctx.globalAlpha = p > 1.3 ? Math.max(0, 1 - (p - 1.3) / .3) : 1;
+    ctx.font = Math.round(cell * .62) + 'px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.shadowColor = 'rgba(0,0,0,.5)'; ctx.shadowBlur = 6;
+    ctx.fillText('👆', hx + cell * .12, hy + ch * .3);
     ctx.restore();
   }
 
@@ -4803,7 +4825,7 @@ class Game {
   showHint(force) {
     const h = this.grid.findHint(); if (!h) return;
     this.hint = h;
-    if (force) setTimeout(() => { if (this.hint === h) this.hint = null; }, 4000);
+    if (force) setTimeout(() => { if (this.hint === h) this.hint = null; }, 9000);
   }
 
   async useHammer(cell) {
