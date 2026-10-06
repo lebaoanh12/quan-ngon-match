@@ -619,6 +619,14 @@ body.ovl #pfill, body.ovl #efill { animation: none !important; }
 body.ovl .card::before, body.ovl .card::after { animation: none; }
 body.lq .card::before, body.lq .card::after { animation: none; }
 
+/* ---------- V4: trong app Android vỏ native đã đệm tai thỏ/thanh trạng thái rồi -> không đệm lần 2; mở rộng bàn chơi ---------- */
+body.droid #app { padding-top: 0; }
+body.droid .panel { padding-top: 8px; }
+body.droid #banner { padding-bottom: 0; }
+#stage { margin: 0 -3px; }
+#board { box-shadow: 0 0 0 3px #ffcf4a, 0 0 0 5px #b8620f, 0 0 0 6px #5a2a08, 0 8px 18px rgba(0,0,0,.5); }
+body.droid .lmbar { padding-top: 8px; }
+
 </style>
 </head>
 <body>
@@ -943,8 +951,9 @@ const CONFIG = {
     enabled: true,
     mockRewardedSeconds: 5,
     mockInterstitialSeconds: 3,
-    interstitialMinIntervalMs: 90000,  // tối thiểu 90 giây giữa 2 quảng cáo xen kẽ
-    interstitialEveryNLevels: 1,
+    interstitialMinIntervalMs: 150000, // tối thiểu 150 giây giữa 2 quảng cáo xen kẽ (tính cả sau khi xem video thưởng)
+    interstitialEveryNLevels: 3,       // chỉ hiện sau mỗi 3 màn thắng
+    interstitialFromLevel: 6,          // 5 màn đầu không có quảng cáo xen kẽ
     ids: {                             // ID TEST của Google; thay bằng ID thật khi phát hành
       banner:       'ca-app-pub-3940256099942544/6300978111',
       interstitial: 'ca-app-pub-3940256099942544/1033173712',
@@ -2575,7 +2584,7 @@ function showRewardedAd(callback)  { return AdManager.showRewarded(callback); }
 /* ------------------------------ Điều phối chung ------------------------------ */
 const AdManager = {
   provider: null,
-  lastInterstitial: 0,
+  lastInterstitial: Date.now(),   // vừa mở game thì chưa chèn quảng cáo ngay
 
   init() { if (this.provider && this.provider.init) this.provider.init(); },
 
@@ -2591,7 +2600,7 @@ const AdManager = {
   },
 
   showRewarded(callback) {
-    const cb = ok => { try { callback && callback(!!ok); } catch (e) { console.error(e); } };
+    const cb = ok => { if (ok) this.lastInterstitial = Date.now(); try { callback && callback(!!ok); } catch (e) { console.error(e); } };
     if (!CONFIG.ADS.enabled) return cb(true);
     this.provider.showRewarded(cb);
   }
@@ -3008,12 +3017,12 @@ const UI = {
 'use strict';
 /* ==========================================================================
  * lives.js — HỆ THỐNG TIM (lượt chơi) kiểu Candy Crush Saga
- *   • Mỗi người chơi có tối đa 5 tim. Thua / bỏ dở màn = mất 1 tim. Thắng màn không mất tim.
- *   • Cứ 25 phút hồi 1 tim (tính cả khi tắt app). Hết tim: chờ, xem video (+1), hoặc dùng xu.
+ *   • Mỗi người chơi có tối đa 5 tim. CHỈ mất 1 tim khi THUA màn (thoát giữa chừng không mất). Thắng màn không mất tim.
+ *   • Cứ 15 phút hồi 1 tim (tính cả khi tắt app). Hết tim: chờ, xem video (+1), hoặc dùng xu.
  *   • Dữ liệu: save.lives = { n: số tim, at: mốc thời gian bắt đầu đếm hồi tim, vd: ngày, vc: số video trong ngày }
  * ========================================================================== */
 const Lives = {
-  MAX: 5, REGEN_MS: 25 * 60 * 1000, COIN_ONE: 300, COIN_FULL: 1000, VIDEO_PER_DAY: 5,
+  MAX: 5, REGEN_MS: 15 * 60 * 1000, COIN_ONE: 300, COIN_FULL: 1000,
 
   sv() { return window.game && game.save; },
   /** Cộng tim đã hồi theo thời gian trôi qua. */
@@ -3059,15 +3068,14 @@ const Lives = {
       if (fb) fb.textContent = '💰 ' + this.COIN_FULL + ' xu: đầy tim';
     }
   },
-  videosLeft() { const L = this.sync(), d = Daily.today(); if (L.vd !== d) { L.vd = d; L.vc = 0; } return this.VIDEO_PER_DAY - (L.vc | 0); },
+  videosLeft() { return 999; },                                        // xem video nhận tim: KHÔNG giới hạn
 
   /** Mở bảng "Hết tim". */
   open() { UI.show('nolives'); this.refresh(); },
   video() {
-    if (this.videosLeft() <= 0) return UI.toast('Hôm nay đã hết lượt xem video nhận tim');
     showRewardedAd(ok => {
       if (!ok) return UI.toast('Cần xem hết video để nhận tim');
-      const L = this.sync(); L.vc = (L.vc | 0) + 1; this.add(1); UI.toast('+1 ❤️');
+      this.add(1); UI.toast('+1 ❤️');
     });
   },
   buy(full) {
@@ -4009,7 +4017,7 @@ class Game {
 
   layout() {
     const st = $('#stage');
-    const size = Math.floor(Math.max(120, Math.min(st.clientWidth - 4, st.clientHeight - 4)));
+    const size = Math.floor(Math.max(120, Math.min(st.clientWidth - 2, st.clientHeight - 4)));
     this.renderer.resize(size);
     if (this.grid) this.snapGems();
     UI.logo(this.renderer);
@@ -4026,7 +4034,7 @@ class Game {
   /** Chuẩn bị màn (tạo bàn, mục tiêu). skipIntro=true: vào chơi luôn, không hiện bảng giới thiệu. */
   /** Bỏ dở / thua màn đang chơi = mất 1 tim (gọi trước khi vào màn mới hoặc về menu). */
   settleRun() {
-    if (this.save.run) { this.save.run = 0; Lives.spend(); Store.save(this.save); }
+    if (this.save.run) { const lost = this.save.run === 2; this.save.run = 0; if (lost) Lives.spend(); Store.save(this.save); }   // run=2: đã thua -> trừ tim; run=1: bỏ dở -> không mất
   }
 
   async startLevel(n, skipIntro = false) {
@@ -4517,7 +4525,7 @@ class Game {
       setTimeout(() => { const q = Fx.at('#winCoins'); Fx.coinsFly(q.x, q.y, '#coins', 10); }, 1500);
     };
     // Interstitial tự động khi qua màn (theo CONFIG.ADS.interstitialEveryNLevels)
-    if (this.level % CONFIG.ADS.interstitialEveryNLevels === 0) showInterstitialAd(showWin); else showWin();
+    if (this.level >= CONFIG.ADS.interstitialFromLevel && this.level % CONFIG.ADS.interstitialEveryNLevels === 0) showInterstitialAd(showWin); else showWin();
   }
 
   doubleReward() {
@@ -4532,6 +4540,7 @@ class Game {
   lose() {
     this.state = 'over'; Sfx.lose(); Voice.say('lose', 5);
     { const bp = this._boardCenter(); Fx.edgeGlow('#3a5bd9', 1500); Fx.shake($('#stage'), 8); Fx.shockwave(bp.x, bp.y, '#7a8cff', 2, 260); Fx.sweep('rgba(40,50,110,.55)'); }
+    this.save.run = 2; Store.save(this.save);          // thua màn: sẽ trừ 1 tim
     $('#loseScore').textContent = this.score; $('#loseTarget').textContent = this.target;
     UI.loseGoals(this);
     $('#btnRevive').classList.toggle('hidden', this.revives >= CONFIG.MAX_REVIVES);
@@ -4542,7 +4551,7 @@ class Game {
   revive() {
     showRewardedAd(async ok => {
       if (!ok) return UI.toast('Cần xem hết video để nhận thêm lượt');
-      this.revives++; this.moves += CONFIG.REVIVE_MOVES;
+      this.revives++; this.moves += CONFIG.REVIVE_MOVES; this.save.run = 1; Store.save(this.save);   // hồi sinh: không mất tim
       UI.hide('lose'); UI.hud(this);
       this.state = 'busy';
       await this.ensurePlayable(this.token);
@@ -4749,11 +4758,12 @@ class Game {
 'use strict';
 /* main.js — khởi động game và nối các nút giao diện. */
 window.addEventListener('DOMContentLoaded', async () => {
+  if (window.AndroidAds) document.body.classList.add('droid');   // app Android: vỏ native đã đệm tai thỏ
   AdManager.init();
   Bg.init(); Fx.init();
   Auth.load(); const gotHash = Auth.consumeHash();
   const game = window.game = new Game();
-  if (game.save.run) { game.save.run = 0; Lives.spend(); Store.save(game.save); }   // lần trước thoát giữa màn -> mất 1 tim
+  if (game.save.run) { const lost = game.save.run === 2; game.save.run = 0; if (lost) Lives.spend(); Store.save(game.save); }   // lần trước đã thua mà chưa trừ tim -> trừ 1 tim
   UI.hud(game); UI.team(game);
   showBannerAd();                                   // banner cố định ở cạnh dưới
 
@@ -4900,7 +4910,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   // Thua
   $('#btnRevive').onclick = () => game.revive();
   $('#btnRetry').onclick = () => game.startLevel(game.level, true);
-  $('#btnLoseMenu').onclick = () => showInterstitialAd(() => game.goMenu());   // hết lượt -> về Menu: Interstitial
+  $('#btnLoseMenu').onclick = () => game.goMenu();   // thua -> về Menu: không chèn quảng cáo (người chơi đang bực)
 });
 
 </script>
