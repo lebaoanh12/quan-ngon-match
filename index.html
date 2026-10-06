@@ -627,6 +627,29 @@ body.droid #banner { padding-bottom: 0; }
 #board { box-shadow: 0 0 0 3px #ffcf4a, 0 0 0 5px #b8620f, 0 0 0 6px #5a2a08, 0 8px 18px rgba(0,0,0,.5); }
 body.droid .lmbar { padding-top: 8px; }
 
+/* ---------- V5: HUD gọn hơn (dồn chỗ cho bàn chơi) ---------- */
+#hud .row { margin-bottom: 3px; }
+#hud .pill { padding: 1px 10px; font-size: 13px; }
+#hud .pill b { font-size: 15px; }
+.stats { gap: 6px; }
+.stat { padding: 3px 4px; }
+.stat span { font-size: 9px; letter-spacing: 1px; }
+.stat b { font-size: 19px; }
+.stat.moves b { font-size: 23px; }
+.progress { height: 12px; margin-top: 4px; }
+#ptext { font-size: 9px; line-height: 12px; }
+#extra { margin-top: 4px; gap: 6px; }
+#order { padding: 1px 8px 1px 3px; font-size: 11px; }
+#order img { width: 22px; height: 22px; }
+.fever { height: 15px; }
+#ftext { line-height: 15px; font-size: 10px; }
+#team { margin: 3px 0 2px; padding: 3px 8px; gap: 6px; }
+#teamPortrait { width: 38px; height: 38px; }
+.tname { font-size: 11px; margin-bottom: 2px; }
+.ebar { height: 12px; }
+#etext { line-height: 12px; font-size: 9px; }
+.skill { padding: 7px 10px; font-size: 12px; }
+
 </style>
 </head>
 <body>
@@ -918,6 +941,7 @@ body.droid .lmbar { padding-top: 8px; }
 const CONFIG = {
   ROWS: 8,
   COLS: 8,
+  SQUEEZE7: false,                   // thu gọn các màn 8x8 thành 7x7 (icon to hơn)
 
   GEM_SCORE: 20,                       // điểm mỗi món bị phá (nhân với combo)
   SPECIAL_BONUS: { line_h: 40, line_v: 40, bomb: 60, rainbow: 100 },
@@ -1715,6 +1739,30 @@ const Levels = (() => {
 
   /** ĐỘ KHÓ TĂNG DẦN: từ màn 5 trở đi mục tiêu tăng, số lượt giảm theo từng màn. */
   const ramp = n => { const m = Math.max(0, n - 4); return { goal: Math.min(2.1, 1 + m * .025), moves: Math.max(.64, 1 - m * .011) }; };
+  /** THU GỌN 8x8 -> 7x7 (icon to hơn ~14%): bỏ 1 hàng + 1 cột ít ảnh hưởng nhất (ưu tiên ở giữa, giữ đối xứng).
+   *  Trả về bản đồ 8x8 mới (7x7 ở góc trên-trái, phần còn lại là ô khuyết 'x'), hoặc null nếu không thu được an toàn. */
+  const OB = 'iIr#=D';
+  const cntOb = rows => { const o = {}; rows.join('').split('').forEach(ch => { if (OB.includes(ch)) o[ch] = (o[ch] || 0) + 1; }); return o; };
+  function squeeze7(map) {
+    if (map.length !== 8 || map.some(r => r.length !== 8)) return null;
+    const before = cntOb(map), tot = Object.values(before).reduce((a, b) => a + b, 0);
+    let best = null;
+    for (let rr = 0; rr < 8; rr++) for (let cc = 0; cc < 8; cc++) {
+      const rows = map.filter((_, r) => r !== rr).map(row => row.slice(0, cc) + row.slice(cc + 1));
+      const after = cntOb(rows);
+      let ok = true;
+      for (const k in before) { if (!(after[k] > 0) || after[k] < before[k] * .5) ok = false; }   // loại obstacle nào còn < 50% hoặc mất hẳn
+      if (!ok) continue;
+      const lost = tot - Object.values(after).reduce((a, b) => a + b, 0);
+      const mid = Math.abs(rr - 3.5) + Math.abs(cc - 3.5);
+      const score = lost * 10 + mid;
+      if (!best || score < best.score) best = { score, rows };
+    }
+    if (!best) return null;
+    const out = best.rows.map(r => r + 'x');
+    out.push('x'.repeat(8));
+    return out;
+  }
   const get = n => {
     const d = n <= LIST.length ? LIST[n - 1] : generate(n);
     const k = ramp(n);
@@ -1724,7 +1772,9 @@ const Levels = (() => {
       else if (o.t === 'collect') o.n = Math.round(o.n * Math.min(1.6, 1 + (k.goal - 1) * .8));
       return o;
     });
-    return { n, moves: Math.max(14, Math.round(d.moves * k.moves)), colors: d.colors, size: d.size || 8, goals, map: d.map };
+    let size = d.size || 8, map = d.map;
+    if (size === 8 && CONFIG.SQUEEZE7) { const m7 = squeeze7(map); if (m7) { size = 7; map = m7; } }   // thu gọn 7x7 nếu an toàn
+    return { n, moves: Math.max(14, Math.round(d.moves * k.moves)), colors: d.colors, size, goals, map };
   };
 
   /** Dựng bàn từ định nghĩa màn. Trả về danh sách mục tiêu đã tính số lượng cụ thể. */
