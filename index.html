@@ -1290,6 +1290,13 @@ class Grid {
     // Viên đặc biệt "dừa" (type -2): không ghép được, phải rơi xuống hàng đáy để thu.
     this.blocks = Array.from({ length: rows }, () => Array(cols).fill(0));
     this.ice = Array.from({ length: rows }, () => Array(cols).fill(0));
+    // CƠ CHẾ "BÀN CHƠI SỐNG":
+    //   pot[r][c]  : ô là NỒI NƯỚC LÈO (cũng là 1 thùng 1 máu trong blocks) — lan sang món kề bên nếu không phá nồi nào trong lượt
+    //   belts      : băng chuyền [{row, dir}] — mỗi lượt cả hàng trượt 1 ô (dir = +1 sang phải, -1 sang trái), vòng lại ở mép
+    //   gem.timer  : BOM HẸN GIỜ (số lượt còn lại); về 0 là thua
+    //   gem.type -3: XE ĐẨY (gem.fixed, gem.hp) — không ghép/hoán đổi được, tự trượt ngang mỗi lượt, phá bằng ghép/nổ kề bên
+    this.pot = Array.from({ length: rows }, () => Array(cols).fill(false));
+    this.belts = [];
     this.n = rows; this.off = 0; this.dropsPending = 0;                 // số dừa còn phải sinh ra từ trên xuống
     this._id = 0;
   }
@@ -1419,6 +1426,7 @@ class Grid {
       const g = this.cells[r][c];
       if (!g) { if (this.blocks[r][c] > 0) blockHits.add(k); return; }   // vụ nổ trúng thùng gỗ
       if (g.type === -2) return;                                        // dừa không bị phá
+      if (g.type === -3) { blockHits.add(k); return; }                  // xe đẩy: bị trúng đòn nhưng không biến mất ngay
       set.set(k, { r, c });
       if (g.special && !(noTrigger && noTrigger.has(k))) queue.push({ r, c, g });
     };
@@ -1539,7 +1547,9 @@ class Grid {
     return out;
   }
 
-  /** Trừ máu chướng ngại sau 1 vòng nổ: băng dưới viên bị phá, thùng kề viên bị phá hoặc trúng vụ nổ. */
+  isCart(r, c) { const g = this.get(r, c); return !!g && g.type === -3; }
+
+  /** Trừ máu chướng ngại sau 1 vòng nổ: băng dưới viên bị phá, thùng/nồi/xe đẩy kề viên bị phá hoặc trúng vụ nổ. */
   obstacleHits(cells, direct) {
     const crates = new Map(), ice = [];
     (direct || []).forEach(k => crates.set(k, 1));
@@ -1547,22 +1557,34 @@ class Grid {
       if (this.ice[p.r][p.c] > 0) { this.ice[p.r][p.c]--; ice.push({ r: p.r, c: p.c, left: this.ice[p.r][p.c] }); }
       for (const [dr, dc] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
         const r = p.r + dr, c = p.c + dc;
-        if (this.inb(r, c) && this.blocks[r][c] > 0) crates.set(this.key(r, c), 1);
+        if (this.inb(r, c) && (this.blocks[r][c] > 0 || this.isCart(r, c))) crates.set(this.key(r, c), 1);
       }
     });
-    const hit = [];
+    const hit = []; let potKilled = 0;
     crates.forEach((_, k) => {
       const r = (k / this.cols) | 0, c = k % this.cols;
-      if (this.blocks[r][c] > 0) { this.blocks[r][c]--; hit.push({ r, c, left: this.blocks[r][c] }); }
+      if (this.blocks[r][c] > 0) {
+        this.blocks[r][c]--;
+        const h = { r, c, left: this.blocks[r][c] };
+        if (this.pot[r][c]) { h.pot = true; if (h.left === 0) { this.pot[r][c] = false; potKilled++; } }
+        hit.push(h);
+      } else if (this.isCart(r, c)) {
+        const g = this.cells[r][c]; g.hp = (g.hp || 2) - 1;
+        const h = { r, c, left: g.hp, cart: true, gem: g };
+        if (g.hp <= 0) this.cells[r][c] = null;                     // xe đẩy vỡ: ô trống, lát nữa trọng lực lấp đầy
+        hit.push(h);
+      }
     });
-    return { ice, crates: hit };
+    return { ice, crates: hit, potKilled };
   }
 
   count(kind) {
     let n = 0;
     for (let r = 0; r < this.rows; r++) for (let c = 0; c < this.cols; c++) {
       if (kind === 'ice' && this.ice[r][c] > 0) n++;
-      else if (kind === 'crate' && this.blocks[r][c] > 0) n++;
+      else if (kind === 'crate' && this.blocks[r][c] > 0 && !this.pot[r][c]) n++;
+      else if (kind === 'pot' && this.pot[r][c]) n++;
+      else if (kind === 'cart' && this.isCart(r, c)) n++;
       else if (kind === 'rope' && this.cells[r][c] && this.cells[r][c].lock) n++;
     }
     return n;
@@ -1585,7 +1607,7 @@ class Grid {
   }
 
   findHint() {
-    const free = (r, c) => { const g = this.get(r, c); return g && !g.lock ? g : null; };
+    const free = (r, c) => { const g = this.get(r, c); return g && !g.lock && !g.fixed ? g : null; };
     for (let r = 0; r < this.rows; r++) for (let c = 0; c < this.cols; c++) {
       const g = free(r, c);
       if (g && g.special) {
@@ -1609,6 +1631,72 @@ class Grid {
   }
 
   /* --------------------------------------------------------------------
+   * 5b) BÀN CHƠI SỐNG: nồi lan, băng chuyền, xe đẩy, bom hẹn giờ (gọi sau mỗi lượt của người chơi)
+   * -------------------------------------------------------------------- */
+  /** Nồi nước lèo lan: chọn 1 món thường kề nồi, biến ô đó thành nồi. Trả về {r,c,gem} hoặc null. */
+  spreadPot() {
+    if (this.count('pot') === 0) return null;
+    const cand = [];
+    for (let r = 0; r < this.rows; r++) for (let c = 0; c < this.cols; c++) {
+      const g = this.cells[r][c];
+      if (!g || g.type < 0 || g.special || g.lock || g.fixed || g.timer > 0 || this.blocks[r][c] !== 0) continue;
+      if ([[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dr, dc]) => this.inb(r + dr, c + dc) && this.pot[r + dr][c + dc])) cand.push({ r, c, g });
+    }
+    if (!cand.length) return null;
+    const pick = cand[(Math.random() * cand.length) | 0];
+    this.cells[pick.r][pick.c] = null; this.blocks[pick.r][pick.c] = 1; this.pot[pick.r][pick.c] = true;
+    return { r: pick.r, c: pick.c, gem: pick.g };
+  }
+
+  /** Băng chuyền: dịch cả hàng 1 ô theo dir (vòng lại ở mép). Trả về danh sách di chuyển hoặc null nếu hàng bị kẹt. */
+  beltShift(belt) {
+    const r = belt.row, n = this.cols;
+    for (let c = 0; c < n; c++) {
+      const g = this.cells[r][c];
+      if (this.blocks[r][c] !== 0 || !g || g.lock || g.fixed || g.type === -2) return null;
+    }
+    const old = this.cells[r].slice(), moves = [];
+    for (let c = 0; c < n; c++) {
+      const to = (c + belt.dir + n) % n;
+      this.cells[r][to] = old[c];
+      moves.push({ gem: old[c], r, from: c, to, wrap: Math.abs(to - c) > 1 });
+    }
+    return moves;
+  }
+
+  /** Xe đẩy: mỗi xe trượt 1 ô theo hàng ngang (đổi chỗ với món bên cạnh), chạm mép/vật cản thì quay đầu. */
+  cartMoves() {
+    const out = [];
+    for (let r = 0; r < this.rows; r++) for (let c = 0; c < this.cols; c++) {
+      const g = this.cells[r][c];
+      if (!g || g.type !== -3 || g._moved) continue;
+      const dir0 = g.dir || 1;
+      let done = false;
+      for (const d of [dir0, -dir0]) {
+        const nc = c + d;
+        if (!this.inb(r, nc) || this.blocks[r][nc] !== 0) continue;
+        const o = this.cells[r][nc];
+        if (!o || o.lock || o.fixed || o.type === -2 || o.type === -3) continue;
+        this.cells[r][nc] = g; this.cells[r][c] = o; g.dir = d; g._moved = true;
+        out.push({ cart: g, other: o, r, from: c, to: nc }); done = true; break;
+      }
+      if (!done) g.dir = -dir0;
+    }
+    for (let r = 0; r < this.rows; r++) for (let c = 0; c < this.cols; c++) { const g = this.cells[r][c]; if (g) g._moved = false; }
+    return out;
+  }
+
+  /** Bom hẹn giờ: trừ 1 lượt cho mọi bom. Trả về {ticked:[{r,c,gem}], exploded:[...]}. */
+  tickTimers() {
+    const ticked = [], exploded = [];
+    for (let r = 0; r < this.rows; r++) for (let c = 0; c < this.cols; c++) {
+      const g = this.cells[r][c];
+      if (g && g.timer > 0) { g.timer--; (g.timer <= 0 ? exploded : ticked).push({ r, c, gem: g }); }
+    }
+    return { ticked, exploded };
+  }
+
+  /* --------------------------------------------------------------------
    * 6) XÁO TRỘN khi hết nước đi: giữ nguyên các viên (kể cả đặc biệt), chỉ đổi
    *    vị trí, lặp đến khi không có chuỗi sẵn và còn nước đi.
    * -------------------------------------------------------------------- */
@@ -1616,7 +1704,7 @@ class Grid {
     const pos = [], gems = [];                       // chỉ xáo viên tự do: không đụng dây buộc, dừa, thùng, băng
     for (let r = 0; r < this.rows; r++) for (let c = 0; c < this.cols; c++) {
       const g = this.cells[r][c];
-      if (g && !g.lock && g.type !== -2) { pos.push([r, c]); gems.push(g); }
+      if (g && !g.lock && !g.fixed && g.type !== -2 && g.type !== -3) { pos.push([r, c]); gems.push(g); }
     }
     for (let attempt = 0; attempt < 400; attempt++) {
       for (let i = gems.length - 1; i > 0; i--) {
@@ -1673,7 +1761,11 @@ const Levels = (() => {
     rope:  ['🔗', 'Dây buộc', 'Món bị buộc không đổi chỗ được, nhưng ghép nó với món khác để cắt dây.'],
     drop:  ['🥥', 'Dừa', 'Dừa không ghép được. Hãy phá món bên dưới để dừa rơi xuống hàng đáy.'],
     collect: ['🎯', 'Thu thập', 'Ghép đủ số món theo yêu cầu.'],
-    score: ['⭐', 'Điểm', 'Đạt đủ số điểm mục tiêu.']
+    score: ['⭐', 'Điểm', 'Đạt đủ số điểm mục tiêu.'],
+    pot:   ['🍲', 'Nồi nước lèo', 'Nồi sẽ LAN sang món bên cạnh nếu bạn không phá được nồi nào trong lượt. Ghép món NGAY CẠNH nồi để phá.'],
+    cart:  ['🛒', 'Xe đẩy', 'Xe tự trượt ngang mỗi lượt, không ghép hay hoán đổi được. Ghép món NGAY CẠNH xe (2 lần) để phá.'],
+    timer: ['💣', 'Bom hẹn giờ', 'Số trên bom là số lượt còn lại. Ghép món có bom trước khi về 0, nếu không bạn thua!'],
+    belt:  ['➡️', 'Băng chuyền', 'Hàng có mũi tên tự trượt 1 ô mỗi lượt. Tính trước món sẽ trôi đi đâu.']
   };
 
   const mix = (a, b) => a.map((row, r) => [...row].map((ch, c) => (b[r][c] !== '.' ? b[r][c] : ch)).join(''));
@@ -1681,7 +1773,7 @@ const Levels = (() => {
   const C = (type, n) => ({ t: 'collect', type, n });
   const D = n => ({ t: 'drop', n });
   const I = () => ({ t: 'ice' }), K = () => ({ t: 'crate' }), R = () => ({ t: 'rope' });
-  const L = (map, moves, colors, goals, size) => ({ map, moves, colors, goals, size });
+  const L = (map, moves, colors, goals, size, extra) => ({ map, moves, colors, goals, size, ...(extra || {}) });
   /** Bàn nhỏ n x n đặt giữa bàn 8x8 (phần ngoài là ô khuyết 'x'); rows: n chuỗi dài n. */
   const box = (n, rows) => { const o = ((8 - n) / 2) | 0; return Array.from({ length: 8 }, (_, r) => [...Array(8)].map((_, c) => (r >= o && r < o + n && c >= o && c < o + n) ? rows[r - o][c - o] : 'x').join('')); };
   const dots = n => Array(n).fill('.'.repeat(n));
@@ -1734,7 +1826,48 @@ const Levels = (() => {
     if (/r/.test(txt)) goals.push(R());
     if (/D/.test(txt)) goals.push(D((txt.match(/D/g) || []).length + (r() < .5 ? 1 : 0)));
     if (goals.length < 3) goals.push(r() < .5 ? S(2400) : C((r() * 6) | 0, 14 + ((r() * 6) | 0)));
-    return L(map, 30, 6, goals.slice(0, 3));
+    // ----- BÀN CHƠI SỐNG (từ màn 27): nồi lan, bom hẹn giờ, băng chuyền, xe đẩy; mỗi cơ chế ra mắt 1 màn riêng rồi mới trộn -----
+    const live = liveMechanics(n, r, map, goals);
+    return L(live.map, 30, 6, live.goals.slice(0, 3), 8, live.extra);
+  }
+
+  const INTRO = { 27: 'pot', 31: 'timer', 35: 'belt', 39: 'cart' };
+  function liveMechanics(n, r, map, goals) {
+    const extra = {};
+    if (n < 27) return { map, goals, extra };
+    let kinds = [];
+    if (INTRO[n]) kinds = [INTRO[n]];
+    else if (n > 39 && r() < .55) {
+      const pool = ['pot', 'timer', 'belt', 'cart'], k = 1 + (n > 60 && r() < .4 ? 1 : 0);
+      for (let i = 0; i < k; i++) { const m = pool.splice((r() * pool.length) | 0, 1)[0]; kinds.push(m); }
+    } else if (n > 27 && n < 39 && r() < .4) kinds = ['pot', 'timer', 'belt'].filter(m => (m === 'pot' && n >= 27) || (m === 'timer' && n >= 31) || (m === 'belt' && n >= 35)).slice(0, 1);
+    if (!kinds.length) return { map, goals, extra };
+    const rows = map.map(x => x.replace(/D/g, '.').split(''));       // bỏ dừa ở màn có cơ chế mới (tránh quá tải)
+    const isFree = (rr, cc) => rows[rr][cc] === '.';
+    const laneClean = rr => rows[rr].every(ch => ch === '.');
+    const place = (ch, rr, cc) => { rows[rr][cc] = ch; };
+    const rnd = k => (r() * k) | 0;
+    const g2 = goals.filter(g => g.t !== 'drop');          // màn có nhiều cơ chế + dừa dễ quá tải: bỏ mục tiêu dừa
+    if (kinds.includes('pot')) {
+      const cr = 2 + rnd(4), cc = 2 + rnd(4); let cnt = 0;
+      for (const [dr, dc] of [[0, 0], [0, 1], [1, 0]].slice(0, 2 + (n > 45 ? 1 : 0))) { const rr = cr + dr, c2 = cc + dc; if (rr < 8 && c2 < 8 && isFree(rr, c2)) { place('P', rr, c2); cnt++; } }
+      if (cnt) g2.unshift({ t: 'pot' });
+    }
+    if (kinds.includes('cart')) {
+      const rr = 3 + rnd(2), free = [1, 2, 3, 4, 5, 6].filter(c => isFree(rr, c));
+      if (free.length) { place('V', rr, free[rnd(free.length)]); g2.unshift({ t: 'cart' }); }
+    }
+    if (kinds.includes('timer')) {
+      const k = n > 50 ? 2 : 1; extra.timer = Math.max(9, 15 - Math.floor((n - 30) / 12));
+      for (let i = 0; i < k; i++) for (let tr = 0; tr < 20; tr++) { const rr = 1 + rnd(6), cc = rnd(8); if (isFree(rr, cc)) { place('T', rr, cc); break; } }
+    }
+    if (kinds.includes('belt')) {
+      let cands = [2, 3, 4, 5].filter(laneClean);
+      if (!cands.length) { const ok = [2, 3, 4, 5].filter(q => !rows[q].some(ch => 'PVT'.includes(ch))); if (ok.length) { const rr = ok[rnd(ok.length)]; rows[rr] = rows[rr].map(() => '.'); cands = [rr]; } }   // dọn sạch 1 hàng cho băng chuyền
+      if (cands.length) { const rr = cands[rnd(cands.length)]; extra.belts = [{ row: rr, dir: r() < .5 ? 1 : -1 }]; }
+    }
+    if (!g2.some(g => g.t !== 'pot' && g.t !== 'cart')) g2.push(r() < .5 ? S(2000 + (n > 50 ? 500 : 0)) : C(rnd(6), 14 + rnd(6)));
+    return { map: rows.map(x => x.join('')), goals: g2, extra };
   }
 
   /** ĐỘ KHÓ TĂNG DẦN: từ màn 5 trở đi mục tiêu tăng, số lượt giảm theo từng màn. */
@@ -1774,12 +1907,12 @@ const Levels = (() => {
     });
     let size = d.size || 8, map = d.map;
     if (size === 8 && CONFIG.SQUEEZE7) { const m7 = squeeze7(map); if (m7) { size = 7; map = m7; } }   // thu gọn 7x7 nếu an toàn
-    return { n, moves: Math.max(14, Math.round(d.moves * k.moves)), colors: d.colors, size, goals, map };
+    return { n, moves: Math.max(14, Math.round(d.moves * k.moves)), colors: d.colors, size, goals, map, belts: d.belts, timer: d.timer };
   };
 
   /** Dựng bàn từ định nghĩa màn. Trả về danh sách mục tiêu đã tính số lượng cụ thể. */
   function build(def, grid) {
-    const ropes = [], drops = [];
+    const ropes = [], drops = [], carts = [], timers = [];
     def.map.forEach((row, r) => [...row].forEach((ch, c) => {
       if (ch === '#') grid.blocks[r][c] = 1;
       else if (ch === '=') grid.blocks[r][c] = 2;
@@ -1788,8 +1921,14 @@ const Levels = (() => {
       else if (ch === 'I') grid.ice[r][c] = 2;
       else if (ch === 'r') ropes.push([r, c]);
       else if (ch === 'D') drops.push([r, c]);
+      else if (ch === 'P') { grid.blocks[r][c] = 1; grid.pot[r][c] = true; }
+      else if (ch === 'V') carts.push([r, c]);
+      else if (ch === 'T') timers.push([r, c]);
     }));
     grid.fill();
+    grid.belts = (def.belts || []).map(b => ({ ...b }));
+    carts.forEach(([r, c]) => { const g = grid.cells[r][c]; if (g) { g.type = -3; g.special = null; g.fixed = true; g.hp = 2; g.dir = (c % 2 ? 1 : -1); } });
+    timers.forEach(([r, c]) => { const g = grid.cells[r][c]; if (g && g.type >= 0) g.timer = def.timer || 12; });
     ropes.forEach(([r, c]) => { const g = grid.cells[r][c]; if (g) g.lock = 1; });
     drops.forEach(([r, c]) => { grid.cells[r][c] = grid.makeGem(-2, 'drop'); });
     const dropGoal = def.goals.find(g => g.t === 'drop');
@@ -1799,6 +1938,8 @@ const Levels = (() => {
       if (g.t === 'ice') o.n = grid.count('ice');
       if (g.t === 'crate') o.n = grid.count('crate');
       if (g.t === 'rope') o.n = grid.count('rope');
+      if (g.t === 'pot') o.n = grid.count('pot');
+      if (g.t === 'cart') o.n = grid.count('cart');
       return o;
     });
   }
@@ -2437,6 +2578,7 @@ class Renderer {
       }
       if (top) this.drawGem2(ctx, top, view, view.selected.r, view.selected.c, true);
       this.drawObstacles(ctx, grid);
+      this.drawLive(ctx, grid);
     }
     for (const f of this.fx) this.drawFx(ctx, f);
     ctx.restore();
@@ -2465,6 +2607,7 @@ class Renderer {
 
   drawGem2(ctx, g, view, r, c, selected) {
     if (g.alpha <= 0.01 || g.scale <= 0.01) return;
+    if (g.type === -3) { this.drawCart(ctx, g); return; }
     const sp = this.sprites[g.type + '|' + (g.special || '')];
     if (!sp) return;
     let sc = g.scale;
@@ -2485,12 +2628,65 @@ class Renderer {
     ctx.shadowBlur = 0;
     if (g.special === 'drop') this.drawFace(ctx, -2, selected ? 'wow' : ((this.time * 1000 + g.id * 937) % 3400) < 120 ? 'blink' : 'normal');
     if (g.lock) this.drawRope(ctx, this.cell * .44);
+    if (g.timer > 0) this.drawTimer(ctx, g);
     if (!g.special && g.type >= 0) {
       const dying = g.alpha < .99 || g.scale < .99;
       const blink = ((this.time * 1000 + g.id * 937) % 3400) < 120;
       this.drawFace(ctx, g.type, dying ? 'happy' : (selected || hinted) ? 'wow' : blink ? 'blink' : 'normal');
     }
     ctx.restore();
+  }
+
+  drawCart(ctx, g) {
+    const cell = this.cell, hp = g.hp || 1;
+    ctx.save(); ctx.globalAlpha = g.alpha; ctx.translate(g.x, g.y); ctx.scale(g.scale, g.scale);
+    const w = cell * .86, h = cell * .6;
+    this.rr(ctx, -w / 2, -h / 2 - 2, w, h, 8);
+    ctx.fillStyle = hp > 1 ? '#b8743a' : '#d99a5a'; ctx.fill();
+    ctx.strokeStyle = '#6b3d17'; ctx.lineWidth = 2.5; ctx.stroke();
+    ctx.fillStyle = '#6b3d17';
+    for (const sx of [-1, 1]) { ctx.beginPath(); ctx.arc(sx * w * .28, h / 2 - 1, cell * .09, 0, 7); ctx.fill(); }
+    ctx.font = Math.round(cell * .36) + 'px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#fff'; ctx.fillText(hp > 1 ? '🛒' + hp : '🛒', 0, -2);
+    ctx.font = 'bold ' + Math.round(cell * .22) + 'px sans-serif'; ctx.fillStyle = '#fff';
+    ctx.fillText((g.dir || 1) > 0 ? '▶' : '◀', 0, h / 2 - 4);
+    ctx.restore();
+  }
+
+  drawTimer(ctx, g) {
+    const cell = this.cell, ph = .5 + .5 * Math.sin(this.time * (g.timer <= 2 ? 12 : 5));
+    const x = cell * .26, y = -cell * .26, r = cell * .22;
+    ctx.save();
+    ctx.beginPath(); ctx.arc(x, y, r, 0, 7);
+    ctx.fillStyle = g.timer <= 2 ? 'rgba(' + (200 + 55 * ph | 0) + ',20,20,1)' : '#222'; ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = '#fff'; ctx.font = 'bold ' + Math.round(r * 1.5) + 'px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(String(g.timer), x, y + 1);
+    ctx.restore();
+  }
+
+  drawLive(ctx, grid) {
+    const cell = this.cell, t = this.time;
+    for (const b of grid.belts || []) {
+      const y = this.pad + (b.row - this.off) * cell;
+      ctx.save();
+      ctx.fillStyle = 'rgba(80,80,90,.18)'; ctx.fillRect(this.pad, y, cell * grid.cols, cell);
+      ctx.strokeStyle = 'rgba(60,60,70,.6)'; ctx.lineWidth = 2.5; ctx.setLineDash([8, 6]); ctx.lineDashOffset = -b.dir * t * 24;
+      ctx.beginPath(); ctx.moveTo(this.pad, y + 2); ctx.lineTo(this.pad + cell * grid.cols, y + 2);
+      ctx.moveTo(this.pad, y + cell - 2); ctx.lineTo(this.pad + cell * grid.cols, y + cell - 2); ctx.stroke();
+      ctx.setLineDash([]); ctx.fillStyle = 'rgba(40,40,50,.8)'; ctx.font = 'bold ' + Math.round(cell * .3) + 'px sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      const a = b.dir > 0 ? '»' : '«'; ctx.fillText(a, this.pad + cell * .18, y + cell / 2); ctx.fillText(a, this.pad + cell * (grid.cols - .18), y + cell / 2);
+      ctx.restore();
+    }
+    for (let r = 0; r < grid.rows; r++) for (let c = 0; c < grid.cols; c++) {
+      if (!grid.pot[r][c]) continue;
+      const x = this.pad + (c - this.off + .5) * cell, y = this.pad + (r - this.off + .5) * cell, ph = .5 + .5 * Math.sin(t * 4 + c);
+      ctx.save();
+      ctx.fillStyle = 'rgba(255,110,40,' + (.35 + .2 * ph) + ')'; ctx.beginPath(); ctx.arc(x, y, cell * .46, 0, 7); ctx.fill();
+      ctx.font = Math.round(cell * .56) + 'px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('🍲', x, y + 1);
+      ctx.restore();
+    }
   }
 
   /** Vầng sáng + vòng sóng lan toả quanh món đặc biệt / dừa: rất nổi trên nền sáng để người chơi bấm vào. */
@@ -2919,6 +3115,8 @@ const UI = {
       case 'ice':     return { ic: '❄️', txt: rem > 0 ? rem : '✔', rem };
       case 'crate':   return { ic: '📦', txt: rem > 0 ? rem : '✔', rem };
       case 'rope':    return { ic: '🔗', txt: rem > 0 ? rem : '✔', rem };
+      case 'pot':     return { ic: '🍲', txt: rem > 0 ? rem : '✔', rem };
+      case 'cart':    return { ic: '🛒', txt: rem > 0 ? rem : '✔', rem };
     }
     return { ic: '?', txt: '', rem: 0 };
   },
@@ -2941,8 +3139,9 @@ const UI = {
     $('#introGoals').innerHTML = g.goals.map(x => UI._chipHtml(x, g)).join('');
     const tips = [], sv = g.save;
     const kinds = new Set(g.goals.map(x => x.t));
-    d.map.join('').split('').forEach(ch => { if ('iI'.includes(ch)) kinds.add('ice'); if ('#='.includes(ch)) kinds.add('crate'); if (ch === 'r') kinds.add('rope'); if (ch === 'D') kinds.add('drop'); });
-    ['ice', 'crate', 'rope', 'drop'].forEach(k => { if (kinds.has(k) && !sv.seen[k]) { tips.push(k); } });
+    d.map.join('').split('').forEach(ch => { if ('iI'.includes(ch)) kinds.add('ice'); if ('#='.includes(ch)) kinds.add('crate'); if (ch === 'r') kinds.add('rope'); if (ch === 'D') kinds.add('drop'); if (ch === 'P') kinds.add('pot'); if (ch === 'V') kinds.add('cart'); if (ch === 'T') kinds.add('timer'); });
+    if (d.belts && d.belts.length) kinds.add('belt');
+    ['ice', 'crate', 'rope', 'drop', 'pot', 'cart', 'timer', 'belt'].forEach(k => { if (kinds.has(k) && !sv.seen[k]) { tips.push(k); } });
     $('#introTips').innerHTML = tips.map(k => { const t = Levels.TIPS[k]; return '<div class="tip"><i>' + t[0] + '</i><div><b>' + t[1] + '</b><span>' + t[2] + '</span></div></div>'; }).join('');
     tips.forEach(k => { sv.seen[k] = 1; }); if (tips.length) Store.save(sv);
     $('#btnIntroVideo').classList.remove('hidden');
@@ -4151,7 +4350,7 @@ class Game {
       case 'score':   return Math.max(0, g.n - this.score);
       case 'collect': return Math.max(0, g.n - (this.collected[g.type] || 0));
       case 'drop':    return Math.max(0, g.n - this.dropsGot);
-      case 'ice': case 'crate': case 'rope': return this.grid ? this.grid.count(g.t) : 0;
+      case 'ice': case 'crate': case 'rope': case 'pot': case 'cart': return this.grid ? this.grid.count(g.t) : 0;
     }
     return 0;
   }
@@ -4237,9 +4436,9 @@ class Game {
   /** Món bị dây buộc / ô thùng / ô khuyết không hoán đổi được: lắc nhẹ báo hiệu. */
   swappable(a, b) {
     const ga = this.grid.get(a.r, a.c), gb = this.grid.get(b.r, b.c);
-    if (!ga || !gb || ga.lock || gb.lock) {
+    if (!ga || !gb || ga.lock || gb.lock || ga.fixed || gb.fixed) {
       Sfx.bad();
-      [ga, gb].forEach(x => { if (x && x.lock) { x.rot = .25; Tween.to(x, { rot: 0 }, 260, Ease.outBack); } });
+      [ga, gb].forEach(x => { if (x && (x.lock || x.fixed)) { x.rot = .25; Tween.to(x, { rot: 0 }, 260, Ease.outBack); } });
       return false;
     }
     return true;
@@ -4262,12 +4461,14 @@ class Game {
       this.state = 'idle'; this.lastAction = performance.now();
       return;
     }
-    this.moves--; UI.hud(this);
+    this.moves--; UI.hud(this); this._potKilled = 0;
     const wasFever = this.feverMoves > 0;
     await this.resolve(eff, [a, b], tk);
     if (tk !== this.token) return;
     if (wasFever && --this.feverMoves <= 0) this.endFever();
     UI.extra(this);
+    if (await this.afterTurn(tk)) return;               // bàn chơi sống: băng chuyền, xe đẩy, nồi lan, bom hẹn giờ
+    if (tk !== this.token) return;
     await this.afterResolve(tk);
   }
 
@@ -4299,7 +4500,7 @@ class Game {
       this.juice(combo, first ? eff : null, clr, cells);
       if (combo >= 4) this.giftItem('combo'); else if (first && eff && eff.kind && eff.kind.startsWith('rainbow')) this.giftItem('rainbow');
       cells.forEach(p => { const gm = g.cells[p.r][p.c]; if (gm && gm.type >= 0) this.collected[gm.type] = (this.collected[gm.type] || 0) + 1; });
-      this.obstacleFx(g.obstacleHits(cells, clr.blockHits));
+      { const oh = g.obstacleHits(cells, clr.blockHits); this._potKilled = (this._potKilled || 0) + oh.potKilled; this.obstacleFx(oh); }
       UI.hud(this);
       const cx = cells.reduce((s, p) => s + R.cellX(p.c), 0) / Math.max(1, cells.length);
       const cy = cells.reduce((s, p) => s + R.cellY(p.r), 0) / Math.max(1, cells.length);
@@ -4376,8 +4577,8 @@ class Game {
     });
     hits.crates.forEach(h => {
       const x = R.cellX(h.c), y = R.cellY(h.r);
-      R.burst(x, y, '#c58a4a', h.left === 0 ? 14 : 6); R.punchZoom(h.left === 0 ? .03 : .012);
-      if (h.left === 0) { R.floatText(x, y, '💥', '#fff', 26); Sfx.boom(.2); Sfx.vib(40); }
+      R.burst(x, y, h.pot ? '#ff7a45' : h.cart ? '#d9b27a' : '#c58a4a', h.left === 0 ? 14 : 6); R.punchZoom(h.left === 0 ? .03 : .012);
+      if (h.left === 0) { R.floatText(x, y, h.pot ? '🍲💥' : h.cart ? '🛒💥' : '💥', '#fff', 26); Sfx.boom(.2); Sfx.vib(40); }
     });
     if (hits.ice.length || hits.crates.length) Sfx.tone(700, .1, 'triangle', .1, -300);
   }
@@ -4406,6 +4607,63 @@ class Game {
       R.burst(gem.x, gem.y, col, 7);
       await Tween.to(gem, { scale: 0, alpha: 0 }, 230, Ease.inBack);
     });
+    await Promise.all(tasks);
+  }
+
+  /* --------------------- BÀN CHƠI SỐNG: SAU MỖI LƯỢT CỦA NGƯỜI CHƠI --------------------- */
+  /** Băng chuyền trượt, xe đẩy chạy, nồi lan, bom đếm ngược. Trả về true nếu màn đã kết thúc (bom nổ). */
+  async afterTurn(tk) {
+    const g = this.grid, R = this.renderer;
+    for (const b of g.belts || []) {
+      const mv = g.beltShift(b); if (!mv) continue;
+      await this.animBelt(mv);
+      if (tk !== this.token) return true;
+      await this.resolve(null, [], tk);
+      if (tk !== this.token) return true;
+    }
+    const cm = g.cartMoves();
+    if (cm.length) {
+      await Promise.all(cm.flatMap(m => [
+        Tween.to(m.cart, { x: R.cellX(m.to) }, 260, Ease.inOutQuad),
+        Tween.to(m.other, { x: R.cellX(m.from) }, 260, Ease.inOutQuad)]));
+      if (tk !== this.token) return true;
+      await this.resolve(null, [], tk);
+      if (tk !== this.token) return true;
+    }
+    if (!this._potKilled) {
+      const sp = g.spreadPot();
+      if (sp) {
+        const x = R.cellX(sp.c), y = R.cellY(sp.r);
+        R.burst(x, y, '#ff7a45', 12); R.ring(x, y, R.cell * 1.1, '#ff9a5c'); Sfx.tone(260, .16, 'sawtooth', .1, -120);
+        Tween.to(sp.gem, { scale: 0, alpha: 0 }, 200, Ease.inQuad);
+        await Tween.wait(220);
+        if (tk !== this.token) return true;
+        // món ở trên nồi mới rơi xuống lấp chỗ (không có chỗ trống nên chỉ cần xếp lại)
+      }
+    }
+    const t = g.tickTimers();
+    if (t.exploded.length) {
+      t.exploded.forEach(b => { const x = R.cellX(b.c), y = R.cellY(b.r); R.burst(x, y, '#ff3d2e', 22); R.ring(x, y, R.cell * 2, '#ff3d2e'); });
+      Sfx.boom(.5); Sfx.vib(120); Fx.shake($('#stage'), 12); Fx.edgeGlow('#ff2a1a', 1200);
+      UI.toast('💣 Bom nổ rồi!', 1600);
+      await Tween.wait(500);
+      if (tk !== this.token) return true;
+      this.lose(); return true;
+    }
+    const low = t.ticked.filter(b => b.gem.timer <= 3);
+    if (low.length) { Sfx.tone(520, .08, 'square', .08, 0); low.forEach(b => { b.gem.sx = 1.25; b.gem.sy = 1.25; Tween.to(b.gem, { sx: 1, sy: 1 }, 260, Ease.outBack); }); }
+    return false;
+  }
+
+  /** Hàng băng chuyền trượt 1 ô: món ở mép vòng sang đầu bên kia. */
+  async animBelt(mv) {
+    const R = this.renderer, tasks = [];
+    mv.forEach(m => {
+      const x = R.cellX(m.to), y = R.cellY(m.r);
+      if (m.wrap) tasks.push((async () => { await Tween.to(m.gem, { alpha: 0, scale: .6 }, 110, Ease.linear); m.gem.x = x; m.gem.y = y; await Tween.to(m.gem, { alpha: 1, scale: 1 }, 150, Ease.outQuad); })());
+      else tasks.push(Tween.to(m.gem, { x }, 280, Ease.inOutQuad));
+    });
+    Sfx.swap();
     await Promise.all(tasks);
   }
 
