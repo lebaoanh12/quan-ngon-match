@@ -2953,7 +2953,7 @@ class Renderer {
     if (g.type === -3) { this.drawCart(ctx, g); return; }
     const sp = this.sprites[g.type + '|' + (g.special || '')];
     if (!sp) return;
-    let sc = g.scale * 1.07;   // món ăn to hơn (kiểu Candy)
+    let sc = g.scale * 1.03, ky = Math.min(1.24, 1 + Math.max(0, this.ch / this.cell - 1) * .85);   // ngang +3%, dọc kéo dài theo chiều cao ô dư   // món ăn to hơn (kiểu Candy)
     if (g.special) sc *= 1.06 + .08 * Math.sin(this.time * 6 + g.id);
     if (selected) sc *= 1.1 + .04 * Math.sin(this.time * 10);
     const h = view.hint;
@@ -2965,7 +2965,7 @@ class Renderer {
     ctx.translate(g.x, g.y + (view.idle && !selected ? Math.sin(this.time * 2.2 + c * .7 + r * .45) * this.cell * .018 : 0));
     ctx.rotate(g.special === 'rainbow' ? .1 * Math.sin(this.time * 3 + g.id) : g.rot);
     if (g.special && g.alpha > .5) this.drawHalo(ctx, g);
-    ctx.scale(sc * (g.sx || 1), sc * (g.sy || 1));
+    ctx.scale(sc * (g.sx || 1), sc * ky * (g.sy || 1));
     if (selected) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = .8; Glow.draw(ctx, '#ffffff', 0, 0, w * .85); ctx.restore(); }
     ctx.drawImage(sp, -w / 2, -w / 2, w, w);
     if (g.special === 'drop') this.drawFace(ctx, -2, selected ? 'wow' : ((this.time * 1000 + g.id * 937) % 3400) < 120 ? 'blink' : 'normal');
