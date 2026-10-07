@@ -816,6 +816,13 @@ body::before { opacity: .12; inset: 0; animation: none !important; mask-image: n
 @keyframes cloudmove { to { margin-left: 26px; } }
 .lmdeco.sway { animation: lmfloat 6s ease-in-out infinite; }
 
+/* --- độ tương phản: nút khóa, tiêu đề bảng, thanh sao/xu --- */
+.scard .btn.ghost:disabled, .scard .btn.ghost[disabled] { background: linear-gradient(180deg, #8a4a3a, #5e2a22); color: #fff; opacity: 1; box-shadow: 0 4px 0 #3a1612; text-shadow: 0 1px 2px rgba(0,0,0,.6); }
+.scard .btn.ghost:disabled small { color: #ffe27a; opacity: 1; font-weight: 800; }
+.panel h3, .panel .hint { color: #fff3d0; text-shadow: 0 1px 2px rgba(0,0,0,.6); opacity: 1; }
+.phead { color: #fff3d0; text-shadow: 0 1px 2px rgba(0,0,0,.6); } .phead .pills, .phead .pills b { color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.6); }
+.evline, .rankline { position: relative; z-index: 1; display: block; margin: 10px 0 8px; } #btnDouble { margin-bottom: 6px; }
+
 </style>
 </head>
 <body>
@@ -3307,8 +3314,13 @@ const UI = {
     clearTimeout(this._toastT); this._toastT = setTimeout(() => t.classList.remove('show'), ms);
   },
   show(id) { $('#' + id).classList.add('show'); this._ovl(); },
-  hide(id) { $('#' + id).classList.remove('show'); this._ovl(); },
-  hideAll() { document.querySelectorAll('.overlay').forEach(o => { if (o.id !== 'adOverlay') o.classList.remove('show'); }); this._ovl(); },
+  /** _ret: bảng cần mở lại khi đóng Bản đồ / Xếp hạng (mở từ màn Thắng/Thua thì quay lại đúng màn đó, không để game đơ). */
+  hide(id) {
+    $('#' + id).classList.remove('show');
+    if ((id === 'levels' || id === 'rankPage') && this._ret) { const r = this._ret; this._ret = null; $('#' + r).classList.add('show'); }
+    this._ovl();
+  },
+  hideAll() { this._ret = null; document.querySelectorAll('.overlay').forEach(o => { if (o.id !== 'adOverlay') o.classList.remove('show'); }); this._ovl(); },
   /** Có bảng nào đang mở -> tạm dừng các animation nền nặng (đỡ lag). */
   _ovl() { document.body.classList.toggle('ovl', !!document.querySelector('.overlay.show')); },
 
@@ -4677,7 +4689,7 @@ const WorldMap = {
       b.innerHTML = '<b>' + (locked ? '🔒' : n) + '</b>' + (locked ? '' : '<span class="lms">' + [0, 1, 2].map(i => '<i class="' + (i < st ? 'on' : '') + '">★</i>').join('') + '</span>')
         + (boss ? '<u class="crown">👑</u>' : '');
       if (n >= 3 && (!locked || n <= cur + 3)) { const bd = this.badges(n); if (bd.length) b.insertAdjacentHTML('beforeend', '<s class="obs">' + bd.join('') + '</s>'); }
-      if (!locked) b.onclick = () => { UI.hide('levels'); Sfx.unlock(); g.startLevel(n); };
+      if (!locked) b.onclick = () => { UI._ret = null; UI.hide('levels'); Sfx.unlock(); g.startLevel(n); };
       else b.onclick = () => UI.toast('🔒 Hãy qua màn ' + (n - 1) + ' trước nhé', 1600);
       add(b);
     }
@@ -5481,7 +5493,7 @@ class Game {
     UI.loseGoals(this);
     $('#btnRevive').classList.toggle('hidden', this.revives >= CONFIG.MAX_REVIVES);
     { const el = $('#loseLives'); if (el) el.innerHTML = Lives.hearts(Math.max(0, Lives.count() - 1)); }
-    $('#btnLoseMap').onclick = () => { UI.hide('lose'); UI.levels(this); };
+    $('#btnLoseMap').onclick = () => { UI.hide('lose'); UI._ret = 'lose'; UI.levels(this); };
     UI.show('lose');
   }
 
@@ -5743,8 +5755,8 @@ window.addEventListener('DOMContentLoaded', async () => {
   $('#rtWeek').onclick = () => Social.open(game, 'week');
   $('#rtAll').onclick = () => Social.open(game, 'all');
   $('#evBanner').onclick = () => { Sfx.unlock(); Social.startParty(game); };
-  $('#btnWinMap').onclick = () => { UI.hide('win'); UI.levels(game); };
-  $('#btnWinRank').onclick = () => { UI.hide('win'); Social.open(game, 'week'); };
+  $('#btnWinMap').onclick = () => { UI.hide('win'); UI._ret = 'win'; UI.levels(game); };
+  $('#btnWinRank').onclick = () => { UI.hide('win'); UI._ret = 'win'; Social.open(game, 'week'); };
   $('#btnStart').onclick = () => { Sfx.unlock(); game.beginLevel(); };
   $('#btnIntroBack').onclick = () => game.goMenu();
   $('#btnIntroVideo').onclick = () => showRewardedAd(ok => { if (!ok) return UI.toast('Cần xem hết video để nhận +3 lượt'); game.introBoost = true; $('#btnIntroVideo').classList.add('hidden'); UI.toast('+3 lượt khi bắt đầu!'); });
