@@ -916,6 +916,7 @@ body::before { opacity: .12; inset: 0; animation: none !important; mask-image: n
         <button class="btn secondary mtile" id="btnRankMenu"><i>🏆</i><span>Xếp hạng</span><span class="badge hot" id="rankBadge"></span></button>
       </div>
       <button class="evbanner" id="evBanner" hidden>🎉 CUỐI TUẦN: XU x2! Bấm vào chơi màn Tiệc thưởng x3</button>
+      <button class="btn ghost" id="btnRename">✏️ Đổi tên</button>
       <button class="btn ghost" id="btnAccount">👤 Tài khoản</button>
       <div class="sndrow icons"><button class="btn ghost" id="btnMusic" title="Nhạc">🎵</button><button class="btn ghost" id="btnSound" title="Tiếng">🔊</button><button class="btn ghost" id="btnVoice" title="Giọng nói">🗣️</button><button class="btn ghost" id="btnVib" title="Rung">📳</button><button class="btn ghost" id="btnNotify" title="Nhắc nhở">🔔</button></div>
       <button class="btn ghost danger" id="btnDelAcct">🗑 Xóa tài khoản</button>
@@ -993,6 +994,7 @@ body::before { opacity: .12; inset: 0; animation: none !important; mask-image: n
     <div class="lmbar"><button class="back" id="btnRankBack">‹ Quay lại</button><b>Đua điểm</b><span class="pills" id="rankClock"></span></div>
     <div class="rtabs"><button id="rtWeek" class="on">Tuần này</button><button id="rtAll">Mọi thời đại</button></div>
     <div id="rankMine"></div>
+    <button class="btn ghost small" id="btnRankRename" style="margin:0 12px 6px">✏️ Đổi tên của bạn</button>
     <div id="rankList"></div>
     <div id="rankMiles"></div>
   </section>
@@ -1113,6 +1115,18 @@ body::before { opacity: .12; inset: 0; animation: none !important; mask-image: n
       <input id="inPass" class="field" type="password" placeholder="Mật khẩu (từ 6 ký tự)" autocomplete="current-password">
       <div id="loginMsg" class="lmsg"></div>
       <button class="btn primary" id="btnLoginGo">ĐĂNG NHẬP</button>
+    </div>
+  </section>
+
+  <!-- ĐỔI TÊN HIỂN THỊ -->
+  <section class="overlay" id="nameBox">
+    <div class="card">
+      <h2>✏️ Đổi tên hiển thị</h2>
+      <p class="sub">Tên này hiện trên bảng xếp hạng (2–16 ký tự)</p>
+      <input id="inNick" class="field" type="text" placeholder="Ví dụ: Bếp trưởng Mèo" maxlength="16" autocomplete="nickname">
+      <div id="nickMsg" class="lmsg"></div>
+      <button class="btn primary" id="btnNickSave">LƯU TÊN</button>
+      <button class="btn ghost" id="btnNickCancel">Hủy</button>
     </div>
   </section>
 
@@ -1280,7 +1294,8 @@ const Auth = {
     this.session = s; try { s ? localStorage.setItem(this.SKEY, JSON.stringify(s)) : localStorage.removeItem(this.SKEY); } catch (e) {}
   },
   user() { return this.session && this.session.user; },
-  name() { const u = this.user(); return u ? ((u.user_metadata && (u.user_metadata.display_name || u.user_metadata.full_name || u.user_metadata.name)) || (u.email || '').split('@')[0] || 'Người chơi') : ''; },
+  nick() { return (this.game && this.game.save && this.game.save.nick) || ''; },
+  name() { const n = this.nick(); if (n) return n; const u = this.user(); return u ? ((u.user_metadata && (u.user_metadata.display_name || u.user_metadata.full_name || u.user_metadata.name)) || (u.email || '').split('@')[0] || 'Người chơi') : ''; },
 
   async api(path, opt = {}, authed = false) {
     const h = { apikey: this.KEY, 'Content-Type': 'application/json', ...(opt.headers || {}) };
@@ -5908,6 +5923,21 @@ window.addEventListener('DOMContentLoaded', async () => {
     if (!b.dataset.arm) { b.dataset.arm = 1; const old = b.textContent; b.textContent = 'Bấm lần nữa để đăng xuất'; setTimeout(() => { delete b.dataset.arm; b.textContent = old; }, 3000); return; }
     delete b.dataset.arm; try { await Auth.push(game.save); } catch (e) {}
     await Auth.signOut(); Sfx.music(false); gate();
+  };
+  // đổi tên hiển thị (hiện trên bảng xếp hạng)
+  const openNick = () => { $('#inNick').value = Auth.name(); $('#nickMsg').textContent = ''; $('#nickMsg').classList.remove('ok'); UI.show('nameBox'); };
+  $('#btnRename').onclick = openNick; $('#btnRankRename').onclick = openNick;
+  $('#btnNickCancel').onclick = () => UI.hide('nameBox');
+  $('#btnNickSave').onclick = async () => {
+    const m = $('#nickMsg'), v = $('#inNick').value.replace(/[<>&"'`]/g, '').replace(/\s+/g, ' ').trim();
+    m.classList.remove('ok');
+    if (v.length < 2) { m.textContent = 'Tên cần từ 2 ký tự trở lên.'; return; }
+    game.save.nick = v.slice(0, 16); Store.save(game.save);
+    $('#btnAccount').textContent = '👤 ' + Auth.name() + ' · Đăng xuất';
+    m.classList.add('ok'); m.textContent = 'Đã lưu!'; $('#btnNickSave').disabled = true;
+    try { await Auth.push(game.save); } catch (e) {}
+    $('#btnNickSave').disabled = false; UI.hide('nameBox'); UI.toast('Tên mới: ' + game.save.nick);
+    Social.cache = {}; if ($('#rankPage').classList.contains('show')) Social.open(game, Social.tab);
   };
   // xóa tài khoản (bắt buộc theo chính sách Google Play)
   $('#btnDelAcct').onclick = () => { $('#delMsg').textContent = ''; $('#btnDelGo').disabled = false; UI.show('delacct'); };
