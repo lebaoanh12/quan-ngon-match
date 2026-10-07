@@ -2953,7 +2953,7 @@ class Renderer {
     if (g.type === -3) { this.drawCart(ctx, g); return; }
     const sp = this.sprites[g.type + '|' + (g.special || '')];
     if (!sp) return;
-    let sc = g.scale * 1.15;   // món ăn to hơn (kiểu Candy)
+    let sc = g.scale * 1.07;   // món ăn to hơn (kiểu Candy)
     if (g.special) sc *= 1.06 + .08 * Math.sin(this.time * 6 + g.id);
     if (selected) sc *= 1.1 + .04 * Math.sin(this.time * 10);
     const h = view.hint;
