@@ -2526,8 +2526,19 @@ class Renderer {
     for (let i = 0; i < 2; i++) this.fx.push({ t: 'star', x: x + (Math.random() - .5) * this.cell * .6, y: y + (Math.random() - .5) * this.cell * .6,
       vy: -30 - Math.random() * 40, rot: Math.random() * 3, life: -Math.random() * 120, max: 520, size: this.cell * (.16 + Math.random() * .12), color: i ? '#fff7b0' : color });
   }
+  /** Mảnh vỡ to (gỗ, băng) văng ra khi vỡ thùng/băng; chỉ khi máy đủ khoẻ và chưa quá tải. */
+  chips(x, y, color, n = 6) {
+    if (Perf.q < 1 || this.fx.length > Perf.cap() * .6) return;
+    n = Math.max(3, Math.round(n * (Perf.q >= 2 ? 1 : .6)));
+    for (let i = 0; i < n; i++) {
+      const a = -Math.PI / 2 + (Math.random() - .5) * 2.4, sp = 140 + Math.random() * 230;
+      this.fx.push({ t: 'shard', x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, rot: Math.random() * 6, vr: (Math.random() - .5) * 18,
+        life: 0, max: 620 + Math.random() * 280, size: this.cell * (.15 + Math.random() * .1), color });
+    }
+  }
   /** Vật bay (cá, đũa...) theo cung tròn từ (x1,y1) tới (x2,y2); delay = ms chờ trước khi bay. */
   fly(emoji, x1, y1, x2, y2, delay = 0, ms = 520, color = '#7fe8ff') {
+    if (this.fx.length > Perf.cap() * .8) return;
     this.fx.push({ t: 'fly', emoji, x1, y1, x2, y2, life: -delay, max: ms, color, arc: this.cell * (1.2 + Math.random() * .8) * (Math.random() < .5 ? -1 : 1) });
   }
   rays(x, y, color = '#fff2a8', maxR = this.size) { this.fx.push({ t: 'rays', x, y, life: 0, max: 650, maxR, color }); }
@@ -2751,9 +2762,8 @@ class Renderer {
     const rgb = sp === 'drop' ? '30,200,60' : sp === 'bomb' ? '255,80,20' : sp === 'rainbow' ? '255,40,210' : '0,170,255';
     ctx.save();
     // nền sáng đặc, nhấp nháy
-    const R = cell * (.58 + .1 * ph), gr = ctx.createRadialGradient(0, 0, cell * .15, 0, 0, R);
-    gr.addColorStop(0, 'rgba(' + rgb + ',.0)'); gr.addColorStop(.55, 'rgba(' + rgb + ',' + (.45 + .25 * ph) + ')'); gr.addColorStop(1, 'rgba(' + rgb + ',0)');
-    ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(0, 0, R, 0, 7); ctx.fill();
+    const R = cell * (.58 + .1 * ph);
+    ctx.globalAlpha *= .55 + .3 * ph; Glow.draw(ctx, 'rgb(' + rgb + ')', 0, 0, R * 1.5); ctx.globalAlpha /= (.55 + .3 * ph);
     // vòng viền sáng + bóng đổ
         ctx.strokeStyle = 'rgba(255,255,255,.95)'; ctx.lineWidth = Math.max(2.5, cell * .05);
     ctx.beginPath(); ctx.arc(0, 0, cell * (.47 + .03 * ph), 0, 7); ctx.stroke();
@@ -3494,6 +3504,15 @@ const Fx = {
       if (i % 3 === 0 && typeof Sfx !== 'undefined') Sfx.coin();
     }, i * 55);
   },
+  /** Sao bay từ (x,y) tới ô sao trên HUD. */
+  starsFly(x, y, targetSel = '#stars', n = 5) {
+    const el = $(targetSel); if (!el || !el.getBoundingClientRect().width) return;
+    const t = this.at(el); n = Math.max(2, Math.round(n * [.5, .8, 1][Perf.q]));
+    for (let i = 0; i < n; i++) setTimeout(() => {
+      this.list.push({ k: 'fly', star: true, x, y, sx: x, sy: y, tx: t.x, ty: t.y, cx: x + (Math.random() - .5) * 220, cy: y - 80 - Math.random() * 120, life: 0, max: 800, r: 11 });
+      if (typeof Sfx !== 'undefined') Sfx.pop(i % 3);
+    }, i * 90);
+  },
   /** Viền màn hình sáng lên (vignette) — dùng khi combo lớn. */
   edgeGlow(color = '#ffd24a', ms = 700) { this.list.push({ k: 'edge', life: 0, max: ms, c: color }); },
   /** Chiếc "chớp" ánh sáng quét ngang. */
@@ -3554,7 +3573,7 @@ const Fx = {
         const sx = Math.abs(Math.cos(f.life / 1000 * f.spin + f.ph)); c.scale(Math.max(.15, sx), 1); this._coin(c, f.r);
       } else if (f.k === 'fly') {
         const t = Math.min(1, p), e = t * t * (3 - 2 * t), u = 1 - e; const x = u * u * f.sx + 2 * u * e * f.cx + e * e * f.tx, y = u * u * f.sy + 2 * u * e * f.cy + e * e * f.ty;
-        c.translate(x, y); c.rotate(t * 9); c.scale(1 - t * .35, 1 - t * .35); this._coin(c, f.r);
+        c.translate(x, y); c.rotate(t * 9); c.scale(1 - t * .35, 1 - t * .35); if (f.star) this._star(c, f.r, '#ffd24a'); else this._coin(c, f.r);
       } else if (f.k === 'star') { c.translate(f.x, f.y); c.rotate(f.rot); c.globalAlpha = 1 - p; this._star(c, f.r, f.c); }
       c.restore();
     }
@@ -4598,6 +4617,7 @@ class Game {
         gem.special = gr.special; if (gr.special === 'rainbow') gem.type = -1;
         gem.scale = .3; Tween.to(gem, { scale: 1 }, 380, Ease.outBack);
         R.burst(gem.x, gem.y, '#ffffff', 10); Sfx.special();
+        if (Perf.q >= 1) { const src = gr.cells[(Math.random() * gr.cells.length) | 0]; if (src) R.fly('✨', R.cellX(src.c), R.cellY(src.r), gem.x, gem.y, 0, 340, gr.special === 'rainbow' ? '#ff9ae6' : gr.special === 'bomb' ? '#ff9a3c' : '#7fe8ff'); }
       }
 
       // trọng lực + sinh viên mới (rơi theo từng đoạn cột bị thùng chia cắt)
@@ -4654,12 +4674,12 @@ class Game {
     const R = this.renderer;
     hits.ice.forEach(h => {
       const x = R.cellX(h.c), y = R.cellY(h.r);
-      R.burst(x, y, '#bfe9ff', h.left === 0 ? 10 : 5); if (h.left === 0) R.ring(x, y, R.cell * 1.2, '#bfe9ff');
+      R.burst(x, y, '#bfe9ff', h.left === 0 ? 10 : 5); if (h.left === 0) { R.ring(x, y, R.cell * 1.2, '#bfe9ff'); R.chips(x, y, '#d6f1ff', 5); }
     });
     hits.crates.forEach(h => {
       const x = R.cellX(h.c), y = R.cellY(h.r);
       R.burst(x, y, h.pot ? '#ff7a45' : h.cart ? '#d9b27a' : '#c58a4a', h.left === 0 ? 14 : 6); R.punchZoom(h.left === 0 ? .03 : .012);
-      if (h.left === 0) { R.floatText(x, y, h.pot ? '🍲💥' : h.cart ? '🛒💥' : '💥', '#fff', 26); Sfx.boom(.2); Sfx.vib(40); }
+      if (h.left === 0) { R.floatText(x, y, h.pot ? '🍲💥' : h.cart ? '🛒💥' : '💥', '#fff', 26); R.chips(x, y, h.pot ? '#ff7a45' : '#b5753a', 7); Sfx.boom(.2); Sfx.vib(40); }
     });
     if (hits.ice.length || hits.crates.length) Sfx.tone(700, .1, 'triangle', .1, -300);
   }
@@ -4956,6 +4976,7 @@ class Game {
     this.winCoins = coins;
     this.save.coins += coins;
     this.save.stars += starGain;
+    if (starGain > 0) { const bp2 = this._boardCenter(); setTimeout(() => Fx.starsFly(bp2.x, bp2.y, '#stars', starGain * 3), 500); }
     this.save.levelStars[this.level] = Math.max(old, stars);
     const oldLvl = this.save.level;
     this.save.level = Math.max(this.save.level, this.level + 1);
