@@ -879,6 +879,13 @@ body::before { opacity: .12; inset: 0; animation: none !important; mask-image: n
 #pstars i{font-size:13px;letter-spacing:-2px;color:rgba(255,255,255,.75);text-shadow:0 0 0 #000,1px 1px 0 #3a0a1a,-1px -1px 0 #3a0a1a,1px -1px 0 #3a0a1a,-1px 1px 0 #3a0a1a;transform:translate(-100%,-50%)}
 #pstars i.on{transform:translate(-100%,-50%) scale(1.25)}
 
+/* ===== bảng màu hiệu ứng/thanh sao: xanh dương - tím - ngọc, tương phản với nền đỏ vàng ===== */
+.progress{background:#14183a !important;border:2px solid #0a0d26}
+#pfill{background:linear-gradient(90deg,#12b76a,#00b8e6 60%,#7a3cff) !important}
+#pstars i{color:#c9d1ff;text-shadow:0 0 0 #000,1px 1px 0 #0a0d26,-1px -1px 0 #0a0d26,1px -1px 0 #0a0d26,-1px 1px 0 #0a0d26}
+#pstars i.on{color:#00e0ff;text-shadow:0 0 6px #00b8e6,1px 1px 0 #0a0d26,-1px -1px 0 #0a0d26,1px -1px 0 #0a0d26,-1px 1px 0 #0a0d26}
+@keyframes scbump{0%{transform:scale(1)}30%{transform:scale(1.35);color:#00b8e6}100%{transform:scale(1)}}
+
 </style>
 </head>
 <body>
@@ -2987,7 +2994,7 @@ class Renderer {
     for (const [x, y] of [[ax, ay], [bx, by]]) {
       this.rr(ctx, x - cell / 2 + 3, y - ch / 2 + 3, cell - 6, ch - 6, 12);
       ctx.fillStyle = 'rgba(255,255,255,' + (.10 + .16 * s) + ')'; ctx.fill();
-      ctx.strokeStyle = 'rgba(232,89,12,' + (.55 + .4 * s) + ')'; ctx.lineWidth = 3 + 1.5 * s; ctx.stroke();
+      ctx.strokeStyle = 'rgba(47,107,255,' + (.55 + .4 * s) + ')'; ctx.lineWidth = 3 + 1.5 * s; ctx.stroke();
     }
     const p = (t * 1.4) % 1.6, k = Math.min(1, p / 1.1), e = k * k * (3 - 2 * k);   // tay trượt rồi nghỉ một nhịp
     const hx = ax + (bx - ax) * e, hy = ay + (by - ay) * e;
@@ -3115,7 +3122,7 @@ class Renderer {
         if (f.life < 0) break;
         ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1 - p; ctx.translate(f.x, f.y); ctx.rotate(f.rot);
         if (Perf.q >= 1) Glow.draw(ctx, f.color, 0, 0, f.size * 2.4);
-        ctx.fillStyle = '#ff9a00'; ctx.strokeStyle = 'rgba(90,25,0,.85)'; ctx.lineWidth = 2; this.sparkle(ctx, 0, 0, f.size * (1 - p * .4)); ctx.stroke();
+        ctx.fillStyle = '#00b8e6'; ctx.strokeStyle = 'rgba(8,14,54,.9)'; ctx.lineWidth = 2; this.sparkle(ctx, 0, 0, f.size * (1 - p * .4)); ctx.stroke();
         break;
       case 'glow':
         ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = (1 - p) * .9;
@@ -3169,7 +3176,7 @@ class Renderer {
         ctx.globalAlpha = p < .7 ? 1 : 1 - (p - .7) / .3;
         ctx.translate(f.x, f.y - p * this.cell * .9); ctx.scale(pop * .8, pop * .8);
         ctx.font = `900 ${f.size}px system-ui, sans-serif`; ctx.textAlign = 'center'; ctx.lineJoin = 'round'; ctx.lineWidth = 7;
-        ctx.strokeStyle = 'rgba(50,5,20,.95)'; ctx.strokeText(f.text, 0, 0);
+        ctx.strokeStyle = 'rgba(8,14,54,.95)'; ctx.strokeText(f.text, 0, 0);
         ctx.fillStyle = f.color; ctx.fillText(f.text, 0, 0);
         break; }
     }
@@ -3467,9 +3474,9 @@ const UI = {
       else if (k > g._starK) { const kk = k; g._starK = k;
         const el = document.querySelectorAll('#pstars i')[kk - 1];
         if (el) { el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop');
-          if (typeof Fx !== 'undefined') { const q = Fx.at(el); Fx.burst(q.x, q.y, ['#e8590c', '#d9002b', '#7a2bd9', '#1a8f3a'], 26 + kk * 10, 1 + kk * .15); Fx.shockwave(q.x, q.y, '#d9002b', kk, 160 + kk * 50); if (kk === 3) { Fx.edgeGlow('#d9002b', 900); Fx.fireworks && Fx.fireworks(2, 700); } } }
+          if (typeof Fx !== 'undefined') { const q = Fx.at(el); Fx.burst(q.x, q.y, ['#7a3cff', '#7a3cff', '#7a2bd9', '#12b76a'], 26 + kk * 10, 1 + kk * .15); Fx.shockwave(q.x, q.y, '#7a3cff', kk, 160 + kk * 50); if (kk === 3) { Fx.edgeGlow('#7a3cff', 900); Fx.fireworks && Fx.fireworks(2, 700); } } }
         Sfx.special && Sfx.special(); Sfx.vib && Sfx.vib(kk * 25 + 20);
-        try { g.announce(kk === 1 ? '⭐ 1 SAO!' : kk === 2 ? '⭐⭐ 2 SAO!' : '⭐⭐⭐ 3 SAO!', 2 + kk); } catch (e) {} }
+        try { g.announce(kk === 1 ? '🌟 1 SAO!' : kk === 2 ? '⭐⭐ 2 SAO!' : '⭐⭐⭐ 3 SAO!', 2 + kk); } catch (e) {} }
       else g._starK = k;
       const pos = [n.s1 / n.s3, n.s2 / n.s3, 1]; document.querySelectorAll('#pstars i').forEach((el, i) => { el.style.left = (pos[i] * 100) + '%'; }); }
     UI.goals(g);
@@ -3832,7 +3839,7 @@ const Fx = {
   _cap() { return this.list.length > Perf.cap(); },
 
   /** Nổ hạt: dùng cho mọi thứ (n hạt, màu tuỳ chọn). */
-  burst(x, y, colors = ['#f07000', '#ff7a2a', '#d83a14'], n = 30, power = 1) {
+  burst(x, y, colors = ['#2f6bff', '#ff7a2a', '#2f6bff'], n = 30, power = 1) {
     if (this._cap()) return;
     n = Math.max(6, Math.round(n * Perf.mulBurst()));
     if (Perf.q >= 1) this.list.push({ k: 'glow', x, y, life: 0, max: 380, r: 60 + 30 * power, c: colors[0] });
@@ -3863,14 +3870,14 @@ const Fx = {
     this._rain = { left: n, rate: n / ms, acc: 0 };
   },
   /** Sóng xung kích: 1-3 vòng tròn lan ra. */
-  shockwave(x, y, color = '#ff8a00', rings = 2, maxR = 220) {
+  shockwave(x, y, color = '#00b8e6', rings = 2, maxR = 220) {
     for (let i = 0; i < rings; i++) this.list.push({ k: 'ring', x, y, life: -i * 140, max: 650, maxR: maxR * (1 + i * .25), c: color });
   },
   /** Hiệu ứng "lên cấp": tia sáng quay + sóng + hạt + sao. */
-  levelUp(x, y, color = '#f07000') {
+  levelUp(x, y, color = '#2f6bff') {
     this.list.push({ k: 'rays', x, y, life: 0, max: 1100, c: color });
     this.shockwave(x, y, color, 2);
-    this.burst(x, y, [color, '#d83a14', '#e8590c'], 30, 1.1);
+    this.burst(x, y, [color, '#2f6bff', '#7a3cff'], 30, 1.1);
     for (let i = 0, ns = [3, 5, 7][Perf.q]; i < ns; i++) this.list.push({ k: 'star', x, y, vx: (Math.random() - .5) * 260, vy: -80 - Math.random() * 220, g: 260, life: 0, max: 1200, r: 8 + Math.random() * 8, c: '#fff6c0', rot: Math.random() * 6 });
     this.shake(document.querySelector('.overlay.show.full .panel, .overlay.show .card') || $('#app'), 10);
   },
@@ -3893,7 +3900,7 @@ const Fx = {
     }, i * 90);
   },
   /** Viền màn hình sáng lên (vignette) — dùng khi combo lớn. */
-  edgeGlow(color = '#f07000', ms = 700) { this.list.push({ k: 'edge', life: 0, max: ms, c: color }); },
+  edgeGlow(color = '#2f6bff', ms = 700) { this.list.push({ k: 'edge', life: 0, max: ms, c: color }); },
   /** Chiếc "chớp" ánh sáng quét ngang. */
   sweep(color = 'rgba(255,255,255,.55)') { this.list.push({ k: 'sweep', life: 0, max: 700, c: color }); },
   shake(el, px = 8) {
@@ -3927,7 +3934,7 @@ const Fx = {
       f.life += dt; if (f.life < 0) continue;
       const p = f.life / f.max;
       switch (f.k) {
-        case 'dot': f.vy += f.g * s; f.x += f.vx * s; f.y += f.vy * s; c.globalAlpha = Math.min(1, (1 - p) * 1.4); c.fillStyle = f.c; c.strokeStyle = 'rgba(60,10,20,.75)'; c.lineWidth = 1.4; c.beginPath(); c.arc(f.x, f.y, f.r * 1.25 * (1 - p * .4), 0, 6.283); c.fill(); c.stroke(); break;
+        case 'dot': f.vy += f.g * s; f.x += f.vx * s; f.y += f.vy * s; c.globalAlpha = Math.min(1, (1 - p) * 1.4); c.fillStyle = f.c; c.strokeStyle = 'rgba(8,14,54,.8)'; c.lineWidth = 1.4; c.beginPath(); c.arc(f.x, f.y, f.r * 1.25 * (1 - p * .4), 0, 6.283); c.fill(); c.stroke(); break;
         case 'spark':
           f.vy += f.g * s; f.vx *= .985; f.x += f.vx * s; f.y += f.vy * s; f.tr.push(f.x, f.y); if (f.tr.length > 8) f.tr.splice(0, 2);
           c.strokeStyle = f.c; c.lineWidth = 2.2 * (1 - p * .6); c.globalAlpha = (1 - p) * .7; c.beginPath(); for (let i = 0; i < f.tr.length; i += 2) { if (i) c.lineTo(f.tr[i], f.tr[i + 1]); else c.moveTo(f.tr[i], f.tr[i + 1]); } c.stroke();
@@ -3952,7 +3959,7 @@ const Fx = {
         const sx = Math.abs(Math.cos(f.life / 1000 * f.spin + f.ph)); c.scale(Math.max(.15, sx), 1); this._coin(c, f.r);
       } else if (f.k === 'fly') {
         const t = Math.min(1, p), e = t * t * (3 - 2 * t), u = 1 - e; const x = u * u * f.sx + 2 * u * e * f.cx + e * e * f.tx, y = u * u * f.sy + 2 * u * e * f.cy + e * e * f.ty;
-        c.translate(x, y); c.rotate(t * 9); c.scale(1 - t * .35, 1 - t * .35); if (f.star) this._star(c, f.r, '#f07000'); else this._coin(c, f.r);
+        c.translate(x, y); c.rotate(t * 9); c.scale(1 - t * .35, 1 - t * .35); if (f.star) this._star(c, f.r, '#2f6bff'); else this._coin(c, f.r);
       } else if (f.k === 'star') { c.translate(f.x, f.y); c.rotate(f.rot); c.globalAlpha = 1 - p; this._star(c, f.r, f.c); }
       c.restore();
     }
@@ -4239,7 +4246,7 @@ const Vault = {
   collect(doubled) {
     const sv = this.game.save, n = this.pending(sv); if (n < 1) return;
     const give = () => { const m = doubled ? 2 : 1; sv.coins += n * m; sv.vault.last = Date.now(); Store.save(sv); Sfx.win();
-      const p = Fx.at('#vaultCv'); Fx.coinsFly(p.x, p.y, '#vaultCoinsPill', 14); Fx.burst(p.x, p.y, ['#f07000', '#d83a14'], 24); UI.toast('Thu về 💰 ' + (n * m).toLocaleString('vi-VN')); this.render(); UI.hud(this.game); };
+      const p = Fx.at('#vaultCv'); Fx.coinsFly(p.x, p.y, '#vaultCoinsPill', 14); Fx.burst(p.x, p.y, ['#2f6bff', '#2f6bff'], 24); UI.toast('Thu về 💰 ' + (n * m).toLocaleString('vi-VN')); this.render(); UI.hud(this.game); };
     if (!doubled) return give();
     showRewardedAd(ok => { if (ok) give(); else UI.toast('Cần xem hết video để nhân đôi'); });
   },
@@ -4278,7 +4285,7 @@ const Vault = {
       const step = now => {
         const p = (now - t0) / 1300, sh = p < .4 ? Math.sin(p * 90) * (p / .4) * 3 : 0, open = p < .4 ? 0 : Math.min(1, (p - .4) / .25);
         c.clearRect(0, 0, S, S); c.save(); c.translate(sh, 0); this.drawChest(c, ti, S, now / 1000, open); c.restore();
-        if (p >= .4 && !fired) { fired = true; const q = Fx.at(cv); Sfx.chestOpen(); Fx.levelUp(q.x, q.y - 10, TIERS[ti].glow); Fx.burst(q.x, q.y - 20, ['#f07000', '#d83a14', TIERS[ti].glow], 50, 1.3); Fx.goldRain(900, 26); Sfx.vib(90); if (ti >= 3) Fx.fireworks(3 + ti - 3, 900); }
+        if (p >= .4 && !fired) { fired = true; const q = Fx.at(cv); Sfx.chestOpen(); Fx.levelUp(q.x, q.y - 10, TIERS[ti].glow); Fx.burst(q.x, q.y - 20, ['#2f6bff', '#2f6bff', TIERS[ti].glow], 50, 1.3); Fx.goldRain(900, 26); Sfx.vib(90); if (ti >= 3) Fx.fireworks(3 + ti - 3, 900); }
         if (p < 1) requestAnimationFrame(step); else res();
       };
       requestAnimationFrame(step);
@@ -4481,7 +4488,7 @@ const Meta = {
       card.innerHTML = `<div class="pitem">${d.icon}</div><div class="sinfo"><b>${d.name} <span class="pown">x${sv.items[k] || 0}</span></b><small>${d.desc}</small><small>${left > 0 ? 'Còn ' + left + ' lần mua hôm nay' : 'Hết lượt mua bằng xu — xem video để nhận'}</small></div>`;
       const gain = (btnEl, free) => {                                 // hiệu ứng nhận vật phẩm: nổ hạt + biểu tượng bay + số nảy
         try {
-          const q = Fx.at(btnEl); Fx.burst(q.x, q.y, ['#f07000', '#d83a14', '#18b868'], 26, 1.1); Sfx.match(3); Sfx.vib(40);
+          const q = Fx.at(btnEl); Fx.burst(q.x, q.y, ['#2f6bff', '#2f6bff', '#18b868'], 26, 1.1); Sfx.match(3); Sfx.vib(40);
           const ic = card.querySelector('.pitem'), t = Fx.at(ic), fly = document.createElement('div');
           fly.textContent = d.icon; fly.style.cssText = 'position:fixed;left:0;top:0;font-size:38px;margin:-19px 0 0 -19px;z-index:70;pointer-events:none';
           document.body.appendChild(fly);
@@ -4525,13 +4532,13 @@ const Meta = {
     if (sv.stars < cost) return UI.toast('Chưa đủ sao — thắng màn để nhận sao!');
     sv.stars -= cost; sv.shop[id] = lv + 1; Store.save(sv);
     this.flash = 1; Sfx.levelup(); Sfx.vib(90); UI.toast('Đã nâng cấp: ' + it.name + '!');
-    { const q = Fx.at('#shopScene'); Fx.levelUp(q.x, q.y, lv + 1 >= 3 ? '#f07000' : '#7fe0ff'); if (lv + 1 >= 3) { Fx.fireworks(4, 1000); Fx.edgeGlow('#f07000', 800); } Fx.shake($('#shopScene'), 7); }
+    { const q = Fx.at('#shopScene'); Fx.levelUp(q.x, q.y, lv + 1 >= 3 ? '#2f6bff' : '#7fe0ff'); if (lv + 1 >= 3) { Fx.fireworks(4, 1000); Fx.edgeGlow('#2f6bff', 800); } Fx.shake($('#shopScene'), 7); }
     this.renderShop(game);
   },
 
   collect(game, doubled) {
     const sv = game.save, n = this.pending(sv); if (n < 1) return;
-    const give = () => { sv.coins += n * (doubled ? 2 : 1); sv.lastCollect = Date.now(); Store.save(sv); Sfx.match(3); { const q = Fx.at('#shopScene'); Fx.coinsFly(q.x, q.y, '#shopCoinsPill', 12); Fx.burst(q.x, q.y, ['#f07000', '#d83a14'], 22); } UI.toast('Thu về 💰 ' + n * (doubled ? 2 : 1)); this.renderShop(game); };
+    const give = () => { sv.coins += n * (doubled ? 2 : 1); sv.lastCollect = Date.now(); Store.save(sv); Sfx.match(3); { const q = Fx.at('#shopScene'); Fx.coinsFly(q.x, q.y, '#shopCoinsPill', 12); Fx.burst(q.x, q.y, ['#2f6bff', '#2f6bff'], 22); } UI.toast('Thu về 💰 ' + n * (doubled ? 2 : 1)); this.renderShop(game); };
     if (!doubled) return give();
     showRewardedAd(ok => { if (ok) give(); else UI.toast('Cần xem hết video để nhân đôi'); });
   },
@@ -5037,7 +5044,7 @@ const WorldMap = {
         const r = this.giftReward(n); sv.gifts[n] = 1; sv.coins += r.coins; if (r.item) sv.items[r.item] = (sv.items[r.item] || 0) + r.cnt;
         Store.save(sv); UI.hud(g); Sfx.coin && Sfx.coin();
         UI.toast('🎁 Quà trên đường: ' + r.t, 2600); e.className = 'lmgift done'; e.textContent = '✔';
-        try { const q = Fx.at(e); Fx.levelUp(q.x, q.y, '#f07000'); } catch (x) {}
+        try { const q = Fx.at(e); Fx.levelUp(q.x, q.y, '#2f6bff'); } catch (x) {}
       };
       add(e);
     }
@@ -5404,10 +5411,10 @@ class Game {
       UI.hud(this);
       const cx = cells.reduce((s, p) => s + R.cellX(p.c), 0) / Math.max(1, cells.length);
       const cy = cells.reduce((s, p) => s + R.cellY(p.r), 0) / Math.max(1, cells.length);
-      { const col = combo >= 5 ? '#ff2e9a' : combo >= 3 ? '#ff5a2a' : this.feverMoves > 0 ? '#ff7a1a' : '#ffffff';
+      { const col = combo >= 5 ? '#ff2e9a' : combo >= 3 ? '#7a3cff' : this.feverMoves > 0 ? '#00a6d6' : '#ffffff';
         R.floatText(cx, cy, '+' + pts, col, 26 + Math.min(combo, 5) * 4);
-        if (combo >= 2) R.floatText(cx, cy - R.cell * .75, 'x' + combo, combo >= 5 ? '#b020ff' : '#ff5a2a', 20 + combo * 2);
-        R.burst(cx, cy, combo >= 5 ? '#ff2e9a' : combo >= 3 ? '#ff5a2a' : '#e8590c', 6 + combo * 3); R.ring(cx, cy, R.cell * (.9 + combo * .12), col === '#ffffff' ? '#e8590c' : col);
+        if (combo >= 2) R.floatText(cx, cy - R.cell * .75, 'x' + combo, combo >= 5 ? '#7a3cff' : '#7a3cff', 20 + combo * 2);
+        R.burst(cx, cy, combo >= 5 ? '#ff2e9a' : combo >= 3 ? '#7a3cff' : '#7a3cff', 6 + combo * 3); R.ring(cx, cy, R.cell * (.9 + combo * .12), col === '#ffffff' ? '#7a3cff' : col);
         try { const sc = document.getElementById('score'); sc.classList.remove('bump'); void sc.offsetWidth; sc.classList.add('bump'); } catch (e) {} }
       Sfx.match(combo);
 
@@ -5421,7 +5428,7 @@ class Game {
         gem.special = gr.special; if (gr.special === 'rainbow') gem.type = -1;
         { const sm = this.specMade = this.specMade || {}; sm.any = (sm.any || 0) + 1; const kk = gr.special === 'rainbow' ? 'rainbow' : gr.special === 'bomb' ? 'bomb' : 'line'; sm[kk] = (sm[kk] || 0) + 1; if (gr.special === 'line_h' || gr.special === 'line_v') sm.line = sm.line; UI.hud(this); }
         gem.scale = .3; Tween.to(gem, { scale: 1 }, 380, Ease.outBack);
-        R.burst(gem.x, gem.y, '#d83a14', 10); Sfx.special();
+        R.burst(gem.x, gem.y, '#2f6bff', 10); Sfx.special();
         if (Perf.q >= 1) { const src = gr.cells[(Math.random() * gr.cells.length) | 0]; if (src) R.fly('✨', R.cellX(src.c), R.cellY(src.r), gem.x, gem.y, 0, 340, gr.special === 'rainbow' ? '#ff9ae6' : gr.special === 'bomb' ? '#ff9a3c' : '#7fe8ff'); }
       }
 
@@ -5594,7 +5601,7 @@ class Game {
       if (!cand.length) break;
       const p = cand[(Math.random() * cand.length) | 0]; p.x.special = kinds[made % 3]; seeds.push({ r: p.r, c: p.c });
       this.moves--; made++; UI.hud(this);
-      const px = R.cellX(p.c), py = R.cellY(p.r); R.burst(px, py, '#ff9a3c', 12); R.ring(px, py, R.cell * 1.2, '#ff8a00'); Sfx.match(Math.min(made + 1, 6)); Sfx.vib(20);
+      const px = R.cellX(p.c), py = R.cellY(p.r); R.burst(px, py, '#00a6d6', 12); R.ring(px, py, R.cell * 1.2, '#00b8e6'); Sfx.match(Math.min(made + 1, 6)); Sfx.vib(20);
       await Tween.wait(150); if (tk !== this.token) return;
     }
     if (this.moves > 0) { this.score += this.moves * CONFIG.GEM_SCORE * 5; this.moves = 0; UI.hud(this); }   // lượt thừa không biến được: quy ra điểm
@@ -5765,7 +5772,7 @@ class Game {
     this.save.items[k] = (this.save.items[k] || 0) + 1; Store.save(this.save);
     (this._giftNew = this._giftNew || {})[k] = true; UI.hud(this);
     const R = this.renderer;
-    setTimeout(() => { R.floatText(R.size / 2, R.size * .3, '🎁 ' + d.icon + ' ' + d.name + ' +1', '#ff8a00', 24); UI.toast('🎁 Quà: ' + d.name + ' +1!', 1800); Sfx.pop(2); }, 350);
+    setTimeout(() => { R.floatText(R.size / 2, R.size * .3, '🎁 ' + d.icon + ' ' + d.name + ' +1', '#00b8e6', 24); UI.toast('🎁 Quà: ' + d.name + ' +1!', 1800); Sfx.pop(2); }, 350);
     const el = document.querySelector('.item[data-item="' + k + '"]');
     if (el) { el.classList.remove('gift'); void el.offsetWidth; el.classList.add('gift'); }
   }
@@ -5842,7 +5849,7 @@ class Game {
     UI.toast('Hoàn thành màn ' + this.level + '!', 2000);
     const stars = this.starsFor(this.score);
     Voice.say('win' + stars, 5);
-    { const bp = this._boardCenter(); Fx.edgeGlow('#f07000', 1400); Fx.shockwave(bp.x, bp.y, '#ff9a00', 3, 320); }
+    { const bp = this._boardCenter(); Fx.edgeGlow('#2f6bff', 1400); Fx.shockwave(bp.x, bp.y, '#00c2a8', 3, 320); }
     const old = this.save.levelStars[this.level] || 0, replay = old > 0;
     const partyOk = this.party && Social.partyAvail(this.save);
     let coins = Math.round((50 + this.level * 10 + this.moves * 5) * (replay && !partyOk ? .3 : 1));   // chơi lại: thưởng xu giảm để không cày
@@ -5873,8 +5880,8 @@ class Game {
       Fx.countUp('#winScore', this.score, 1100); Fx.countUp('#winCoins', coins, 1100);
       // sao bật lần lượt + pháo hoa; 3 sao = màn pháo hoa lớn + mưa vàng
       const sr = $('#winStarsRow');
-      for (let i = 0; i < stars; i++) setTimeout(() => { Sfx.pop(i); const q = Fx.at(sr.children[i]); Fx.levelUp(q.x, q.y, ['#f07000', '#ffb347', '#ff8a00'][i]); Fx.shake($('#win .card'), 6); }, 450 + i * 380);
-      setTimeout(() => { Fx.fireworks(stars === 3 ? 5 : 3, 1800); Fx.goldRain(stars === 3 ? 2000 : 1200, stars === 3 ? 50 : 24); if (stars === 3) { Fx.edgeGlow('#f07000', 1200); Fx.sweep(); Sfx.levelup(); } }, 300);
+      for (let i = 0; i < stars; i++) setTimeout(() => { Sfx.pop(i); const q = Fx.at(sr.children[i]); Fx.levelUp(q.x, q.y, ['#2f6bff', '#ffb347', '#00b8e6'][i]); Fx.shake($('#win .card'), 6); }, 450 + i * 380);
+      setTimeout(() => { Fx.fireworks(stars === 3 ? 5 : 3, 1800); Fx.goldRain(stars === 3 ? 2000 : 1200, stars === 3 ? 50 : 24); if (stars === 3) { Fx.edgeGlow('#2f6bff', 1200); Fx.sweep(); Sfx.levelup(); } }, 300);
       setTimeout(() => { const q = Fx.at('#winCoins'); Fx.coinsFly(q.x, q.y, '#coins', 10); }, 1500);
     };
     // Interstitial tự động khi qua màn (theo CONFIG.ADS.interstitialEveryNLevels)
@@ -5951,7 +5958,7 @@ class Game {
     this.state = 'busy'; this.hint = null; const tk = this.token, g = this.grid, R = this.renderer;
     const id = this.save.chars.sel, ch = CONFIG.CHARS.find(c => c.id === id);
     this.energy = 0; this.casts++; this.energyMax = CONFIG.skillEnergy(ch.energy, this.level, this.casts); UI.team(this);
-    Sfx.special(); Voice.say('skill', 3); R.floatText(R.size / 2, R.size * .45, ch.skill.toUpperCase() + '!', '#ff8a00', 30);
+    Sfx.special(); Voice.say('skill', 3); R.floatText(R.size / 2, R.size * .45, ch.skill.toUpperCase() + '!', '#00b8e6', 30);
     const rnd = n => (Math.random() * n) | 0;
     const seeds = [];
     if (id === 'cat') {                                   // phá 2 hàng ngẫu nhiên
@@ -5987,7 +5994,7 @@ class Game {
       while (ob.length > 10) ob.splice(rnd(ob.length), 1);
       ob.forEach(p => seeds.push(p));
       for (let i = ob.length; i < 6 && rest.length; i++) seeds.push(rest.splice(rnd(rest.length), 1)[0]);
-      seeds.forEach(p => R.ring(R.cellX(p.c), R.cellY(p.r), R.cell * 1.1, '#f07000'));
+      seeds.forEach(p => R.ring(R.cellX(p.c), R.cellY(p.r), R.cell * 1.1, '#2f6bff'));
     } else if (id === 'horse') {                          // Phi nước đại: 2 đường chéo
       const cr = g.off + rnd(g.n), cc = g.off + rnd(g.n), lo = g.off, hi = g.off + g.n - 1;
       for (let d = -g.n; d <= g.n; d++) for (const [r, c] of [[cr + d, cc + d], [cr + d, cc - d]]) if (r >= lo && r <= hi && c >= lo && c <= hi) { seeds.push({ r, c }); R.ring(R.cellX(c), R.cellY(r), R.cell * .9, '#ffb36b'); }
@@ -6012,14 +6019,14 @@ class Game {
         const gem = normal.splice(rnd(normal.length), 1)[0];
         gem.special = kinds[i]; if (gem.special === 'rainbow') gem.type = -1;
         gem.scale = .3; Tween.to(gem, { scale: 1 }, 420, Ease.outBack);
-        R.burst(gem.x, gem.y, '#d83a14', 12);
+        R.burst(gem.x, gem.y, '#2f6bff', 12);
       }
       await Tween.wait(600); if (tk !== this.token) return;
       await this.ensurePlayable(tk); return;
     } else if (id === 'dragon3') {
       for (let i = 0; i < 3; i++) {
         const cr = g.off + 1 + rnd(g.n - 2), cc = g.off + 1 + rnd(g.n - 2);
-        R.ring(R.cellX(cc), R.cellY(cr), R.cell * 2.4, '#ff9a3c');
+        R.ring(R.cellX(cc), R.cellY(cr), R.cell * 2.4, '#00a6d6');
         for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) seeds.push({ r: cr + dr, c: cc + dc });
       }
     } else if (id === 'dog') {                            // biến 3 món thường thành món đặc biệt
@@ -6029,7 +6036,7 @@ class Game {
         const gem = normal.splice(rnd(normal.length), 1)[0];
         gem.special = ['line_h', 'line_v', 'bomb'][rnd(3)];
         gem.scale = .3; Tween.to(gem, { scale: 1 }, 420, Ease.outBack);
-        R.burst(gem.x, gem.y, '#d83a14', 12);
+        R.burst(gem.x, gem.y, '#2f6bff', 12);
       }
       await Tween.wait(600);
       if (tk !== this.token) return;
@@ -6068,8 +6075,8 @@ class Game {
       if (combo >= 4) { this.flash('#fff3b0', .35); this.slow(380, .45); R.rays(cx, cx, '#ffe27a'); }
       // lớp hiệu ứng toàn màn: càng combo cao càng rực rỡ
       const bp = this._boardCenter();
-      if (combo >= 3) Fx.edgeGlow(['#f07000', '#f07000', '#f07000', '#e8590c', '#ff5a8a', '#b266ff'][Math.min(combo, 6) - 1] || '#f07000', 600);
-      if (combo >= 4) { Fx.shockwave(bp.x, bp.y, '#ff9a00', 2, 200 + combo * 25); Fx.burst(bp.x, bp.y, ['#f07000', '#d83a14', '#e8590c'], 18 + combo * 6, 1 + combo * .1); }
+      if (combo >= 3) Fx.edgeGlow(['#2f6bff', '#2f6bff', '#2f6bff', '#7a3cff', '#ff5a8a', '#b266ff'][Math.min(combo, 6) - 1] || '#2f6bff', 600);
+      if (combo >= 4) { Fx.shockwave(bp.x, bp.y, '#00c2a8', 2, 200 + combo * 25); Fx.burst(bp.x, bp.y, ['#2f6bff', '#2f6bff', '#7a3cff'], 18 + combo * 6, 1 + combo * .1); }
       if (combo >= 5) { Fx.sweep(); Fx.shake($('#stage'), 5 + combo); }
       if (combo >= 6) { Fx.firework(bp.x + (Math.random() - .5) * 160, bp.y - 90); }
     }
@@ -6077,8 +6084,8 @@ class Game {
       this.announce(eff.kind.startsWith('rainbow') ? 'LẨU THẬP CẨM!' : 'COMBO ĐẶC BIỆT!', 6);
       Voice.say(eff.kind.startsWith('rainbow') ? 'rainbow' : (eff.kind.indexOf('bomb') >= 0 ? 'bomb' : 'line'), 3);
       R.rays(cx, cx, '#fff2a8'); R.punchZoom(.06); this.flash('#ffffff', .6); this.slow(550, .35); Sfx.boom(.4); Sfx.vib(120);
-      { const bp = this._boardCenter(), rb = eff.kind.startsWith('rainbow'); Fx.shockwave(bp.x, bp.y, rb ? '#e83ec0' : '#ff9a00', 3, 260); Fx.edgeGlow(rb ? '#ff6ad5' : '#f07000', 800); Fx.sweep(rb ? 'rgba(255,170,240,.6)' : undefined);
-        Fx.burst(bp.x, bp.y, rb ? ['#ff6ad5', '#6ad9ff', '#ff8a00', '#8affa8'] : ['#f07000', '#d83a14', '#e8590c'], 40, 1.3); Fx.shake($('#stage'), 9); }
+      { const bp = this._boardCenter(), rb = eff.kind.startsWith('rainbow'); Fx.shockwave(bp.x, bp.y, rb ? '#e83ec0' : '#00c2a8', 3, 260); Fx.edgeGlow(rb ? '#ff6ad5' : '#2f6bff', 800); Fx.sweep(rb ? 'rgba(255,170,240,.6)' : undefined);
+        Fx.burst(bp.x, bp.y, rb ? ['#ff6ad5', '#6ad9ff', '#00b8e6', '#8affa8'] : ['#2f6bff', '#2f6bff', '#7a3cff'], 40, 1.3); Fx.shake($('#stage'), 9); }
     } else if (clr.sources.some(s => s.special && s.special !== 'rainbow')) {
       R.punchZoom(.035); Sfx.boom(.25); Sfx.vib(50);
       const src = clr.sources[0]; R.rays(R.cellX(src.c), R.cellY(src.r), '#ffd86a', R.size * .6);
@@ -6092,9 +6099,9 @@ class Game {
   }
   startFever() {
     this.feverMoves = 3; this.renderer.fever = true; Bg.fever = true;
-    this.announce('LỬA! ĐIỂM x2', 6); Voice.say('fever', 3); this.flash('#ff7a1a', .5); this.renderer.punchZoom(.07);
+    this.announce('LỬA! ĐIỂM x2', 6); Voice.say('fever', 3); this.flash('#00a6d6', .5); this.renderer.punchZoom(.07);
     this.renderer.rays(this.renderer.size / 2, this.renderer.size / 2, '#ff9a3c'); Sfx.boom(.45); Sfx.win(); Sfx.vib(200);
-    const bp = this._boardCenter(); Fx.edgeGlow('#ff6a1a', 1100); Fx.shockwave(bp.x, bp.y, '#ff9a3c', 3, 300); Fx.burst(bp.x, bp.y, ['#ff6a1a', '#f07000', '#ff3d2e'], 60, 1.4); Fx.shake($('#app'), 10);
+    const bp = this._boardCenter(); Fx.edgeGlow('#2f6bff', 1100); Fx.shockwave(bp.x, bp.y, '#00a6d6', 3, 300); Fx.burst(bp.x, bp.y, ['#2f6bff', '#2f6bff', '#ff3d2e'], 60, 1.4); Fx.shake($('#app'), 10);
   }
   endFever() { this.fever = 0; this.feverMoves = 0; this.renderer.fever = false; Bg.fever = false; UI.toast('Hết lửa! Tiếp tục tích lại nhé'); }
 
@@ -6104,8 +6111,8 @@ class Game {
     cells.forEach(p => { const gm = g.cells[p.r][p.c]; if (gm && gm.type === o.type) o.have++; });
     if (o.have >= o.need) {
       o.done = true; this.save.stars++; this.save.coins += 100; Store.save(this.save); this.giftItem('order', true);
-      this.announce('ĐƠN VIP XONG!', 5); Voice.say('vip', 2); this.flash('#ff8a00', .4); this.renderer.confetti(); Sfx.win(); Sfx.vib(80);
-      { const q = Fx.at('#order'); Fx.coinsFly(q.x, q.y, '#stars', 8); Fx.burst(q.x, q.y, ['#ff8a00', '#d83a14'], 30); }
+      this.announce('ĐƠN VIP XONG!', 5); Voice.say('vip', 2); this.flash('#00b8e6', .4); this.renderer.confetti(); Sfx.win(); Sfx.vib(80);
+      { const q = Fx.at('#order'); Fx.coinsFly(q.x, q.y, '#stars', 8); Fx.burst(q.x, q.y, ['#00b8e6', '#2f6bff'], 30); }
     }
     UI.extra(this); UI.hud(this);
   }
