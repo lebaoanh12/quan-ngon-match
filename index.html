@@ -751,7 +751,7 @@ body.droid .lmbar { padding-top: 8px; }
       <button class="btn secondary" id="btnWheelMenu">🎡 VÒNG QUAY MAY MẮN <span class="badge hot" id="wheelBadge"></span></button>
       <button class="btn ghost" id="btnAccount">👤 Tài khoản</button>
       <div class="sndrow"><button class="btn ghost" id="btnMusic">🎵 Nhạc: BẬT</button><button class="btn ghost" id="btnSound">🔊 Tiếng: BẬT</button><button class="btn ghost" id="btnVoice">🗣️ Giọng: BẬT</button></div>
-      <button class="btn ghost" id="btnNotify">🔔 Nhắc nhở: BẬT</button>
+      <div class="sndrow"><button class="btn ghost" id="btnVib">📳 Rung: BẬT</button><button class="btn ghost" id="btnNotify">🔔 Nhắc nhở: BẬT</button></div>
       <button class="btn ghost danger" id="btnDelAcct">🗑 Xóa tài khoản</button>
     </div>
   </section>
@@ -762,6 +762,7 @@ body.droid .lmbar { padding-top: 8px; }
       <button class="btn primary" id="btnResume">Tiếp tục</button>
       <button class="btn secondary" id="btnRestart">Chơi lại màn</button>
       <div class="sndrow"><button class="btn ghost" id="btnMusic2">🎵 Nhạc: BẬT</button><button class="btn ghost" id="btnSound2">🔊 Tiếng: BẬT</button><button class="btn ghost" id="btnVoice2">🗣️ Giọng: BẬT</button></div>
+      <button class="btn ghost" id="btnVib2">📳 Rung: BẬT</button>
       <button class="btn ghost" id="btnPauseMenu">Về Menu</button>
     </div>
   </section>
@@ -3114,7 +3115,7 @@ const Sfx = {
     g.gain.value = vol; src.buffer = buf; src.connect(f); f.connect(g); g.connect(this.sfxBus); src.start(t);
     this.tone(90, .3, 'sine', vol * .8, -50);
   },
-  vib(ms) { try { if (this.on && navigator.vibrate) navigator.vibrate(ms); } catch (e) {} },
+  vib(ms) { try { if (window.game && game.save && game.save.vib === false) return; if (navigator.vibrate) navigator.vibrate(ms); } catch (e) {} },
 
   /* Nhạc nền tạo bằng code: giai điệu ngũ cung vui tai, nhẹ, lặp vô hạn */
   _mt: null, _step: 0,
@@ -5292,6 +5293,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   const soundLabel = () => {
     $('#btnSound').textContent = '🔊 Tiếng: ' + (Sfx.on ? 'BẬT' : 'TẮT'); $('#btnSound2').textContent = $('#btnSound').textContent;
     $('#btnMusic').textContent = '🎵 Nhạc: ' + (Sfx.musicOn ? 'BẬT' : 'TẮT'); $('#btnMusic2').textContent = $('#btnMusic').textContent;
+    $('#btnVib').textContent = '📳 Rung: ' + (game.save.vib === false ? 'TẮT' : 'BẬT'); $('#btnVib2').textContent = $('#btnVib').textContent;
     $('#btnVoice').textContent = '🗣️ Giọng: ' + (Voice.on ? 'BẬT' : 'TẮT'); $('#btnVoice2').textContent = $('#btnVoice').textContent;
   };
   const notifyLabel = () => { const b = $('#btnNotify'); if (b) b.textContent = '🔔 Nhắc nhở: ' + (game.save.notify === false ? 'TẮT' : 'BẬT'); };
@@ -5303,6 +5305,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   const toggleMusic = () => { Sfx.musicOn = !Sfx.musicOn; game.save.music = Sfx.musicOn; Store.save(game.save); soundLabel(); Sfx.unlock(); Sfx.music(Sfx.musicOn); };
   const toggleVoice = () => { Voice.on = !Voice.on; game.save.voice = Voice.on; Store.save(game.save); soundLabel(); if (Voice.on) Voice.say('c3', 3); else Voice.stop(); };
   $('#btnVoice').onclick = $('#btnVoice2').onclick = toggleVoice;
+  $('#btnVib').onclick = $('#btnVib2').onclick = () => { game.save.vib = game.save.vib === false; Store.save(game.save); soundLabel(); Sfx.vib(40); };
   $('#btnSound').onclick = $('#btnSound2').onclick = toggleSfx;
   $('#btnMusic').onclick = $('#btnMusic2').onclick = toggleMusic;
   // nhạc nền bắt đầu ở lần chạm đầu tiên (trình duyệt cấm tự phát)
