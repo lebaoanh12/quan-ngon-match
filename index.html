@@ -4462,7 +4462,7 @@ class Game {
 
   layout() {
     const st = $('#stage');
-    const maxH = Math.max(120, st.clientHeight - 4);
+    const maxH = Math.max(120, st.clientHeight - 20);   // chừa chỗ cho viền khung bàn (nhô ra ngoài ~8px mỗi phía)
     const size = Math.floor(Math.max(120, Math.min(st.clientWidth - 2 - 2 * (CONFIG.SIDE_GAP || 0), maxH)));
     this.renderer.resize(size, maxH);
     if (this.grid) this.snapGems();
@@ -4511,6 +4511,7 @@ class Game {
     UI.hideAll();
     $('#score').textContent = 0;
     UI.hud(this); UI.team(this); UI.extra(this);
+    { const st = $('#stage'); if (st && Math.abs((st.clientHeight - 20) - (this.renderer.maxH || 0)) > 2) this.layout(); }   // thanh HUD đổi chiều cao -> tính lại cỡ bàn để không đè lên thẻ đồng đội
     this.state = 'busy';
     // đặt tạm toàn bộ viên phía trên bàn; hoạt ảnh rơi vào chạy khi bấm BẮT ĐẦU
     const R = this.renderer;
