@@ -2625,7 +2625,7 @@ class Renderer {
     g.lineJoin = 'round'; g.lineCap = 'round';
     const R = S * 0.44, d = this.dpr;
     if (special === 'rainbow') this.drawHotPot(g, R, d);
-    else if (special === 'drop') this.drawCoconut(g, R, d);
+    else if (special === 'drop') (this.dropEmoji ? this.drawSpecialty(g, R, d, this.dropEmoji) : this.drawCoconut(g, R, d));
     else if (type === 'crate') this.drawCrate(g, S / 2 - 2 * d, d, special);
     else {
       // bóng đổ tiếp đất
@@ -2675,6 +2675,19 @@ class Renderer {
     rg.addColorStop(0, 'rgba(255,230,120,.95)'); rg.addColorStop(1, 'rgba(255,90,40,0)');
     g.fillStyle = rg; g.beginPath(); g.arc(0, 0, R * .5, 0, Math.PI * 2); g.fill();
     g.restore();
+  }
+
+  /** Đặc sản của tỉnh (rơi xuống hàng đáy): đĩa trắng viền vàng + biểu tượng món. */
+  setDrop(emoji) { if (this.dropEmoji === emoji) return; this.dropEmoji = emoji; if (this.sprites) this.sprites['-2|drop'] = this.makeSprite(-2, 'drop'); }
+  drawSpecialty(g, R, d, emoji) {
+    g.fillStyle = 'rgba(0,0,0,.25)'; g.beginPath(); g.ellipse(0, R * .92, R * .7, R * .13, 0, 0, Math.PI * 2); g.fill();
+    const gr = g.createRadialGradient(-.3 * R, -.35 * R, .1 * R, 0, 0, 1.05 * R);
+    gr.addColorStop(0, '#ffffff'); gr.addColorStop(1, '#ffe39a');
+    g.beginPath(); g.arc(0, .02 * R, .9 * R, 0, Math.PI * 2); g.fillStyle = gr; g.fill();
+    g.strokeStyle = '#e0a21c'; g.lineWidth = 3 * d; g.stroke();
+    g.beginPath(); g.arc(0, .02 * R, .74 * R, 0, Math.PI * 2); g.strokeStyle = 'rgba(224,162,28,.45)'; g.lineWidth = 1.5 * d; g.stroke();
+    g.font = Math.round(R * 1.15) + 'px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText(emoji, 0, R * .08);
   }
 
   /* DỪA (vật phẩm phải rơi xuống hàng đáy) */
@@ -3439,7 +3452,7 @@ const UI = {
     switch (g.t) {
       case 'score':   return { ic: '⭐', txt: rem > 0 ? rem : '✔', rem };
       case 'collect': { const pend = (gm._flyPend && gm._flyPend[g.type]) || 0; return { ic: 'T' + g.type, txt: rem + pend > 0 ? rem + pend : '✔', rem: rem + pend }; }   // số trên chip chỉ giảm khi món bay tới nơi
-      case 'drop':    return { ic: '🥥', txt: rem > 0 ? rem : '✔', rem };
+      case 'drop':    return { ic: (typeof WorldMap !== 'undefined' ? WorldMap.theme(gm.level).ic : '🥥'), txt: rem > 0 ? rem : '✔', rem };
       case 'ice':     return { ic: '❄️', txt: rem > 0 ? rem : '✔', rem };
       case 'crate':   return { ic: '📦', txt: rem > 0 ? rem : '✔', rem };
       case 'rope':    return { ic: '🔗', txt: rem > 0 ? rem : '✔', rem };
@@ -3499,7 +3512,7 @@ const UI = {
   },
   intro(g) {
     const d = g.levelDef;
-    $('#introTitle').textContent = 'Màn ' + g.level;
+    $('#introTitle').textContent = 'Màn ' + g.level + (typeof WorldMap !== 'undefined' ? ' · ' + WorldMap.theme(g.level).sh : '');
     $('#introMoves').textContent = d.moves;
     { const n = g.starNeed(); $('#introStars').innerHTML = '★ ' + n.s1 + ' · ★★ ' + n.s2 + ' · ★★★ ' + n.s3 + ' điểm'; }
     $('#introGoals').innerHTML = g.goals.map(x => UI._chipHtml(x, g)).join('');
@@ -5022,6 +5035,7 @@ class Game {
     this.mode = null; this.selected = null; this.hint = null; this.tut = null; { const tt = $('#tutTip'); if (tt) tt.classList.remove('show'); }
     this.setActiveItem();
     this.renderer.setView(def.size || CONFIG.COLS);
+    try { const th = WorldMap.theme(n); this.renderer.setDrop(th.ic); Levels.TIPS.drop = [th.ic, th.food, 'Đặc sản không ghép được. Hãy phá món bên dưới để đặc sản rơi xuống hàng đáy.']; } catch (e) {}
     this.grid = new Grid(CONFIG.ROWS, CONFIG.COLS, def.colors);
     this.grid.n = this.renderer.n; this.grid.off = this.renderer.off;
     this.goals = Levels.build(def, this.grid);
@@ -5274,7 +5288,7 @@ class Game {
       if (!got.length) return;
       got.forEach(d => {
         this.dropsGot++;
-        R.burst(d.gem.x, d.gem.y, '#5fd068', 10); R.floatText(d.gem.x, d.gem.y - R.cell * .4, '+1 🥥', '#9af09f', 22);
+        R.burst(d.gem.x, d.gem.y, '#5fd068', 10); R.floatText(d.gem.x, d.gem.y - R.cell * .4, '+1 ' + WorldMap.theme(this.level).ic, '#9af09f', 22);
       });
       Sfx.match(3); Sfx.vib(30);
       UI.hud(this);
