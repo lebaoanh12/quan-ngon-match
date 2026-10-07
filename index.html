@@ -2958,7 +2958,7 @@ class Renderer {
     if (selected) sc *= 1.1 + .04 * Math.sin(this.time * 10);
     const h = view.hint;
     const hinted = h && ((h.a.r === r && h.a.c === c) || (h.b.r === r && h.b.c === c));
-    if (hinted) sc *= Math.sin(this.time * 11) > 0 ? 1.22 : .96;
+    if (hinted) sc *= 1 + .09 * (.5 + .5 * Math.sin(this.time * 4.2)) ;
     const w = sp.width / this.dpr;
     ctx.save();
     ctx.globalAlpha = g.alpha;
@@ -2981,14 +2981,13 @@ class Renderer {
 
   /** Gợi ý nổi bật: 2 ô sáng viền vàng nhấp nháy + bàn tay trượt từ ô này sang ô kia. */
   drawHint(ctx, h) {
-    const t = this.time, cell = this.cell, ch = this.ch, on = Math.sin(t * 11) > 0, ph = on ? 1 : 0;   // chớp tắt liên tục ~3.5 lần/giây
+    const t = this.time, cell = this.cell, ch = this.ch, s = .5 + .5 * Math.sin(t * 4.2);   // nhịp thở mượt ~0.7 lần/giây
     const ax = this.cellX(h.a.c), ay = this.cellY(h.a.r), bx = this.cellX(h.b.c), by = this.cellY(h.b.r);
     ctx.save();
     for (const [x, y] of [[ax, ay], [bx, by]]) {
-      this.rr(ctx, x - cell / 2 + 2, y - ch / 2 + 2, cell - 4, ch - 4, 10);
-      ctx.fillStyle = on ? 'rgba(255,245,90,.75)' : 'rgba(255,245,90,0)'; ctx.fill();
-      if (on) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = .55; Glow.draw(ctx, '#ffb800', x, y, cell * .95); ctx.restore(); }
-      ctx.strokeStyle = on ? '#ffb800' : 'rgba(255,184,0,.35)'; ctx.lineWidth = on ? 4.5 : 2; ctx.stroke();
+      this.rr(ctx, x - cell / 2 + 3, y - ch / 2 + 3, cell - 6, ch - 6, 12);
+      ctx.fillStyle = 'rgba(255,255,255,' + (.10 + .16 * s) + ')'; ctx.fill();
+      ctx.strokeStyle = 'rgba(232,89,12,' + (.55 + .4 * s) + ')'; ctx.lineWidth = 3 + 1.5 * s; ctx.stroke();
     }
     const p = (t * 1.4) % 1.6, k = Math.min(1, p / 1.1), e = k * k * (3 - 2 * k);   // tay trượt rồi nghỉ một nhịp
     const hx = ax + (bx - ax) * e, hy = ay + (by - ay) * e;
