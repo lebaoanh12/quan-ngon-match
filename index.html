@@ -666,14 +666,14 @@ body.droid .lmbar { padding-top: 8px; }
 .stat.goals #goalChips .gchip { padding: 2px 6px; font-size: 15px; }
 #goalChips[data-n="3"] .gchip { font-size: 14px; padding: 2px 5px; }
 
-/* V7: 9 vật phẩm + tạm dừng = 2 hàng gọn (5 nút mỗi hàng) */
-#bottom { flex-wrap: wrap; gap: 6px 6px; padding: 4px 0 6px; }
-#bottom .item { flex: 0 0 calc(20% - 5px); padding: 3px 2px 3px; }
-#bottom .item i { font-size: 20px; line-height: 22px; }
+/* V7: 6 vật phẩm + tạm dừng gọn trên 1 hàng */
+#bottom { flex-wrap: nowrap; gap: 5px; padding: 6px 0 8px; }
+#bottom .item { flex: 1 1 0; min-width: 0; padding: 4px 1px 3px; }
+#bottom .item i { font-size: 21px; line-height: 24px; }
 #bottom .item span { font-size: 10px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .item[data-item="fish"] { background: linear-gradient(180deg, #29b6f6, #0277bd); }
 .item[data-item="wand"] { background: linear-gradient(180deg, #f06292, #ad1457); }
-@media (max-height: 760px) { #bottom .item span { display: none; } #bottom .item { padding: 2px; } }
+@media (max-height: 700px) { #bottom .item span { display: none; } }
 
 </style>
 </head>
@@ -724,9 +724,6 @@ body.droid .lmbar { padding-top: 8px; }
     <button class="item" data-item="swap"><i>🔀</i><span>Đổi chỗ</span><em id="cnt-swap">2</em></button>
     <button class="item" data-item="hint"><i>💡</i><span>Gợi ý</span><em id="cnt-hint">2</em></button>
     <button class="item" data-item="moves"><i>➕</i><span>+5 lượt</span><em id="cnt-moves">1</em></button>
-    <button class="item" data-item="shuffle"><i>🌀</i><span>Xáo bàn</span><em id="cnt-shuffle">1</em></button>
-    <button class="item" data-item="line"><i>⚡</i><span>Tia chớp</span><em id="cnt-line">1</em></button>
-    <button class="item" data-item="color"><i>🌈</i><span>Ngũ sắc</span><em id="cnt-color">1</em></button>
     <button class="item" data-item="fish"><i>🐟</i><span>Cá thần</span><em id="cnt-fish">1</em></button>
     <button class="item" data-item="wand"><i>🪄</i><span>Đũa thần</span><em id="cnt-wand">1</em></button>
     <button class="item pause" id="btnPause"><i>⏸</i><span>Tạm dừng</span></button>
@@ -987,9 +984,6 @@ const CONFIG = {
     { id: 'swap', desc: 'Đổi chỗ 2 món bất kỳ',    icon: '🔀', name: 'Đổi chỗ',  tip: 'Chọn 2 món bất kỳ để đổi chỗ' },
     { id: 'hint', desc: 'Chỉ nước đi tốt',    icon: '💡', name: 'Gợi ý',    tip: '' },
     { id: 'moves', desc: 'Cộng thêm 5 lượt đi',   icon: '➕', name: '+5 lượt',  tip: '' },
-    { id: 'shuffle', desc: 'Xáo lại cả bàn', icon: '🌀', name: 'Xáo bàn',  tip: '' },
-    { id: 'line', desc: 'Phá cả hàng + cột',    icon: '⚡', name: 'Tia chớp', tip: 'Chạm 1 món: phá cả hàng và cột của nó' },
-    { id: 'color', desc: 'Phá mọi món cùng loại',   icon: '🌈', name: 'Ngũ sắc',  tip: 'Chạm 1 món: phá mọi món cùng loại' },
     { id: 'fish', desc: '3 chú cá bay tới phá chướng ngại', icon: '🐟', name: 'Cá thần', tip: '' },
     { id: 'wand', desc: 'Biến 4 món thành món đặc biệt',    icon: '🪄', name: 'Đũa thần', tip: '' }
   ],
@@ -4898,8 +4892,8 @@ class Game {
   giftItem(why, force) {
     if (!force && this.gifts >= CONFIG.GIFT_MAX_PER_LEVEL) return;
     if (!force) this.gifts++;
-    const pool = ['hammer', 'swap', 'hint', 'moves', 'shuffle', 'line', 'color', 'fish', 'wand'];
-    const w = { hammer: 3, swap: 2, hint: 3, moves: 1, shuffle: 2, line: 2, color: 1, fish: 2, wand: 1 };
+    const pool = ['hammer', 'swap', 'hint', 'moves', 'fish', 'wand'];
+    const w = { hammer: 3, swap: 2, hint: 3, moves: 1, fish: 3, wand: 2 };
     const bag = []; pool.forEach(k => { for (let i = 0; i < w[k]; i++) bag.push(k); });
     const k = bag[(Math.random() * bag.length) | 0], d = CONFIG.ITEM_DEFS.find(x => x.id === k);
     this.save.items[k] = (this.save.items[k] || 0) + 1; Store.save(this.save);
