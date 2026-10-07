@@ -841,6 +841,19 @@ body::before { opacity: .12; inset: 0; animation: none !important; mask-image: n
 #pantry .pbtns{display:flex;flex-direction:column;gap:6px}#pantry .pbtns .btn{min-width:104px;padding:7px 10px;font-size:14px;line-height:1.15}#pantry .pbtns small{font-size:11px;opacity:.9}
 #pantry .pbtns .btn small{color:#fff !important;text-shadow:0 1px 0 rgba(0,0,0,.35);opacity:1}
 
+/* ---- Chặng 34 tỉnh + sổ đặc sản ---- */
+.lmgate em{display:block;font-style:normal;font-size:11px;font-weight:700;color:#d2541a;margin-top:1px}
+.albbtn{border:0;background:#fff;border-radius:12px;padding:2px 8px;font-size:16px;margin-right:4px}
+#album{background:#bfe9ff;overflow-y:auto}#album .lmbar{position:sticky;top:0;z-index:2}
+#albumList{padding:10px 12px 40px;display:flex;flex-direction:column;gap:8px}
+.alb{display:flex;align-items:center;gap:12px;background:#fff;border:2px solid #e6cf9a;border-radius:16px;padding:8px 12px;color:#5a3512;opacity:.75}
+.alb.ok{opacity:1;border-color:#f2b134;background:linear-gradient(180deg,#fffbe8,#ffeeb8)}
+.alb i{font-style:normal;font-size:34px;width:42px;text-align:center}.alb div{flex:1;min-width:0}
+.alb b{display:block;font-size:16px}.alb small{display:block;font-size:12.5px;color:#7a5530;line-height:1.3}
+#album{z-index:45}
+#album{z-index:45;flex-direction:column;background:linear-gradient(180deg,#bfe9ff,#dff5d8 55%,#fff0c8)}
+#album .lmbar{flex:0 0 auto}#albumList{flex:1;overflow-y:auto;width:100%;max-width:520px;margin:0 auto}
+
 </style>
 </head>
 <body>
@@ -999,8 +1012,14 @@ body::before { opacity: .12; inset: 0; animation: none !important; mask-image: n
     <div id="rankMiles"></div>
   </section>
 
+  <!-- SỔ ĐẶC SẢN 34 TỈNH -->
+  <section class="overlay full" id="album">
+    <div class="lmbar"><button class="back" id="btnAlbumBack">‹ Quay lại</button><b>Sổ đặc sản</b><span class="pills"><b id="albumCount">0/34</b></span></div>
+    <div id="albumList"></div>
+  </section>
+
   <section class="overlay full" id="levels">
-    <div class="lmbar"><button class="back" id="btnLevelsBack">‹ Quay lại</button><b id="lmTitle">Bản đồ món ngon</b><span class="pills">★ <b id="lmStars">0</b></span></div>
+    <div class="lmbar"><button class="back" id="btnLevelsBack">‹ Quay lại</button><b id="lmTitle">Bản đồ món ngon</b><span class="pills"><button class="albbtn" id="btnAlbum">📖</button> ★ <b id="lmStars">0</b></span></div>
     <div id="levelScroll"><div id="levelMap"></div></div>
   </section>
 
@@ -4718,17 +4737,78 @@ const Social = {
  * ========================================================================== */
 const WorldMap = {
   CH: 10,
-  THEMES: [
-    { name: 'Phố cổ Hà Nội', sh: 'Hà Nội', ic: '🏮', top: '#d4f7e6', bot: '#7fe0b8', hill: '#2fbf8a', deco: ['🏮', '⛵', '🛵', '🌴', '🥥'] },
-    { name: 'Hội An lồng đèn', sh: 'Hội An', ic: '⛵', top: '#c9f5ec', bot: '#6fdcd0', hill: '#1fb5a8', deco: ['⛵', '🌴', '🏮', '🥥', '🛵'] },
-    { name: 'Sài Gòn nhộn nhịp', sh: 'Sài Gòn', ic: '🛵', top: '#d9f8d0', bot: '#8fe3a0', hill: '#35b56a', deco: ['🛵', '🏮', '🌴', '⛵', '🥥'] },
-    { name: 'Đà Lạt sương mờ', sh: 'Đà Lạt', ic: '🌲', top: '#ccf4f2', bot: '#7edad2', hill: '#2aa9a0', deco: ['🌴', '🥥', '⛵', '🛵', '🏮'] },
-    { name: 'Cố đô Huế', sh: 'Huế', ic: '🏯', top: '#d6f6dc', bot: '#86dca4', hill: '#2fae78', deco: ['🏮', '🌴', '🥥', '⛵', '🛵'] },
-    { name: 'Miền Tây sông nước', sh: 'Miền Tây', ic: '🥥', top: '#c4f3ea', bot: '#69d6c4', hill: '#18a897', deco: ['⛵', '🛵', '🥥', '🏮', '🌴'] }
+  /* 34 tỉnh thành (từ 1/7/2025), đi từ Cà Mau ngược ra Bắc. ic = emoji đặc sản chính, food = tên đặc sản, more = vài đặc sản khác */
+  PROV: [
+    ['Cà Mau', '🦀', 'Cua Cà Mau', 'Tôm khô, mật ong U Minh'],
+    ['An Giang', '🌴', 'Đường thốt nốt', 'Mắm Châu Đốc, bún cá, bò bảy món'],
+    ['Cần Thơ', '🍲', 'Lẩu mắm', 'Nem nướng Cái Răng, bánh cống'],
+    ['Vĩnh Long', '🍊', 'Bưởi Năm Roi', 'Dừa Bến Tre, kẹo dừa, bún nước lèo'],
+    ['Đồng Tháp', '🥭', 'Xoài Cao Lãnh', 'Hủ tiếu Mỹ Tho, hạt sen'],
+    ['Tây Ninh', '🥞', 'Bánh tráng phơi sương', 'Muối tôm, mãng cầu Bà Đen'],
+    ['TP. Hồ Chí Minh', '🍚', 'Cơm tấm', 'Bánh mì Sài Gòn, cà phê sữa đá'],
+    ['Đồng Nai', '🌰', 'Hạt điều', 'Bưởi Tân Triều, chôm chôm'],
+    ['Lâm Đồng', '🍓', 'Dâu tây Đà Lạt', 'Atiso, thanh long Bình Thuận, nước mắm Phan Thiết'],
+    ['Đắk Lắk', '☕', 'Cà phê Buôn Ma Thuột', 'Bơ, sầu riêng'],
+    ['Khánh Hòa', '🍢', 'Nem nướng Ninh Hòa', 'Yến sào, nho Ninh Thuận, bún sứa'],
+    ['Gia Lai', '🍡', 'Bánh ít lá gai', 'Phở khô Gia Lai, bún chả cá Quy Nhơn'],
+    ['Quảng Ngãi', '🍯', 'Mạch nha, kẹo gương', 'Tỏi Lý Sơn, don, sâm Ngọc Linh'],
+    ['Đà Nẵng', '🍝', 'Mì Quảng', 'Cao lầu Hội An, bánh tráng cuốn thịt heo'],
+    ['Huế', '🍜', 'Bún bò Huế', 'Bánh bèo, cơm hến, chè Huế'],
+    ['Quảng Trị', '🥣', 'Cháo canh', 'Bánh xèo Quảng Bình, tiêu Khe Sanh'],
+    ['Hà Tĩnh', '🍬', 'Kẹo cu đơ', 'Bưởi Phúc Trạch, cam bù'],
+    ['Nghệ An', '🥘', 'Cháo lươn', 'Tương Nam Đàn, cam Vinh'],
+    ['Thanh Hóa', '🍖', 'Nem chua', 'Chè lam Phủ Quảng, bánh gai Tứ Trụ'],
+    ['Ninh Bình', '🍘', 'Cơm cháy', 'Dê núi, phở Nam Định'],
+    ['Hà Nội', '🥢', 'Phở', 'Bún chả, chả cá Lã Vọng, cốm làng Vòng'],
+    ['Hưng Yên', '🍑', 'Nhãn lồng', 'Long nhãn, bánh cáy Thái Bình'],
+    ['Hải Phòng', '🥖', 'Bánh mì cay', 'Bánh đa cua, nem cua bể'],
+    ['Quảng Ninh', '🦑', 'Chả mực Hạ Long', 'Sá sùng, ngan Tiên Yên'],
+    ['Bắc Ninh', '🍒', 'Vải thiều Lục Ngạn', 'Bánh phu thê, nem Bùi'],
+    ['Thái Nguyên', '🍵', 'Trà Tân Cương', 'Chè Thái Nguyên'],
+    ['Lạng Sơn', '🦆', 'Vịt quay Lạng Sơn', 'Phở chua, khâu nhục, na Chi Lăng'],
+    ['Cao Bằng', '🌰', 'Hạt dẻ Trùng Khánh', 'Vịt quay, bánh cuốn Cao Bằng'],
+    ['Tuyên Quang', '🍊', 'Cam sành Hàm Yên', 'Mật ong bạc hà, bánh tam giác mạch'],
+    ['Phú Thọ', '🍋', 'Bưởi Đoan Hùng', 'Cam Cao Phong, cơm lam'],
+    ['Lào Cai', '🐟', 'Cá hồi Sa Pa', 'Thắng cố, chè shan tuyết'],
+    ['Sơn La', '🥛', 'Sữa Mộc Châu', 'Mận hậu, sơn tra'],
+    ['Lai Châu', '🥩', 'Thịt trâu gác bếp', 'Sâm Lai Châu, gà đen'],
+    ['Điện Biên', '🌾', 'Gạo Điện Biên', 'Xôi nếp nương, pa pỉnh tộp']
+  ],
+  /* bảng màu pastel xoay vòng cho các chặng */
+  PAL: [
+    { top: '#d4f7e6', bot: '#7fe0b8', hill: '#2fbf8a', deco: ['🏮', '⛵', '🛵', '🌴', '🥥'] },
+    { top: '#c9f5ec', bot: '#6fdcd0', hill: '#1fb5a8', deco: ['⛵', '🌴', '🏮', '🥥', '🛵'] },
+    { top: '#d9f8d0', bot: '#8fe3a0', hill: '#35b56a', deco: ['🛵', '🏮', '🌴', '⛵', '🥥'] },
+    { top: '#ccf4f2', bot: '#7edad2', hill: '#2aa9a0', deco: ['🌴', '🥥', '⛵', '🛵', '🏮'] },
+    { top: '#d6f6dc', bot: '#86dca4', hill: '#2fae78', deco: ['🏮', '🌴', '🥥', '⛵', '🛵'] },
+    { top: '#c4f3ea', bot: '#69d6c4', hill: '#18a897', deco: ['⛵', '🛵', '🥥', '🏮', '🌴'] }
   ],
   OBST: ['ice', 'crate', 'rope', 'drop', 'pot', 'cart', 'timer', 'belt'],
-  theme(n) { return this.THEMES[(((n - 1) / this.CH) | 0) % this.THEMES.length]; },
   chapter(n) { return ((n - 1) / this.CH | 0) + 1; },
+  theme(n) {
+    const c = this.chapter(n) - 1, p = this.PROV[c % this.PROV.length], pal = this.PAL[c % this.PAL.length];
+    return { name: p[0], sh: p[0], ic: p[1], food: p[2], more: p[3], lap: (c / this.PROV.length | 0) + 1, top: pal.top, bot: pal.bot, hill: pal.hill, deco: [p[1]].concat(pal.deco.slice(0, 3), [p[1]]) };
+  },
+  /** Mở đặc sản khi qua màn cuối của chặng lần đầu: thưởng xu + hiện trên màn thắng. */
+  onWin(g, old) {
+    g._prov = null;
+    if (g.level % this.CH !== 0 || old > 0) return;
+    const th = this.theme(g.level); g._prov = th; g.save.coins += 150; g.winCoins = (g.winCoins || 0) + 150;
+  },
+  winExtra(g) {
+    const th = g._prov; if (!th) return;
+    const ev = $('#winEvent'); ev.hidden = false;
+    ev.textContent = (ev.textContent ? ev.textContent + ' · ' : '') + th.ic + ' Mở đặc sản ' + th.name + ': ' + th.food + ' (+💰150)';
+  },
+  /** Sổ đặc sản: 34 tỉnh, tỉnh nào đã qua màn cuối của chặng thì sáng lên. */
+  album(g) {
+    const sv = g.save, box = $('#albumList'), n = this.PROV.length; let got = 0, html = '';
+    for (let c = 1; c <= n; c++) {
+      const p = this.PROV[c - 1], ok = (sv.levelStars[c * this.CH] || 0) > 0; if (ok) got++;
+      html += '<div class="alb' + (ok ? ' ok' : '') + '"><i>' + (ok ? p[1] : '🔒') + '</i><div><b>' + c + '. ' + p[0] + '</b><small>' + (ok ? p[2] + ' · ' + p[3] : 'Qua màn ' + (c * this.CH) + ' để mở đặc sản') + '</small></div></div>';
+    }
+    $('#albumCount').textContent = got + '/' + n; box.innerHTML = html; UI.show('album');
+  },
   /** Quà trên đường: nằm giữa màn n và n+1 (n%5==2). */
   giftReward(n) {
     const k = (n / 5) | 0, items = ['hammer', 'swap', 'sweep', 'fish'], it = items[k % items.length];
@@ -4742,7 +4822,7 @@ const WorldMap = {
     return out;
   },
   build(g) {
-    const sv = g.save, cur = sv.level, total = Math.max(Levels.count(), cur) + 12, STEP = 100, TOP = 150, BOT = 120;
+    const sv = g.save, cur = sv.level, total = Math.max(Levels.count(), cur, this.PROV.length * this.CH) + 12, STEP = 100, TOP = 150, BOT = 120;
     const box = $('#levelMap'), H = TOP + BOT + (total - 1) * STEP, W = Math.min(520, innerWidth);
     const pos = n => ({ x: W * (.5 + .26 * Math.sin(n * .95) + .06 * Math.sin(n * .37)), y: H - BOT - (n - 1) * STEP });
     box.style.height = H + 'px'; box.innerHTML = '';
@@ -4764,7 +4844,7 @@ const WorldMap = {
       for (let k = 0; k < 4; k++) add(mk('div', 'lmcloud2' + (k % 2 ? ' sm' : ''), '', { top: (yTop + 40 + k * 215) + 'px', left: ((k * 37 + c * 23) % 70 + 2) + '%', animationDelay: (-k * 3) + 's' }));
       // biển chương ở ranh giới giữa 2 chương, dạt sang phía không có đường để không đè lên nút
       const qa = pos(a), side = qa.x > W / 2 ? 'left' : 'right';
-      add(mk('div', 'lmgate ' + side + (reached ? '' : ' far'), '<i>' + th.ic + '</i><div><small>CHƯƠNG ' + c + '</small><b>' + th.name + '</b></div>', { top: (qa.y + STEP * .5) + 'px' }));
+      add(mk('div', 'lmgate ' + side + (reached ? '' : ' far'), '<i>' + th.ic + '</i><div><small>CHẶNG ' + c + '/' + this.PROV.length + (th.lap > 1 ? ' · VÒNG ' + th.lap : '') + '</small><b>' + th.name + '</b><em>' + th.food + '</em></div>', { top: (qa.y + STEP * .5) + 'px' }));
       // trang trí theo chủ đề (tĩnh; chỉ vài cái lắc nhẹ cho đỡ nặng máy)
       for (let k = 0; k < 9; k++) {
         const yy = pos(b).y + (k + .5) * ((yBot - yTop) / 9) - STEP * .2, left = k % 2 ? 4 + ((k * 13) % 14) : 82 - ((k * 11) % 12);
@@ -4800,7 +4880,7 @@ const WorldMap = {
       const q = pts[n - 1], st = sv.levelStars[n] || 0, locked = n > cur, boss = n % this.CH === 0, th = this.theme(n);
       const b = mk('button', 'lmnode' + (locked ? ' locked' : '') + (n === cur ? ' cur' : '') + (boss ? ' big boss' : '') + (st === 3 ? ' gold' : ''), '', { left: q.x + 'px', top: q.y + 'px' });
       b.innerHTML = '<b>' + (locked ? '🔒' : n) + '</b>' + (locked ? '' : '<span class="lms">' + [0, 1, 2].map(i => '<i class="' + (i < st ? 'on' : '') + '">★</i>').join('') + '</span>')
-        + (boss ? '<u class="crown">👑</u>' : '');
+        + (boss ? '<u class="crown">' + th.ic + '</u>' : '');
       if (n >= 3 && (!locked || n <= cur + 3)) { const bd = this.badges(n); if (bd.length) b.insertAdjacentHTML('beforeend', '<s class="obs">' + bd.join('') + '</s>'); }
       if (!locked) b.onclick = () => { UI._ret = null; UI.hide('levels'); Sfx.unlock(); g.startLevel(n); };
       else b.onclick = () => UI.toast('🔒 Hãy qua màn ' + (n - 1) + ' trước nhé', 1600);
@@ -4828,7 +4908,7 @@ const WorldMap = {
 UI.levels = function (g) {
   const m = WorldMap.build(g), sv = g.save;
   const th = WorldMap.theme(sv.level), c = WorldMap.chapter(sv.level);
-  const t = $('#lmTitle'); if (t) t.textContent = 'Chương ' + c + ' · ' + th.sh;
+  const t = $('#lmTitle'); if (t) t.textContent = 'Chặng ' + c + ' · ' + th.sh;
   $('#lmStars').textContent = Object.values(sv.levelStars).reduce((a, b) => a + b, 0);
   UI.show('levels');
   Social.mapFlags(g, m.box, n => n <= m.total ? m.pos(n) : { x: -999, y: -999 });
@@ -5565,6 +5645,7 @@ class Game {
     this.save.stars += starGain;
     if (starGain > 0) { const bp2 = this._boardCenter(); setTimeout(() => Fx.starsFly(bp2.x, bp2.y, '#stars', starGain * 3), 500); }
     this.save.levelStars[this.level] = Math.max(old, stars);
+    WorldMap.onWin(this, old);
     const oldLvl = this.save.level;
     this.save.level = Math.max(this.save.level, this.level + 1);
     { const nu = CONFIG.CHARS.find(c => !c.hidden && c.need > oldLvl && c.need <= this.save.level && !this.save.chars.owned.includes(c.id)); if (nu) setTimeout(() => UI.toast('🔓 Đồng đội mới mở khóa: ' + nu.zodiac + ' · ' + nu.name + '! Vào Đồng đội để mua', 3200), 2200); }
@@ -5575,7 +5656,7 @@ class Game {
       $('#winStarsRow').innerHTML = [0, 1, 2].map(i => '<i class="ws' + (i < stars ? ' on' : '') + '" style="animation-delay:' + (.35 + i * .38) + 's">★</i>').join('');
       $('#winStarsRow').style.color = '';
       $('#winStarGain').textContent = starGain;
-      Social.winExtra(this);
+      Social.winExtra(this); WorldMap.winExtra(this);
       $('#btnDouble').classList.remove('hidden');
       UI.show('win');
       Fx.countUp('#winScore', this.score, 1100); Fx.countUp('#winCoins', coins, 1100);
@@ -5924,6 +6005,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     delete b.dataset.arm; try { await Auth.push(game.save); } catch (e) {}
     await Auth.signOut(); Sfx.music(false); gate();
   };
+  $('#btnAlbum').onclick = () => WorldMap.album(game);
+  $('#btnAlbumBack').onclick = () => UI.hide('album');
   // đổi tên hiển thị (hiện trên bảng xếp hạng)
   const openNick = () => { $('#inNick').value = Auth.name(); $('#nickMsg').textContent = ''; $('#nickMsg').classList.remove('ok'); UI.show('nameBox'); };
   $('#btnRename').onclick = openNick; $('#btnRankRename').onclick = openNick;
