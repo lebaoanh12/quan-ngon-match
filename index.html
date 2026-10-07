@@ -675,6 +675,9 @@ body.droid .lmbar { padding-top: 8px; }
 .item[data-item="wand"] { background: linear-gradient(180deg, #f06292, #ad1457); }
 @media (max-height: 700px) { #bottom .item span { display: none; } }
 
+#tutTip { position: absolute; left: 50%; bottom: 6px; transform: translate(-50%, 10px); max-width: 92%; background: rgba(255,226,122,.96); color: #4a2200; font-weight: 800; font-size: 14px; line-height: 1.25; text-align: center; padding: 8px 14px; border-radius: 14px; box-shadow: 0 3px 10px rgba(0,0,0,.35); opacity: 0; pointer-events: none; z-index: 29; transition: opacity .3s, transform .3s; }
+#tutTip.show { opacity: 1; transform: translate(-50%, 0); }
+
 </style>
 </head>
 <body>
@@ -715,6 +718,7 @@ body.droid .lmbar { padding-top: 8px; }
     <canvas id="board"></canvas>
     <div id="toast"></div>
     <div id="announce"></div>
+    <div id="tutTip"></div>
   </main>
   <div id="flash"></div>
 
@@ -743,9 +747,11 @@ body.droid .lmbar { padding-top: 8px; }
       <button class="btn secondary" id="btnShopMenu">🏮 QUÁN CỦA TÔI <span class="badge" id="shopBadge"></span></button>
       <button class="btn secondary vaultbtn" id="btnVaultMenu">💎 KHO BÁU <span class="badge" id="vaultBadge"></span></button>
       <button class="btn secondary" id="btnTeamMenu">🐾 ĐỒNG ĐỘI</button>
+      <button class="btn secondary" id="btnDailyMenu">📅 ĐIỂM DANH <span class="badge hot" id="dailyBadge"></span></button>
       <button class="btn secondary" id="btnWheelMenu">🎡 VÒNG QUAY MAY MẮN <span class="badge hot" id="wheelBadge"></span></button>
       <button class="btn ghost" id="btnAccount">👤 Tài khoản</button>
       <div class="sndrow"><button class="btn ghost" id="btnMusic">🎵 Nhạc: BẬT</button><button class="btn ghost" id="btnSound">🔊 Tiếng: BẬT</button><button class="btn ghost" id="btnVoice">🗣️ Giọng: BẬT</button></div>
+      <button class="btn ghost" id="btnNotify">🔔 Nhắc nhở: BẬT</button>
       <button class="btn ghost danger" id="btnDelAcct">🗑 Xóa tài khoản</button>
     </div>
   </section>
@@ -1807,25 +1813,25 @@ const Levels = (() => {
   const LIST = [
     /* 1  */ L(box(4, dots(4)), 20, 3, [S(400)], 4),
     /* 2  */ L(box(4, dots(4)), 20, 3, [C(0, 8), S(500)], 4),
-    /* 3  */ L(box(5, ['.....', '.....', '.....', 'iiiii', 'iiiii']), 22, 3, [I()], 5),
+    /* 3  */ L(box(5, ['.....', '.....', '.....', 'iiiii', 'iiiii']), 24, 3, [I()], 5),
     /* 4  */ L(box(5, ['.....', '.r.r.', '.....', '.....', '.....']), 22, 4, [R(), S(700)], 5),
     /* 5  */ L(box(6, ['......', '......', '.#..#.', '......', '......', '......']), 24, 4, [K(), S(900)], 6),
     /* 6  */ L(box(6, ['.D..D.', '......', '......', '......', '......', '......']), 24, 4, [D(2)], 6),
     /* 7  */ L(box(6, ['......', 'i.i.i.', '.i.i.i', 'i.i.i.', '.i.i.i', '......']), 26, 4, [I(), C(1, 10)], 6),
-    /* 8  */ L(box(6, ['x....x', '......', '......', '......', '......', 'x....x']), 24, 4, [S(1200)], 6),
+    /* 8  */ L(box(6, ['x....x', '......', '......', '......', '......', 'x....x']), 26, 4, [S(1100)], 6),
     /* 9  */ L(box(7, ['.......', '.......', '.......', '..###..', '.......', '.......', '.......']), 26, 4, [K(), C(2, 12)], 7),
-    /* 10 */ L(mix(P.iceRing, P.ropes4), 30, 5, [I(), R()]),
+    /* 10 */ L(mix(P.iceRing, P.ropes4), 34, 5, [I(), R()]),
     /* 11 */ L(P.wall2, 26, 5, [K(), S(1800)]),
     /* 12 */ L(mix(P.drop3, P.iceBottom), 30, 5, [D(3), I()]),
-    /* 13 */ L(mix(P.cross, P.pillars), 28, 5, [K(), C(3, 14)]),
-    /* 14 */ L(P.iceCenter2, 30, 5, [I(), S(1800)]),
+    /* 13 */ L(mix(P.cross, P.pillars), 32, 5, [K(), C(3, 14)]),
+    /* 14 */ L(P.iceCenter2, 33, 5, [I(), S(1800)]),
     /* 15 */ L(mix(P.ropes8, P.iceChecker), 30, 5, [R(), I()]),
     /* 16 */ L(mix(P.diamond, P.drop2), 28, 5, [D(2), C(4, 14)]),
     /* 17 */ L(mix(P.wall, P.iceBottom), 30, 5, [K(), I()]),
     /* 18 */ L(mix(P.pillars, P.ropes8), 28, 6, [K(), R(), S(2000)]),
     /* 19 */ L(P.drop4, 32, 6, [D(4), S(2000)]),
     /* 20 */ L(mix(P.cross, P.iceCenter2), 30, 6, [I(), C(0, 16)]),
-    /* 21 */ L(mix(P.wall2, P.drop3), 30, 6, [K(), D(3)]),
+    /* 21 */ L(mix(P.wall2, P.drop3), 33, 6, [K(), D(3)]),
     /* 22 */ L(mix(P.ropes8, P.wall), 28, 6, [R(), K(), C(5, 14)]),
     /* 23 */ L(mix(P.iceRing, P.pillars), 30, 6, [I(), K(), S(2500)]),
     /* 24 */ L(mix(P.diamond, P.iceCenter2), 30, 6, [I(), C(3, 18)])
@@ -3056,12 +3062,12 @@ const Store = {
       level: 1, coins: 0, stars: 0, items: { ...CONFIG.START_ITEMS }, sound: true, music: true, voice: true,
       shop: { kitchen: 0, tables: 0, awning: 0, sign: 0, lantern: 0, plants: 0 },
       chars: { owned: ['cat'], sel: 'cat' }, lastCollect: Date.now(), lives: { n: 5, at: Date.now() }, run: 0,
-      pantry: { day: '', bought: {}, bonus: {} }, daily: { last: '', streak: 0 }, wheelDay: '', levelStars: {}, seen: {}, chests: {}, vault: { lv: 0, last: Date.now() }
+      pantry: { day: '', bought: {}, bonus: {} }, daily: { last: '', streak: 0 }, wheelDay: '', levelStars: {}, fails: {}, seen: {}, chests: {}, vault: { lv: 0, last: Date.now() }
     };
     if (fresh) return def;
     try {
       const d = JSON.parse(localStorage.getItem(this.key));
-      if (d) return { ...def, ...d, items: { ...def.items, ...d.items }, shop: { ...def.shop, ...d.shop }, chars: { ...def.chars, ...d.chars }, levelStars: { ...d.levelStars }, seen: { ...d.seen }, chests: { ...d.chests }, vault: { ...def.vault, ...d.vault }, lives: { ...def.lives, ...d.lives }, pantry: { ...def.pantry, ...d.pantry, bought: { ...(d.pantry && d.pantry.bought) }, bonus: { ...(d.pantry && d.pantry.bonus) } } };
+      if (d) return { ...def, ...d, items: { ...def.items, ...d.items }, shop: { ...def.shop, ...d.shop }, chars: { ...def.chars, ...d.chars }, levelStars: { ...d.levelStars }, seen: { ...d.seen }, fails: { ...d.fails }, chests: { ...d.chests }, vault: { ...def.vault, ...d.vault }, lives: { ...def.lives, ...d.lives }, pantry: { ...def.pantry, ...d.pantry, bought: { ...(d.pantry && d.pantry.bought) }, bonus: { ...(d.pantry && d.pantry.bonus) } } };
     } catch (e) {}
     return def;
   },
@@ -3177,6 +3183,7 @@ const UI = {
     $('#vaultBadge').textContent = vp >= 1 ? '💰 +' + vp : '';
     $('#vaultBadge').classList.toggle('hot', Vault.canUpgrade(g.save));
     $('#btnVaultMenu').classList.toggle('notify', Vault.canUpgrade(g.save) || vp >= 60);
+    { const sv = g.save, b = $('#dailyBadge'); if (b) b.textContent = Daily.available(sv) ? 'NHẬN QUÀ' : (Daily.streak(sv) ? '🔥' + Daily.streak(sv) : ''); }
     $('#wheelBadge').textContent = g.save.wheelDay !== Daily.today() ? 'MIỄN PHÍ' : '';
     $('#btnShopMenu').classList.toggle('notify', Meta.canUpgrade(g.save) || pend >= 30);
   },
@@ -3378,6 +3385,8 @@ const Lives = {
   has() { return this.count() > 0; },
   /** Mili-giây còn lại tới tim kế tiếp (0 nếu đã đầy). */
   nextMs() { const L = this.sync(); if (!L || L.n >= this.MAX) return 0; return Math.max(0, this.waitMs(L.rk | 0) - (Date.now() - L.at)); },
+  /** Mili-giây tới khi đầy 5 tim (0 nếu đã đầy). */
+  fullMs() { const L = this.sync(); if (!L || L.n >= this.MAX) return 0; let t = this.nextMs(); for (let k = (L.rk | 0) + 1, n = L.n + 1; n < this.MAX; n++, k++) t += this.waitMs(k); return t; },
   fmt(ms) { const s = Math.ceil(ms / 1000), m = Math.floor(s / 60); return m + ':' + String(s % 60).padStart(2, '0'); },
   spend() {
     const sv = this.sv(), L = this.sync(); if (!L || L.n <= 0) return false;
@@ -4229,13 +4238,15 @@ const Bg = {
 /* ------------------------------ ĐIỂM DANH 7 NGÀY ------------------------------ */
 const Daily = {
   REWARDS: [
-    { t: '💰 100',  coins: 100 }, { t: '⭐ 1', stars: 1 }, { t: '🔨 +1', items: { hammer: 1 } }, { t: '💰 200', coins: 200 },
-    { t: '⭐ 2',  stars: 2 },   { t: '💡 +2', items: { hint: 2 } }, { t: '🎁 Lớn', coins: 500, stars: 3 }
+    { t: '💰 150',  coins: 150 }, { t: '🔨 +1', items: { hammer: 1 } }, { t: '🐟 +1', items: { fish: 1 } }, { t: '💰 300', coins: 300 },
+    { t: '🪄 +1', items: { wand: 1 } }, { t: '💡 +2', items: { hint: 2 } }, { t: '🎁 Lớn', coins: 800, stars: 3, items: { fish: 1, wand: 1 } }
   ],
-  today() { return new Date().toISOString().slice(0, 10); },
-  yesterday() { return new Date(Date.now() - 864e5).toISOString().slice(0, 10); },
+  fmt(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); },
+  today() { return this.fmt(new Date()); },
+  yesterday() { return this.fmt(new Date(Date.now() - 864e5)); },
   available(sv) { return sv.daily.last !== this.today(); },
-  nextIndex(sv) { return sv.daily.last === this.yesterday() ? sv.daily.streak % 7 : 0; },
+  streak(sv) { return (sv.daily.last === this.today() || sv.daily.last === this.yesterday()) ? sv.daily.streak : 0; },
+  nextIndex(sv) { return sv.daily.last === this.yesterday() ? sv.daily.streak % 7 : (sv.daily.last === this.today() ? sv.daily.streak % 7 : 0); },
   open(game) {
     const sv = game.save, idx = this.nextIndex(sv), box = $('#dailyGrid'); box.innerHTML = '';
     this.REWARDS.forEach((r, i) => {
@@ -4364,7 +4375,7 @@ class Game {
     Meta.tick(this, ts);
     this.drawPortrait(ts);
     // tự gợi ý khi người chơi đứng yên
-    if (this.state === 'idle' && !this.hint && !this.mode && ts - this.lastAction > CONFIG.IDLE_HINT_MS) this.showHint(false);
+    if (this.state === 'idle' && !this.hint && !this.mode && ts - this.lastAction > (this.tut ? 700 : CONFIG.IDLE_HINT_MS)) this.showHint(false);
     requestAnimationFrame(t => this.loop(t));
   }
 
@@ -4408,7 +4419,7 @@ class Game {
     this.energy = 0; this.energyMax = CONFIG.skillEnergy(ch.energy, n, 0); this.energyAds = 0;
     this.fever = 0; this.feverMoves = 0; this.renderer.fever = false; Bg.fever = false;
     this.order = { type: (Math.random() * def.colors) | 0, need: 10 + n, have: 0, done: false };
-    this.mode = null; this.selected = null; this.hint = null;
+    this.mode = null; this.selected = null; this.hint = null; this.tut = null; { const tt = $('#tutTip'); if (tt) tt.classList.remove('show'); }
     this.setActiveItem();
     this.renderer.setView(def.size || CONFIG.COLS);
     this.grid = new Grid(CONFIG.ROWS, CONFIG.COLS, def.colors);
@@ -4432,6 +4443,8 @@ class Game {
     if (tk !== this.token) return;
     UI.hide('intro');
     if (this.introBoost) { this.moves += 3; UI.hud(this); }
+    { const f = (this.save.fails || {})[this.level] || 0;       // thua liên tiếp: tự cộng lượt để đỡ nản (từ lần thua thứ 2)
+      if (f >= 2 && this.level >= 3) { const add = Math.min(6, (f - 1) * 2); this.moves += add; UI.hud(this); setTimeout(() => UI.toast('💝 Hỗ trợ: +' + add + ' lượt cho bạn!', 2200), 900); } }
     const R = this.renderer, tasks = [];
     this.grid.cells.forEach((row, r) => row.forEach((gem, c) => {
       if (gem) tasks.push(Tween.to(gem, { y: R.cellY(r) }, 520, Ease.outBounce, (CONFIG.ROWS - r) * 40 + c * 25));
@@ -4441,6 +4454,7 @@ class Game {
     this.state = 'idle'; this.lastAction = performance.now();
     if (!this.save.run) { this.save.run = 1; this.save.runAt = Date.now(); Store.save(this.save); }   // đánh dấu đang chơi dở: thoát giữa chừng sẽ mất tim
     Voice.say('start', 1);
+    this.tutStart();
   }
 
   /* ------------------------------- MỤC TIÊU ------------------------------- */
@@ -4560,7 +4574,7 @@ class Game {
       this.state = 'idle'; this.lastAction = performance.now();
       return;
     }
-    this.moves--; UI.hud(this); this._potKilled = 0;
+    this.moves--; UI.hud(this); this._potKilled = 0; if (this.tut) this.tutUpdate();
     if (this.save.run === 1) { this.save.run = 4; this.save.runAt = Date.now(); Store.save(this.save); }   // đã đi nước đầu: bỏ dở sẽ mất tim
     const wasFever = this.feverMoves > 0;
     await this.resolve(eff, [a, b], tk);
@@ -4924,6 +4938,27 @@ class Game {
     if (el) { el.classList.remove('gift'); void el.offsetWidth; el.classList.add('gift'); }
   }
 
+  /** Hướng dẫn 30 giây: màn 1-2, tay chỉ nước đi + dòng chữ ngắn, chỉ hiện lần đầu. */
+  tutStart() {
+    const n = this.level, sv = this.save;
+    this.tut = (n <= 2 && sv.level <= n && !sv.seen['tut' + n]) ? { n, m0: this.moves } : null;
+    this.tutUpdate();
+  }
+  tutUpdate() {
+    const el = $('#tutTip'), t = this.tut; if (!el) return;
+    if (!t) { el.classList.remove('show'); return; }
+    const used = t.m0 - this.moves; let txt = '';
+    if (t.n === 1) txt = used === 0 ? '👆 Vuốt 2 món cạnh nhau để xếp 3 món giống nhau' : used === 1 ? '✨ Giỏi lắm! Xếp 4 món liền nhau để tạo món đặc biệt' : used === 2 ? '🎯 Làm xong mục tiêu trước khi hết lượt nhé!' : '';
+    else txt = used === 0 ? '🎯 Xem MỤC TIÊU phía trên, làm xong trước khi hết lượt' : used === 1 ? '💡 Bí nước đi? Bấm Gợi ý ở thanh dưới' : '';
+    if (!txt) { this.tutEnd(); return; }
+    el.textContent = txt; el.classList.add('show');
+  }
+  tutEnd() {
+    const t = this.tut; this.tut = null;
+    const el = $('#tutTip'); if (el) el.classList.remove('show');
+    if (t) { this.save.seen['tut' + t.n] = 1; Store.save(this.save); }
+  }
+
   showHint(force) {
     const h = this.grid.findHint(); if (!h) return;
     this.hint = h;
@@ -4965,6 +5000,12 @@ class Game {
   async win() {
     this.state = 'over'; const tk = this.token;
     this.save.run = 0;                                // thắng màn: không mất tim
+    if (this.tut) this.tutEnd();
+    if (this.save.fails && this.save.fails[this.level]) { delete this.save.fails[this.level]; }
+    if (this.level === 1 && this.save.level <= 1 && !this.save.seen.tutGift) {   // quà sau màn 1 để người chơi biết có vật phẩm
+      this.save.seen.tutGift = 1; this.save.items.hint += 2; this.save.items.hammer += 1;
+      setTimeout(() => UI.toast('🎁 Quà tân thủ: 💡 Gợi ý x2 + 🔨 Búa x1', 3000), 1800);
+    }
     Sfx.win(); this.renderer.confetti();
     UI.toast('Hoàn thành màn ' + this.level + '!', 2000);
     const stars = this.starsFor(this.score);
@@ -5011,6 +5052,7 @@ class Game {
   }
 
   lose() {
+    { const sv = this.save; sv.fails = sv.fails || {}; sv.fails[this.level] = (sv.fails[this.level] || 0) + 1; Store.save(sv); }
     this.state = 'over'; Sfx.lose(); Voice.say('lose', 5);
     { const bp = this._boardCenter(); Fx.edgeGlow('#3a5bd9', 1500); Fx.shake($('#stage'), 8); Fx.shockwave(bp.x, bp.y, '#7a8cff', 2, 260); Fx.sweep('rgba(40,50,110,.55)'); }
     this.save.run = 2; this.save.runAt = Date.now();   // thua màn: sẽ trừ 1 tim
@@ -5249,7 +5291,11 @@ window.addEventListener('DOMContentLoaded', async () => {
     $('#btnMusic').textContent = '🎵 Nhạc: ' + (Sfx.musicOn ? 'BẬT' : 'TẮT'); $('#btnMusic2').textContent = $('#btnMusic').textContent;
     $('#btnVoice').textContent = '🗣️ Giọng: ' + (Voice.on ? 'BẬT' : 'TẮT'); $('#btnVoice2').textContent = $('#btnVoice').textContent;
   };
-  soundLabel();
+  const notifyLabel = () => { const b = $('#btnNotify'); if (b) b.textContent = '🔔 Nhắc nhở: ' + (game.save.notify === false ? 'TẮT' : 'BẬT'); };
+  $('#btnNotify').onclick = () => { game.save.notify = game.save.notify === false; Store.save(game.save); notifyLabel(); UI.toast(game.save.notify === false ? 'Đã tắt nhắc nhở' : 'Đã bật nhắc nhở: tim đầy, quà ngày…'); };
+  // Vỏ Android hỏi trạng thái khi thoát game để đặt thông báo nhắc (tim đầy, quà điểm danh, nhớ bạn)
+  window.QNM_notify = () => { const sv = game.save; return JSON.stringify({ on: sv.notify !== false, heartsMs: Lives.fullMs(), daily: Daily.available(sv), streak: Daily.streak(sv) }); };
+  soundLabel(); notifyLabel();
   const toggleSfx = () => { Sfx.on = !Sfx.on; game.save.sound = Sfx.on; Store.save(game.save); soundLabel(); Sfx.unlock(); if (Sfx.on) Sfx.swap(); };
   const toggleMusic = () => { Sfx.musicOn = !Sfx.musicOn; game.save.music = Sfx.musicOn; Store.save(game.save); soundLabel(); Sfx.unlock(); Sfx.music(Sfx.musicOn); };
   const toggleVoice = () => { Voice.on = !Voice.on; game.save.voice = Voice.on; Store.save(game.save); soundLabel(); if (Voice.on) Voice.say('c3', 3); else Voice.stop(); };
@@ -5281,6 +5327,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   $('#btnWheelMenu').onclick = () => { Sfx.unlock(); Wheel.open(game); };
   $('#btnSpin').onclick = () => Wheel.spin();
   $('#btnWheelClose').onclick = () => { UI.hide('wheel'); UI.hud(game); };
+  $('#btnDailyMenu').onclick = () => { if (Daily.available(game.save)) Daily.open(game); else { const r = Daily.REWARDS[Daily.nextIndex(game.save)]; UI.toast('Mai quay lại nhận ngày ' + (Daily.nextIndex(game.save) + 1) + ': ' + r.t + ' (chuỗi 🔥' + Daily.streak(game.save) + ')', 2600); } };
   $('#btnDailyClaim').onclick = () => Daily.claim(game, false);
   $('#btnDailyDouble').onclick = () => showRewardedAd(ok => ok ? Daily.claim(game, true) : UI.toast('Cần xem hết video để nhận x2'));
 
