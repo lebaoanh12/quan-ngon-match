@@ -3317,11 +3317,12 @@ const UI = {
 /* ==========================================================================
  * lives.js — HỆ THỐNG TIM (lượt chơi) kiểu Candy Crush Saga
  *   • Mỗi người chơi có tối đa 5 tim. CHỈ mất 1 tim khi THUA màn (thoát giữa chừng không mất). Thắng màn không mất tim.
- *   • Hồi tim theo cấp số cộng trong ngày: tim hồi lần 1 chờ 1 phút, lần 2 chờ 3, lần 3 chờ 5, 7, 9... (tối đa 30 phút); sang ngày mới đếm lại từ 1 phút. Tính cả khi tắt app. Hết tim: chờ, xem video (+1), hoặc dùng xu.
+ *   • Hồi tim theo cấp số cộng trong ngày: tim hồi lần 1 chờ 1 phút, rồi 3, 5, 10, 15, 20, 30 phút (sau đó giữ 30); sang ngày mới đếm lại từ 1 phút. Tính cả khi tắt app. Hết tim: chờ, xem video (+1), hoặc dùng xu.
  *   • Dữ liệu: save.lives = { n: số tim, at: mốc thời gian bắt đầu đếm hồi tim, vd: ngày, vc: số video trong ngày }
  * ========================================================================== */
 const Lives = {
-  MAX: 5, REGEN_FIRST_MIN: 1, REGEN_STEP_MIN: 2, REGEN_CAP_MIN: 30, COIN_ONE: 300, COIN_FULL: 1000,
+  MAX: 5, REGEN_STEPS_MIN: [1, 3, 5, 10, 15, 20, 30],   // phút chờ ở lần hồi thứ 1,2,3... trong ngày; từ lần thứ 7 trở đi luôn 30 phút
+  COIN_ONE: 300, COIN_FULL: 1000,
 
   sv() { return window.game && game.save; },
   /** Cộng tim đã hồi theo thời gian trôi qua. */
@@ -3343,8 +3344,8 @@ const Lives = {
     if (changed) Store.save(sv);
     return L;
   },
-  /** Thời gian chờ (ms) để hồi tim ở lần hồi thứ k (k = 0,1,2...) trong ngày: 1, 3, 5, 7... phút, tối đa REGEN_CAP_MIN. */
-  waitMs(k) { return Math.min(this.REGEN_CAP_MIN, this.REGEN_FIRST_MIN + this.REGEN_STEP_MIN * k) * 60000; },
+  /** Thời gian chờ (ms) để hồi tim ở lần hồi thứ k (k = 0,1,2...) trong ngày: 1, 3, 5, 10, 15, 20, 30 phút (rồi giữ 30). */
+  waitMs(k) { const a = this.REGEN_STEPS_MIN; return a[Math.min(k, a.length - 1)] * 60000; },
   count() { const L = this.sync(); return L ? L.n : this.MAX; },
   has() { return this.count() > 0; },
   /** Mili-giây còn lại tới tim kế tiếp (0 nếu đã đầy). */
