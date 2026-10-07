@@ -827,6 +827,20 @@ body::before { opacity: .12; inset: 0; animation: none !important; mask-image: n
 #toast { width: max-content; max-width: calc(100% - 24px); white-space: normal; text-align: center; line-height: 1.35; box-sizing: border-box; overflow-wrap: anywhere; z-index: 200; }
 #toast { border-radius: 18px; }
 
+/* ---- Cửa hàng ---- */
+.storecard{display:flex;align-items:center;gap:14px;width:100%;margin:14px 0 0;padding:18px 16px;border:0;border-radius:20px;text-align:left;color:#4a2a10;background:linear-gradient(180deg,#fff3c4,#ffd98a);box-shadow:0 4px 0 #d9a24a,0 8px 16px rgba(0,0,0,.18);font-family:inherit}
+.storecard.team{background:linear-gradient(180deg,#d9f5e4,#9fe0bd);box-shadow:0 4px 0 #5fb98a,0 8px 16px rgba(0,0,0,.18);color:#1e4a33}
+.storecard:active{transform:translateY(2px)}
+.storecard i{font-style:normal;font-size:44px;line-height:1}
+.storecard span{flex:1;display:flex;flex-direction:column;gap:3px}
+.storecard b{font-size:20px}
+.storecard small{font-size:13px;opacity:.85}
+.storecard em{font-style:normal;font-weight:700;font-size:13px;background:#fff;border-radius:12px;padding:4px 10px}
+.storecard em:empty{display:none}
+
+#pantry .pbtns{display:flex;flex-direction:column;gap:6px}#pantry .pbtns .btn{min-width:104px;padding:7px 10px;font-size:14px;line-height:1.15}#pantry .pbtns small{font-size:11px;opacity:.9}
+#pantry .pbtns .btn small{color:#fff !important;text-shadow:0 1px 0 rgba(0,0,0,.35);opacity:1}
+
 </style>
 </head>
 <body>
@@ -896,7 +910,7 @@ body::before { opacity: .12; inset: 0; animation: none !important; mask-image: n
       <div class="mgrid">
         <button class="btn secondary mtile" id="btnShopMenu"><i>🏮</i><span>Quán</span><span class="badge" id="shopBadge"></span></button>
         <button class="btn secondary mtile vaultbtn" id="btnVaultMenu"><i>💎</i><span>Kho báu</span><span class="badge" id="vaultBadge"></span></button>
-        <button class="btn secondary mtile" id="btnTeamMenu"><i>🐾</i><span>Đồng đội</span></button>
+        <button class="btn secondary mtile" id="btnStoreMenu"><i>🛒</i><span>Cửa hàng</span><span class="badge" id="storeBadge"></span></button>
         <button class="btn secondary mtile" id="btnDailyMenu"><i>📅</i><span>Điểm danh</span><span class="badge hot" id="dailyBadge"></span></button>
         <button class="btn secondary mtile" id="btnWheelMenu"><i>🎡</i><span>Vòng quay</span><span class="badge hot" id="wheelBadge"></span></button>
         <button class="btn secondary mtile" id="btnRankMenu"><i>🏆</i><span>Xếp hạng</span><span class="badge hot" id="rankBadge"></span></button>
@@ -1006,11 +1020,23 @@ body::before { opacity: .12; inset: 0; animation: none !important; mask-image: n
       </div>
       <h3>Nâng cấp quán (dùng ⭐)</h3>
       <div id="shopList"></div>
-      <button class="btn secondary pantrybtn" id="btnPantry">🧺 KHO NGUYÊN LIỆU</button>
     </div>
   </section>
 
-  <!-- KHO NGUYÊN LIỆU (tách riêng khỏi Quán) -->
+  <!-- CỬA HÀNG (gồm Kho nguyên liệu + Đồng đội) -->
+  <section class="overlay full" id="storeHub">
+    <div class="panel">
+      <div class="phead">
+        <button class="back" id="btnStoreBack">‹ Quay lại</button>
+        <b>Cửa hàng</b>
+        <span class="pills">💰 <b id="storeCoins">0</b></span>
+      </div>
+      <button class="storecard" id="btnPantry"><i>🧺</i><span><b>Kho nguyên liệu</b><small id="pantryHint">Búa, đổi chỗ, lốc xoáy, đũa thần...</small></span><em id="pantryTag"></em></button>
+      <button class="storecard team" id="btnTeamMenu"><i>🐾</i><span><b>Đồng đội</b><small id="teamHint">Nạp năng lượng, tung chiêu hỗ trợ</small></span><em id="teamTag"></em></button>
+    </div>
+  </section>
+
+  <!-- KHO NGUYÊN LIỆU -->
   <section class="overlay full" id="pantry">
     <div class="panel">
       <div class="phead">
@@ -1018,7 +1044,7 @@ body::before { opacity: .12; inset: 0; animation: none !important; mask-image: n
         <b>Kho nguyên liệu</b>
         <span class="pills">💰 <b id="pantryCoins">0</b></span>
       </div>
-      <p class="pnote">Nguyên liệu hỗ trợ khi chơi. Mỗi loại chỉ mua tối đa <b>3 lần/ngày</b>, giá tăng sau mỗi lần mua. Hết lượt thì <b>xem video</b> để mở thêm 1 lượt mua. Chơi giỏi cũng nhận quà ngay trong màn.</p>
+      <p class="pnote">Nguyên liệu hỗ trợ khi chơi. Mỗi loại chỉ mua tối đa <b>3 lần/ngày</b>, giá tăng sau mỗi lần mua. Không đủ xu? <b>Xem video</b> để nhận miễn phí (tối đa 3 lần/ngày mỗi loại). Chơi giỏi cũng nhận quà ngay trong màn.</p>
       <div id="pantryList"></div>
     </div>
   </section>
@@ -3285,7 +3311,14 @@ const Sfx = {
     g.gain.value = vol; src.buffer = buf; src.connect(f); f.connect(g); g.connect(this.sfxBus); src.start(t);
     this.tone(90, .3, 'sine', vol * .8, -50);
   },
-  vib(ms) { try { if (window.game && game.save && game.save.vib === false) return; if (navigator.vibrate) navigator.vibrate(ms); } catch (e) {} },
+  vib(ms) {
+    try {
+      if (window.game && game.save && game.save.vib === false) return;
+      ms = Math.max(45, Math.round(ms * 1.4));                                // rung ngắn <40ms nhiều máy không cảm nhận được
+      if (window.AndroidBridge && AndroidBridge.vibrate) { AndroidBridge.vibrate(ms); return; }   // rung gốc của Android (ổn định hơn WebView)
+      if (navigator.vibrate) navigator.vibrate(ms);
+    } catch (e) {}
+  },
 
   /* Nhạc nền tạo bằng code: giai điệu ngũ cung vui tai, nhẹ, lặp vô hạn */
   _mt: null, _step: 0,
@@ -3371,7 +3404,7 @@ const UI = {
     const rem = gm.goalRemaining(g);
     switch (g.t) {
       case 'score':   return { ic: '⭐', txt: rem > 0 ? rem : '✔', rem };
-      case 'collect': return { ic: 'T' + g.type, txt: rem > 0 ? rem : '✔', rem };
+      case 'collect': { const pend = (gm._flyPend && gm._flyPend[g.type]) || 0; return { ic: 'T' + g.type, txt: rem + pend > 0 ? rem + pend : '✔', rem: rem + pend }; }   // số trên chip chỉ giảm khi món bay tới nơi
       case 'drop':    return { ic: '🥥', txt: rem > 0 ? rem : '✔', rem };
       case 'ice':     return { ic: '❄️', txt: rem > 0 ? rem : '✔', rem };
       case 'crate':   return { ic: '📦', txt: rem > 0 ? rem : '✔', rem };
@@ -3386,7 +3419,44 @@ const UI = {
     let ic = i.ic;
     if (/^T\d$/.test(ic)) { const sp = gm.renderer && gm.renderer.sprites[ic.slice(1) + '|']; ic = sp ? '<img src="' + sp.toDataURL() + '">' : '🍜'; }
     else ic = '<i>' + ic + '</i>';
-    return '<div class="gchip' + (i.rem === 0 ? ' ok' : '') + '">' + ic + '<b>' + i.txt + '</b></div>';
+    return '<div class="gchip' + (i.rem === 0 ? ' ok' : '') + '"' + (g.t === 'collect' ? ' data-ty="' + g.type + '"' : '') + '>' + ic + '<b>' + i.txt + '</b></div>';
+  },
+  /** Món ăn trúng mục tiêu: bay từ ô lên chip mục tiêu, tới nơi chip nảy lên và hiện "-n". */
+  flyGoals(g, cells) {
+    try {
+      const R = g.renderer, rc = R.cv.getBoundingClientRect(), by = {};
+      cells.forEach(p => { const gm = g.grid.cells[p.r][p.c]; if (gm && gm.type >= 0 && (g.goals || []).some(x => x.t === 'collect' && x.type === gm.type)) (by[gm.type] = by[gm.type] || []).push(p); });
+      let delay = 0;
+      Object.keys(by).forEach(ty => {
+        const chip = document.querySelector('#goalChips .gchip[data-ty="' + ty + '"]'); if (!chip) return;
+        g._flyPend = g._flyPend || {}; g._flyPend[ty] = (g._flyPend[ty] || 0) + by[ty].length;
+        const sp = R.sprites[ty + '|'], src = sp ? sp.toDataURL() : null, cr = chip.getBoundingClientRect(), n = by[ty].length;
+        const tx = cr.left + cr.width / 2, ty2 = cr.top + cr.height / 2;
+        by[ty].slice(0, 8).forEach((p, i) => {
+          const sx = rc.left + R.cellX(p.c), sy = rc.top + R.cellY(p.r), d = delay + i * 45;
+          const el = document.createElement(src ? 'img' : 'div'); if (src) el.src = src; else el.textContent = '🍜';
+          el.style.cssText = 'position:fixed;left:0;top:0;width:34px;height:34px;margin:-17px 0 0 -17px;z-index:60;pointer-events:none;font-size:28px;will-change:transform,opacity';
+          document.body.appendChild(el);
+          const a = el.animate([
+            { transform: 'translate(' + sx + 'px,' + sy + 'px) scale(1.15)', opacity: 1 },
+            { transform: 'translate(' + (sx + (tx - sx) * .35) + 'px,' + (sy + (ty2 - sy) * .35 - 40) + 'px) scale(1.25)', opacity: 1, offset: .35 },
+            { transform: 'translate(' + tx + 'px,' + ty2 + 'px) scale(.45)', opacity: .9 }
+          ], { duration: 650, delay: d, easing: 'cubic-bezier(.3,.1,.4,1)', fill: 'both' });
+          a.onfinish = () => el.remove();
+        });
+        const last = delay + Math.min(8, n - 1) * 45 + 650;
+        setTimeout(() => {
+          const c = document.querySelector('#goalChips .gchip[data-ty="' + ty + '"]'); if (!c) { g._flyPend[ty] = 0; return; }
+          g._flyPend[ty] = Math.max(0, (g._flyPend[ty] || 0) - n); UI.goals(g);
+          const c2 = document.querySelector('#goalChips .gchip[data-ty="' + ty + '"]') || c;
+          const r = c2.getBoundingClientRect(), t = document.createElement('div'); t.textContent = '-' + n;
+          t.style.cssText = 'position:fixed;left:' + (r.left + r.width / 2) + 'px;top:' + (r.bottom + 2) + 'px;transform:translateX(-50%);z-index:61;pointer-events:none;font:900 20px system-ui,sans-serif;color:#fff;text-shadow:0 0 4px #e8423a,0 2px 0 #b3261e';
+          document.body.appendChild(t);
+          t.animate([{ opacity: 1, transform: 'translate(-50%,0)' }, { opacity: 0, transform: 'translate(-50%,22px)' }], { duration: 700, easing: 'ease-out' }).onfinish = () => t.remove();
+        }, last);
+        delay += 60;
+      });
+    } catch (e) {}
   },
   goals(g) {
     const box = $('#goalChips'); if (!box) return;
@@ -4262,11 +4332,24 @@ const Meta = {
   },
 
   /* ----------------------------- KHO NGUYÊN LIỆU ----------------------------- */
-  pantryDay(sv) { const t = Daily.today(); if (!sv.pantry || sv.pantry.day !== t) sv.pantry = { day: t, bought: {}, bonus: {} }; if (!sv.pantry.bonus) sv.pantry.bonus = {}; return sv.pantry; },
+  pantryDay(sv) { const t = Daily.today(); if (!sv.pantry || sv.pantry.day !== t) sv.pantry = { day: t, bought: {}, bonus: {}, vid: {} }; if (!sv.pantry.bonus) sv.pantry.bonus = {}; return sv.pantry; },
   pantryLeft(sv) { const p = this.pantryDay(sv); return CONFIG.ITEM_DEFS.reduce((s, d) => s + Math.max(0, CONFIG.PANTRY_DAILY_MAX + (p.bonus[d.id] || 0) - (p.bought[d.id] || 0)), 0); },
+  /* ------------------------------- CỬA HÀNG ------------------------------- */
+  storeInfo(sv) {
+    const left = this.pantryLeft(sv);
+    return { left };
+  },
+  openStore(game) { this.open = 'store'; UI.show('storeHub'); this.renderStore(game); },
+  closeStore(game) { this.open = null; UI.hide('storeHub'); UI.hud(game); },
+  renderStore(game) {
+    const sv = game.save, i = this.storeInfo(sv);
+    $('#storeCoins').textContent = sv.coins;
+    $('#pantryTag').textContent = i.left > 0 ? 'Còn ' + i.left + ' lượt' : 'Hết lượt';
+  },
   openPantry(game) { this.open = 'pantry'; UI.show('pantry'); this.renderPantry(game); },
-  closePantry(game) { this.open = 'shop'; UI.hide('pantry'); this.renderShop(game); },
+  closePantry(game) { this.open = 'store'; UI.hide('pantry'); this.renderStore(game); },
   renderPantry(game) {
+    const VID_MAX = 3;
     const sv = game.save, p = this.pantryDay(sv);
     $('#pantryCoins').textContent = sv.coins;
     const list = $('#pantryList'); list.innerHTML = '';
@@ -4287,7 +4370,18 @@ const Meta = {
         if (sv.coins < price) return UI.toast('Chưa đủ xu — hãy chơi thêm hoặc thu doanh thu quán');
         sv.coins -= price; sv.items[k] = (sv.items[k] || 0) + 1; p.bought[k] = bought + 1; Store.save(sv); Sfx.match(2); this.renderPantry(game);
       };
-      card.appendChild(b); list.appendChild(card);
+      // Xem video để nhận miễn phí 1 món (không tốn xu), tối đa VID_MAX lần/ngày cho mỗi loại
+      p.vid = p.vid || {}; const vleft = VID_MAX - (p.vid[k] || 0);
+      const v = document.createElement('button');
+      v.className = 'btn video'; v.disabled = vleft <= 0;
+      v.innerHTML = vleft > 0 ? '▶ Miễn phí<br><small>xem video (' + vleft + '/' + VID_MAX + ')</small>' : 'Hết video<br><small>hôm nay</small>';
+      v.onclick = () => showRewardedAd(ok => {
+        if (!ok) return UI.toast('Cần xem hết video để nhận miễn phí');
+        p.vid[k] = (p.vid[k] || 0) + 1; sv.items[k] = (sv.items[k] || 0) + 1; Store.save(sv); Sfx.match(3);
+        UI.toast('Nhận miễn phí 1 ' + d.name + '!'); this.renderPantry(game);
+      });
+      const col = document.createElement('div'); col.className = 'pbtns'; col.appendChild(b); col.appendChild(v);
+      card.appendChild(col); list.appendChild(card);
     });
   },
 
@@ -4325,7 +4419,7 @@ const Meta = {
 
   /* ------------------------------- ĐỒNG ĐỘI ------------------------------- */
   openTeam(game) { this.open = 'team'; UI.show('team-panel'); this.renderTeam(game); },
-  closeTeam(game) { this.open = null; UI.hide('team-panel'); UI.hud(game); UI.team(game); },
+  closeTeam(game) { this.open = 'store'; UI.hide('team-panel'); UI.hud(game); UI.team(game); if ($('#storeHub').classList.contains('show')) this.renderStore(game); },
 
   renderTeam(game) {
     const sv = game.save, list = $('#teamList'); list.innerHTML = '';
@@ -4812,6 +4906,7 @@ class Game {
   }
 
   async startLevel(n, skipIntro = false) {
+    this._flyPend = {};
     this.settleRun();
     if (!Lives.has()) {                               // hết tim: chặn vào màn, mở bảng mua/chờ tim
       this.token++; Tween.clear(); this.state = 'menu';
@@ -5024,6 +5119,7 @@ class Game {
       this.countOrder(cells, g);
       this.juice(combo, first ? eff : null, clr, cells);
       if (combo >= 4) this.giftItem('combo'); else if (first && eff && eff.kind && eff.kind.startsWith('rainbow')) this.giftItem('rainbow');
+      UI.flyGoals(this, cells);
       cells.forEach(p => { const gm = g.cells[p.r][p.c]; if (gm && gm.type >= 0) this.collected[gm.type] = (this.collected[gm.type] || 0) + 1; });
       { const oh = g.obstacleHits(cells, clr.blockHits); this._potKilled = (this._potKilled || 0) + oh.potKilled; this.obstacleFx(oh); }
       UI.hud(this);
@@ -5765,7 +5861,9 @@ window.addEventListener('DOMContentLoaded', async () => {
   $('#btnIntroBack').onclick = () => game.goMenu();
   $('#btnIntroVideo').onclick = () => showRewardedAd(ok => { if (!ok) return UI.toast('Cần xem hết video để nhận +3 lượt'); game.introBoost = true; $('#btnIntroVideo').classList.add('hidden'); UI.toast('+3 lượt khi bắt đầu!'); });
   $('#btnShopMenu').onclick = () => { Sfx.unlock(); Meta.openShop(game); };
+  $('#btnStoreMenu').onclick = () => { Sfx.unlock(); Meta.openStore(game); };
   $('#btnTeamMenu').onclick = () => { Sfx.unlock(); Meta.openTeam(game); };
+  $('#btnStoreBack').onclick = () => Meta.closeStore(game);
 
   // Vòng quay / điểm danh
   $('#btnWheelMenu').onclick = () => { Sfx.unlock(); Wheel.open(game); };
