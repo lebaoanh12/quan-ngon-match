@@ -823,6 +823,10 @@ body::before { opacity: .12; inset: 0; animation: none !important; mask-image: n
 .phead { color: #fff3d0; text-shadow: 0 1px 2px rgba(0,0,0,.6); } .phead .pills, .phead .pills b { color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.6); }
 .evline, .rankline { position: relative; z-index: 1; display: block; margin: 10px 0 8px; } #btnDouble { margin-bottom: 6px; }
 
+/* thông báo dài tự xuống dòng, không tràn màn hình */
+#toast { width: max-content; max-width: calc(100% - 24px); white-space: normal; text-align: center; line-height: 1.35; box-sizing: border-box; overflow-wrap: anywhere; z-index: 200; }
+#toast { border-radius: 18px; }
+
 </style>
 </head>
 <body>
