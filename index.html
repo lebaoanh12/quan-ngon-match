@@ -752,6 +752,7 @@ body::before { opacity: .12; inset: 0; animation: none !important; mask-image: n
 .lmbar { color: #ffe9b8; text-shadow: 0 1px 2px rgba(0,0,0,.5); background: linear-gradient(180deg, rgba(120,10,30,.95), rgba(120,10,30,0)); }
 .lmbar .pills b { color: #ffe27a; }
 @media (max-height: 740px) { #menu .lanterns { display: none; } .card.menu { padding-top: 34px; } .mgrid .btn { height: 80px; } .mgrid .btn i { font-size: 28px; line-height: 30px; } .card.menu .btn.primary { padding: 14px 10px; font-size: 24px; } }
+#team { margin: 4px 0 10px; }
 
 </style>
 </head>
@@ -804,7 +805,7 @@ body::before { opacity: .12; inset: 0; animation: none !important; mask-image: n
     <button class="item" data-item="sweep"><i>🌪️</i><span>Lốc xoáy</span><em id="cnt-sweep">0</em></button>
     <button class="item" data-item="moves"><i>➕</i><span>+5 lượt</span><em id="cnt-moves">1</em></button>
     <button class="item" data-item="fish"><i>🐟</i><span>Cá thần</span><em id="cnt-fish">1</em></button>
-    <button class="item" data-item="wand"><i>🪄</i><span>Đũa thần</span><em id="cnt-wand">1</em></button>
+    <button class="item" data-item="wand"><i>✨</i><span>Đũa thần</span><em id="cnt-wand">1</em></button>
     <button class="item pause" id="btnPause"><i>⏸</i><span>Tạm dừng</span></button>
   </footer>
 
@@ -1068,7 +1069,7 @@ const CONFIG = {
     { id: 'sweep', desc: 'Cuốn sạch toàn bộ màn hình', icon: '🌪️', name: 'Lốc xoáy', tip: '' },
     { id: 'moves', desc: 'Cộng thêm 5 lượt đi',   icon: '➕', name: '+5 lượt',  tip: '' },
     { id: 'fish', desc: '3 chú cá bay tới phá chướng ngại', icon: '🐟', name: 'Cá thần', tip: '' },
-    { id: 'wand', desc: 'Biến 4 món thành món đặc biệt',    icon: '🪄', name: 'Đũa thần', tip: '' }
+    { id: 'wand', desc: 'Biến 4 món thành món đặc biệt',    icon: '✨', name: 'Đũa thần', tip: '' }
   ],
   MOVES_ITEM: 5,
   GIFT_MAX_PER_LEVEL: 3,               // số quà vật phẩm tối đa nhận được trong 1 màn (từ combo/đơn VIP/món đặc biệt)
@@ -4319,7 +4320,7 @@ const Bg = {
 const Daily = {
   REWARDS: [
     { t: '💰 150',  coins: 150 }, { t: '🔨 +1', items: { hammer: 1 } }, { t: '🐟 +1', items: { fish: 1 } }, { t: '💰 300', coins: 300 },
-    { t: '🪄 +1', items: { wand: 1 } }, { t: '🌪️ +1', items: { sweep: 1 } }, { t: '🎁 Lớn', coins: 800, stars: 3, items: { fish: 1, wand: 1 } }
+    { t: '✨ +1', items: { wand: 1 } }, { t: '🌪️ +1', items: { sweep: 1 } }, { t: '🎁 Lớn', coins: 800, stars: 3, items: { fish: 1, wand: 1 } }
   ],
   fmt(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); },
   today() { return this.fmt(new Date()); },
@@ -5004,7 +5005,7 @@ class Game {
     g.cells.forEach((row, r) => row.forEach((x, c) => { if (x && !x.special && x.type >= 0 && !x.lock) normal.push(x); }));
     if (!normal.length) { this.state = 'idle'; return; }
     Sfx.special(); Voice.say('skill', 3);
-    R.floatText(R.size / 2, R.size * .4, '🪄 ĐŨA THẦN!', '#ff9ae6', 30);
+    R.floatText(R.size / 2, R.size * .4, '✨ ĐŨA THẦN!', '#ff9ae6', 30);
     const kinds = ['line_h', 'line_v', 'bomb', 'line_h'].sort(() => Math.random() - .5), picks = [];
     for (let i = 0; i < 4 && normal.length; i++) picks.push(normal.splice((Math.random() * normal.length) | 0, 1)[0]);
     picks.forEach((gem, i) => R.fly('✨', R.size / 2, R.H + R.cell, gem.x, gem.y, i * 110, 480, '#ff9ae6'));
