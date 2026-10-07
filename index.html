@@ -1017,7 +1017,6 @@ body::before { opacity: .12; inset: 0; animation: none !important; mask-image: n
       <p class="coinline" id="introStars" style="font-size:.85em"></p>
       <div id="introGoals" class="goalrow"></div>
       <div id="introTips"></div>
-      <div id="introBoost" class="boost"></div>
       <div id="introStreak" class="streak"></div>
       <button class="btn video" id="btnIntroVideo">▶ Xem video: +3 lượt</button>
       <button class="btn primary" id="btnStart">BẮT ĐẦU</button>
@@ -3576,7 +3575,7 @@ const UI = {
     $('#introTips').innerHTML = tips.map(k => { const t = Levels.TIPS[k]; return '<div class="tip"><i>' + t[0] + '</i><div><b>' + t[1] + '</b><span>' + t[2] + '</span></div></div>'; }).join('');
     tips.forEach(k => { sv.seen[k] = 1; }); if (tips.length) Store.save(sv);
     $('#btnIntroVideo').classList.remove('hidden');
-    UI.boosters(g); Streak.render(g);
+    Streak.render(g);
     UI.show('intro');
   },
   /** Chọn vật tăng cường trước màn (học Candy Crush): bấm để chọn, hết thì bấm dấu + xem video nhận 1 cái. */
