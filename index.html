@@ -771,6 +771,51 @@ body::before { opacity: .12; inset: 0; animation: none !important; mask-image: n
 .rk-mile { display: flex; align-items: center; justify-content: space-between; gap: 8px; background: rgba(255,255,255,.7); border-radius: 12px; padding: 8px 12px; margin: 5px 0; color: #5a3410; font-weight: 700; opacity: .7; } .rk-mile.ok { opacity: 1; background: #fff; } .rk-mile.done { opacity: .5; } .rk-mile .btn { margin: 0; padding: 6px 14px; font-size: 14px; width: auto; }
 .lmflag { position: absolute; transform: translate(-50%,-50%); display: flex; flex-direction: column; align-items: center; pointer-events: none; z-index: 3; } .lmflag b { background: #fff; color: #5a3410; border-radius: 8px; padding: 1px 6px; font-size: 11px; box-shadow: 0 1px 3px #0004; } .lmflag i { font-style: normal; font-size: 20px; background: #5b8def; border-radius: 50%; width: 26px; height: 26px; display: grid; place-items: center; border: 2px solid #fff; }
 
+/* === Bản đồ chọn màn 2.0: chương, cổng chào, đường rộng, hộp quà, biểu tượng chướng ngại === */
+.lmband { position: absolute; left: 0; right: 0; pointer-events: none; } .lmband.far { filter: saturate(.55) brightness(.8); }
+.lmgate { position: absolute; transform: translateY(-50%); display: flex; align-items: center; gap: 8px; padding: 6px 14px; z-index: 1; pointer-events: none; white-space: nowrap; color: #7a2a0c;
+  background: linear-gradient(180deg, #ffe9a8, #f5b942); box-shadow: 0 3px 0 #8a4b00, 0 0 0 2px #fff3c4, 0 6px 10px rgba(0,0,0,.35); }
+.lmgate.left { left: 0; border-radius: 0 18px 18px 0; } .lmgate.right { right: 0; border-radius: 18px 0 0 18px; flex-direction: row-reverse; }
+.lmgate i { font-style: normal; font-size: 22px; } .lmgate small { display: block; font-size: 10px; letter-spacing: 2px; font-weight: 800; opacity: .75; } .lmgate b { display: block; font-size: 14px; }
+.lmgate.far { filter: grayscale(.5) brightness(.85); }
+.lmsvg { position: absolute; left: 0; top: 0; pointer-events: none; }
+.lmpath .p0 { stroke: rgba(40,6,40,.55); stroke-width: 46; } .lmpath .p1 { stroke: #8b4a2b; stroke-width: 38; } .lmpath .p3 { stroke: #ffeec0; stroke-width: 30; }
+.lmpath .pg { stroke: #ffc83a; stroke-width: 30; opacity: .95; filter: drop-shadow(0 0 8px rgba(255,200,60,.9)); }
+.lmpath .p2 { stroke: #b4561c; stroke-width: 4; stroke-dasharray: 1 16; }
+.lmdeco.sway { animation: lmfloat 6s ease-in-out infinite; } .lmdeco:not(.sway) { animation: none; opacity: .7; }
+.lmnode .crown { position: absolute; left: 50%; top: -24px; transform: translateX(-50%); font-size: 24px; text-decoration: none; filter: drop-shadow(0 2px 2px rgba(0,0,0,.5)); animation: bob 1.8s ease-in-out infinite; }
+.lmnode.boss:not(.locked) { box-shadow: 0 6px 0 #6b3a00, 0 0 0 5px #ffe27a, 0 0 22px 6px rgba(255,210,60,.8); }
+.lmnode .obs { position: absolute; left: -14px; top: -10px; display: flex; gap: 0; text-decoration: none; background: #fff; border-radius: 999px; padding: 1px 4px; font-size: 14px; line-height: 18px; box-shadow: 0 2px 4px rgba(0,0,0,.4); }
+.lmnode.locked .obs { opacity: .75; }
+.lmgift { position: absolute; width: 44px; height: 44px; margin: -22px 0 0 -22px; border: 0; border-radius: 50%; font-size: 26px; z-index: 3; cursor: pointer; background: radial-gradient(circle, #fff 0, #ffe9a8 60%, rgba(255,233,168,0) 72%); padding: 0; }
+.lmgift.lock { filter: grayscale(.9) brightness(.85); } .lmgift.done { font-size: 18px; font-weight: 900; color: #0b7a3a; opacity: .8; filter: none; }
+.lmgift.ready { animation: chestbounce .8s ease-in-out infinite; box-shadow: 0 0 22px 8px rgba(255,235,120,.95); }
+
+.lmbar b#lmTitle { white-space: nowrap; font-size: 15px; } .lmgift.lock { filter: saturate(.6) brightness(.9); opacity: .9; }
+
+/* --- bản đồ sáng, nhiều màu (ghi đè bản tối) --- */
+#levels { background: #bfe9ff; }
+.lmbar { color: #7a2a0c; text-shadow: 0 1px 0 rgba(255,255,255,.8); background: linear-gradient(180deg, rgba(255,255,255,.95), rgba(255,255,255,0)); }
+.lmbar .pills b { color: #e8452c; } .lmbar b#lmTitle { color: #7a2a0c; }
+.lmband.far { filter: none; opacity: .9; }
+.lmhill { position: absolute; left: -25%; width: 150%; height: 140px; border-radius: 50% 50% 0 0 / 100% 100% 0 0; opacity: .55; pointer-events: none; } .lmhill.h2 { left: -45%; width: 120%; opacity: .4; }
+.lmcloud { position: absolute; opacity: .85; pointer-events: none; filter: drop-shadow(0 4px 4px rgba(60,100,160,.25)); }
+.lmdeco { opacity: 1 !important; filter: drop-shadow(0 4px 3px rgba(80,50,20,.3)); }
+.lmpath .p0 { stroke: rgba(255,255,255,.7); stroke-width: 50; } .lmpath .p1 { stroke: #b87333; stroke-width: 40; } .lmpath .p3 { stroke: #fff6dc; stroke-width: 32; }
+.lmpath .pg { stroke: #ffd24a; stroke-width: 32; filter: drop-shadow(0 0 6px rgba(255,170,0,.9)); } .lmpath .p2 { stroke: #fff; stroke-width: 4; stroke-dasharray: 1 16; opacity: .9; }
+.lmnode.locked { background: radial-gradient(circle at 35% 28%, #f4eefc, #cdbfe6 60%, #a898c8); box-shadow: 0 5px 0 #7d6ea3, 0 0 0 4px rgba(255,255,255,.9); color: #6a5a8c; }
+.lmgate { background: linear-gradient(180deg, #fff, #ffe7a8); color: #b02a10; box-shadow: 0 3px 0 #c98a1a, 0 0 0 2px #fff, 0 6px 10px rgba(60,40,0,.25); }
+.lmflag b { color: #7a2a0c; }
+.lmgate.far { filter: none; opacity: .92; } .lmhill { opacity: .4; } .lmhill.h2 { opacity: .3; }
+
+.lmhill.h3 { left: -30%; width: 140%; opacity: .55; }
+.lmcloud2 { position: absolute; width: 96px; height: 34px; border-radius: 40px; background: #fff; opacity: .95; pointer-events: none; animation: cloudmove 14s ease-in-out infinite alternate; filter: drop-shadow(0 4px 3px rgba(20,120,110,.25)); }
+.lmcloud2::before, .lmcloud2::after { content: ""; position: absolute; background: #fff; border-radius: 50%; }
+.lmcloud2::before { width: 46px; height: 46px; left: 14px; top: -22px; } .lmcloud2::after { width: 34px; height: 34px; left: 48px; top: -14px; }
+.lmcloud2.sm { transform: scale(.7); }
+@keyframes cloudmove { to { margin-left: 26px; } }
+.lmdeco.sway { animation: lmfloat 6s ease-in-out infinite; }
+
 </style>
 </head>
 <body>
@@ -928,7 +973,7 @@ body::before { opacity: .12; inset: 0; animation: none !important; mask-image: n
   </section>
 
   <section class="overlay full" id="levels">
-    <div class="lmbar"><button class="back" id="btnLevelsBack">‹ Quay lại</button><b>Bản đồ món ngon</b><span class="pills">★ <b id="lmStars">0</b></span></div>
+    <div class="lmbar"><button class="back" id="btnLevelsBack">‹ Quay lại</button><b id="lmTitle">Bản đồ món ngon</b><span class="pills">★ <b id="lmStars">0</b></span></div>
     <div id="levelScroll"><div id="levelMap"></div></div>
   </section>
 
@@ -4533,6 +4578,136 @@ const Social = {
       });
     } catch (e) {}
   }
+};
+
+</script>
+<script>
+'use strict';
+/* ==========================================================================
+ * worldmap.js — BẢN ĐỒ CHỌN MÀN MỚI (ghi đè UI.levels):
+ *  - chia CHƯƠNG theo vùng miền (10 màn/chương), mỗi chương một sắc màu + cổng chào + trang trí riêng
+ *  - đường rộng có viền, phần đã đi sáng vàng, có vạch bước chân
+ *  - mỗi màn hiện biểu tượng CHƯỚNG NGẠI VẬT (băng, thùng, dây, dừa, nồi, bom, băng chuyền, xe đẩy)
+ *  - HỘP QUÀ nằm trên đường (qua màn kế tiếp là bấm nhận), rương mỗi 5 màn, màn thứ 10 của chương là "BOSS" 👑
+ *  - cờ tên người chơi khác (từ bảng xếp hạng)
+ * ========================================================================== */
+const WorldMap = {
+  CH: 10,
+  THEMES: [
+    { name: 'Phố cổ Hà Nội', sh: 'Hà Nội', ic: '🏮', top: '#d4f7e6', bot: '#7fe0b8', hill: '#2fbf8a', deco: ['🏮', '⛵', '🛵', '🌴', '🥥'] },
+    { name: 'Hội An lồng đèn', sh: 'Hội An', ic: '⛵', top: '#c9f5ec', bot: '#6fdcd0', hill: '#1fb5a8', deco: ['⛵', '🌴', '🏮', '🥥', '🛵'] },
+    { name: 'Sài Gòn nhộn nhịp', sh: 'Sài Gòn', ic: '🛵', top: '#d9f8d0', bot: '#8fe3a0', hill: '#35b56a', deco: ['🛵', '🏮', '🌴', '⛵', '🥥'] },
+    { name: 'Đà Lạt sương mờ', sh: 'Đà Lạt', ic: '🌲', top: '#ccf4f2', bot: '#7edad2', hill: '#2aa9a0', deco: ['🌴', '🥥', '⛵', '🛵', '🏮'] },
+    { name: 'Cố đô Huế', sh: 'Huế', ic: '🏯', top: '#d6f6dc', bot: '#86dca4', hill: '#2fae78', deco: ['🏮', '🌴', '🥥', '⛵', '🛵'] },
+    { name: 'Miền Tây sông nước', sh: 'Miền Tây', ic: '🥥', top: '#c4f3ea', bot: '#69d6c4', hill: '#18a897', deco: ['⛵', '🛵', '🥥', '🏮', '🌴'] }
+  ],
+  OBST: ['ice', 'crate', 'rope', 'drop', 'pot', 'cart', 'timer', 'belt'],
+  theme(n) { return this.THEMES[(((n - 1) / this.CH) | 0) % this.THEMES.length]; },
+  chapter(n) { return ((n - 1) / this.CH | 0) + 1; },
+  /** Quà trên đường: nằm giữa màn n và n+1 (n%5==2). */
+  giftReward(n) {
+    const k = (n / 5) | 0, items = ['hammer', 'swap', 'sweep', 'fish'], it = items[k % items.length];
+    return k % 2 ? { coins: 60 + n * 3, item: it, cnt: 1, t: '💰 ' + (60 + n * 3) + ' + ' + { hammer: '🔨', swap: '🔀', sweep: '🌪️', fish: '🐟' }[it] } : { coins: 80 + n * 4, t: '💰 ' + (80 + n * 4) };
+  },
+  badges(n) {
+    const out = [], d = Levels.get(n), set = {};
+    (d.goals || []).forEach(g => { if (this.OBST.includes(g.t)) set[g.t] = 1; });
+    (d.map || []).join('').split('').forEach(ch => { if (ch === 'i' || ch === 'I') set.ice = 1; if (ch === '#' || ch === '=') set.crate = 1; if (ch === 'r') set.rope = 1; if (ch === 'D') set.drop = 1; });
+    this.OBST.forEach(k => { if (set[k] && out.length < 2 && Levels.TIPS[k]) out.push(Levels.TIPS[k][0]); });
+    return out;
+  },
+  build(g) {
+    const sv = g.save, cur = sv.level, total = Math.max(Levels.count(), cur) + 12, STEP = 100, TOP = 150, BOT = 120;
+    const box = $('#levelMap'), H = TOP + BOT + (total - 1) * STEP, W = Math.min(520, innerWidth);
+    const pos = n => ({ x: W * (.5 + .26 * Math.sin(n * .95) + .06 * Math.sin(n * .37)), y: H - BOT - (n - 1) * STEP });
+    box.style.height = H + 'px'; box.innerHTML = '';
+    sv.gifts = sv.gifts || {};
+    const frag = document.createDocumentFragment(), add = e => { frag.appendChild(e); return e; };
+    const mk = (tag, cls, html, st) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; if (st) Object.assign(e.style, st); return e; };
+
+    // ----- dải màu theo chương + cổng chào -----
+    const nCh = ((total - 1) / this.CH | 0) + 1;
+    for (let c = 1; c <= nCh; c++) {
+      const a = (c - 1) * this.CH + 1, b = Math.min(total, c * this.CH), th = this.theme(a);
+      const yTop = pos(b).y - STEP * .5, yBot = pos(a).y + STEP * .5;
+      const reached = a <= cur;
+      add(mk('div', 'lmband' + (reached ? '' : ' far'), '', { top: yTop + 'px', height: (yBot - yTop) + 'px', background: 'linear-gradient(180deg,' + th.top + ',' + th.bot + ')' }));
+      // đồi + mây tạo chiều sâu: đồi nằm ở chân chương, phủ lên phần đầu chương trước
+      add(mk('div', 'lmhill h1', '', { top: (yBot - 70) + 'px', background: th.hill }));
+      add(mk('div', 'lmhill h2', '', { top: (yBot - 46) + 'px', background: th.hill }));
+      add(mk('div', 'lmhill h3', '', { top: (yBot - 24) + 'px', background: th.hill }));
+      for (let k = 0; k < 4; k++) add(mk('div', 'lmcloud2' + (k % 2 ? ' sm' : ''), '', { top: (yTop + 40 + k * 215) + 'px', left: ((k * 37 + c * 23) % 70 + 2) + '%', animationDelay: (-k * 3) + 's' }));
+      // biển chương ở ranh giới giữa 2 chương, dạt sang phía không có đường để không đè lên nút
+      const qa = pos(a), side = qa.x > W / 2 ? 'left' : 'right';
+      add(mk('div', 'lmgate ' + side + (reached ? '' : ' far'), '<i>' + th.ic + '</i><div><small>CHƯƠNG ' + c + '</small><b>' + th.name + '</b></div>', { top: (qa.y + STEP * .5) + 'px' }));
+      // trang trí theo chủ đề (tĩnh; chỉ vài cái lắc nhẹ cho đỡ nặng máy)
+      for (let k = 0; k < 9; k++) {
+        const yy = pos(b).y + (k + .5) * ((yBot - yTop) / 9) - STEP * .2, left = k % 2 ? 4 + ((k * 13) % 14) : 82 - ((k * 11) % 12);
+        add(mk('span', 'lmdeco' + (k % 3 === 0 ? ' sway' : ''), th.deco[(k + c) % th.deco.length], { left: left + '%', top: yy + 'px', fontSize: (46 + (k * 7) % 22) + 'px', animationDelay: (-(k % 5)) + 's' }));
+      }
+    }
+
+    // ----- đường: viền tối, mặt đường kem, phần đã đi sáng vàng, vạch bước chân -----
+    const pts = []; for (let n = 1; n <= total; n++) pts.push(pos(n));
+    const dOf = upto => { let o = 'M' + pts[0].x.toFixed(1) + ' ' + pts[0].y.toFixed(1); for (let i = 1; i < upto; i++) { const a = pts[i - 1], b = pts[i], my = (a.y + b.y) / 2; o += ` C ${a.x.toFixed(1)} ${my.toFixed(1)}, ${b.x.toFixed(1)} ${my.toFixed(1)}, ${b.x.toFixed(1)} ${b.y.toFixed(1)}`; } return o; };
+    const dd = dOf(total), dc = dOf(Math.max(2, Math.min(total, cur)));
+    const svg = mk('div', 'lmsvg', '<svg class="lmpath" width="' + W + '" height="' + H + '"><path d="' + dd + '" class="p0"/><path d="' + dd + '" class="p1"/><path d="' + dd + '" class="p3"/><path d="' + dc + '" class="pg"/><path d="' + dd + '" class="p2"/></svg>');
+    add(svg);
+
+    // ----- hộp quà trên đường -----
+    for (let n = 2; n < total - 1; n += 5) {
+      const a = pts[n - 1], b = pts[n], mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+      const claimed = sv.gifts[n], ready = !claimed && ((sv.levelStars[n + 1] || 0) > 0 || cur > n + 1);
+      const e = mk('button', 'lmgift ' + (claimed ? 'done' : ready ? 'ready' : 'lock'), claimed ? '✔' : '🎁', { left: mx + 'px', top: my + 'px' });
+      e.onclick = () => {
+        if (sv.gifts[n]) return UI.toast('Bạn đã nhận quà này rồi', 1400);
+        if (!ready) return UI.toast('🎁 Qua màn ' + (n + 1) + ' để mở quà trên đường', 2000);
+        const r = this.giftReward(n); sv.gifts[n] = 1; sv.coins += r.coins; if (r.item) sv.items[r.item] = (sv.items[r.item] || 0) + r.cnt;
+        Store.save(sv); UI.hud(g); Sfx.coin && Sfx.coin();
+        UI.toast('🎁 Quà trên đường: ' + r.t, 2600); e.className = 'lmgift done'; e.textContent = '✔';
+        try { const q = Fx.at(e); Fx.levelUp(q.x, q.y, '#ffd24a'); } catch (x) {}
+      };
+      add(e);
+    }
+
+    // ----- các nút màn -----
+    for (let n = 1; n <= total; n++) {
+      const q = pts[n - 1], st = sv.levelStars[n] || 0, locked = n > cur, boss = n % this.CH === 0, th = this.theme(n);
+      const b = mk('button', 'lmnode' + (locked ? ' locked' : '') + (n === cur ? ' cur' : '') + (boss ? ' big boss' : '') + (st === 3 ? ' gold' : ''), '', { left: q.x + 'px', top: q.y + 'px' });
+      b.innerHTML = '<b>' + (locked ? '🔒' : n) + '</b>' + (locked ? '' : '<span class="lms">' + [0, 1, 2].map(i => '<i class="' + (i < st ? 'on' : '') + '">★</i>').join('') + '</span>')
+        + (boss ? '<u class="crown">👑</u>' : '');
+      if (n >= 3 && (!locked || n <= cur + 3)) { const bd = this.badges(n); if (bd.length) b.insertAdjacentHTML('beforeend', '<s class="obs">' + bd.join('') + '</s>'); }
+      if (!locked) b.onclick = () => { UI.hide('levels'); Sfx.unlock(); g.startLevel(n); };
+      else b.onclick = () => UI.toast('🔒 Hãy qua màn ' + (n - 1) + ' trước nhé', 1600);
+      add(b);
+    }
+
+    // ----- rương thưởng mỗi 5 màn -----
+    for (let n = 5; n <= total; n += 5) {
+      const q2 = pts[n - 1], claimed = sv.chests[n], ready = !claimed && (sv.levelStars[n] || 0) > 0;
+      const c = mk('button', 'lmchest t' + Vault.tierForLevel(n) + ' ' + (claimed ? 'done' : ready ? 'ready' : 'lock'), '', { left: (q2.x + (q2.x > W / 2 ? -70 : 70)) + 'px', top: q2.y + 'px' });
+      c.appendChild(Vault.chestCanvas(Vault.tierForLevel(n), 54, claimed ? 1 : 0)); if (claimed) c.insertAdjacentHTML('beforeend', '<u>✔</u>'); c.onclick = () => UI.chest(g, n);
+      add(c);
+    }
+
+    // ----- nhân vật đồng đội đứng ở màn hiện tại -----
+    const av = mk('canvas', 'lmavatar'); av.width = av.height = 96;
+    const q = pts[Math.min(cur, total) - 1], ch = sv.chars.sel; av.style.left = q.x + 'px'; av.style.top = (q.y - 66) + 'px';
+    try { Chars.draw(av.getContext('2d'), ch, 48, 50, 40, 0, true); } catch (e) {}
+    add(av);
+    box.appendChild(frag);
+    return { box, pos: n => pts[Math.min(n, total) - 1], total, q };
+  }
+};
+
+UI.levels = function (g) {
+  const m = WorldMap.build(g), sv = g.save;
+  const th = WorldMap.theme(sv.level), c = WorldMap.chapter(sv.level);
+  const t = $('#lmTitle'); if (t) t.textContent = 'Chương ' + c + ' · ' + th.sh;
+  $('#lmStars').textContent = Object.values(sv.levelStars).reduce((a, b) => a + b, 0);
+  UI.show('levels');
+  Social.mapFlags(g, m.box, n => n <= m.total ? m.pos(n) : { x: -999, y: -999 });
+  const sc = $('#levelScroll'); sc.scrollTop = Math.max(0, m.q.y - sc.clientHeight * .6);
 };
 
 </script>
