@@ -754,6 +754,23 @@ body::before { opacity: .12; inset: 0; animation: none !important; mask-image: n
 @media (max-height: 740px) { #menu .lanterns { display: none; } .card.menu { padding-top: 34px; } .mgrid .btn { height: 80px; } .mgrid .btn i { font-size: 28px; line-height: 30px; } .card.menu .btn.primary { padding: 14px 10px; font-size: 24px; } }
 #team { margin: 4px 0 10px; }
 
+/* === Xếp hạng / sự kiện cuối tuần === */
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 6px 0; } .row2 .btn { margin: 0; padding: 12px 4px; font-size: 15px; }
+.evline { margin: 4px 0; font-weight: 800; color: #c2410c; font-size: 14px; } .rankline { margin: 2px 0 8px; font-weight: 800; color: #7a4a12; font-size: 14px; }
+.evbanner { display: block; width: 100%; margin: 8px 0 2px; padding: 9px 10px; border: 0; border-radius: 14px; font: 800 13px/1.25 inherit; color: #fff; background: linear-gradient(90deg,#f97316,#e11d48); box-shadow: 0 3px 0 #9f1239; } .evbanner[hidden] { display: none; } .evbanner.ready { animation: evp 1.2s ease-in-out infinite; }
+@keyframes evp { 50% { transform: scale(1.04); } }
+.mgrid .mtile:last-child:nth-child(3n+1) { grid-column: 1 / -1; height: 66px; flex-direction: row; gap: 10px; }
+#rankPage { background: linear-gradient(180deg, #ffb74d 0%, #ff7a59 14%, #e0407f 40%, #7b2a8c 75%, #3a1466 100%); flex-direction: column; flex-wrap: nowrap; overflow-y: auto; justify-content: flex-start; }
+#rankPage > * { width: 100%; max-width: 520px; margin-left: auto; margin-right: auto; flex: none; box-sizing: border-box; }
+.rtabs { display: flex; gap: 8px; padding: 10px 14px 4px; } .rtabs button { flex: 1; padding: 10px; border: 0; border-radius: 14px; font: 800 15px inherit; background: #fff; color: #7a4a12; } .rtabs button.on { background: #e8452c; color: #fff; }
+#rankMine { padding: 6px 14px; } .rk-me { background: #fff; border-radius: 14px; padding: 10px 14px; font-weight: 700; color: #7a4a12; text-align: center; }
+#rankList { padding: 4px 14px; } .rk-empty { text-align: center; color: #fff; padding: 24px 10px; font-weight: 700; }
+.rk-row { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,.85); border-radius: 12px; padding: 9px 12px; margin: 5px 0; color: #5a3410; font-weight: 700; } .rk-row.me { background: #ffe27a; outline: 2px solid #e8452c; }
+.rk-n { width: 30px; text-align: center; font-size: 18px; } .rk-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .rk-lv { font-size: 12px; opacity: .7; } .rk-sc { min-width: 52px; text-align: right; }
+#rankMiles { padding: 6px 14px 24px; } .rk-mh { font-weight: 800; color: #fff; margin: 8px 2px; }
+.rk-mile { display: flex; align-items: center; justify-content: space-between; gap: 8px; background: rgba(255,255,255,.7); border-radius: 12px; padding: 8px 12px; margin: 5px 0; color: #5a3410; font-weight: 700; opacity: .7; } .rk-mile.ok { opacity: 1; background: #fff; } .rk-mile.done { opacity: .5; } .rk-mile .btn { margin: 0; padding: 6px 14px; font-size: 14px; width: auto; }
+.lmflag { position: absolute; transform: translate(-50%,-50%); display: flex; flex-direction: column; align-items: center; pointer-events: none; z-index: 3; } .lmflag b { background: #fff; color: #5a3410; border-radius: 8px; padding: 1px 6px; font-size: 11px; box-shadow: 0 1px 3px #0004; } .lmflag i { font-style: normal; font-size: 20px; background: #5b8def; border-radius: 50%; width: 26px; height: 26px; display: grid; place-items: center; border: 2px solid #fff; }
+
 </style>
 </head>
 <body>
@@ -819,15 +836,16 @@ body::before { opacity: .12; inset: 0; animation: none !important; mask-image: n
       <div class="logo" id="logo"></div>
       <h1 class="logo"><span class="t1">VIET FOOD</span><span class="t2">MATCH PUZZLE</span></h1>
       <p class="sub">Xếp món ngon – Xây quán xịn</p>
-      <button class="btn primary" id="btnPlay">CHƠI – Màn <span id="menuLevel">1</span></button>
+      <button class="btn primary" id="btnPlay">CHƠI · Màn <span id="menuLevel">1</span></button>
       <div class="mgrid">
-        <button class="btn secondary mtile" id="btnLevelsMenu"><i>🗺️</i><span>Chọn màn</span></button>
         <button class="btn secondary mtile" id="btnShopMenu"><i>🏮</i><span>Quán</span><span class="badge" id="shopBadge"></span></button>
         <button class="btn secondary mtile vaultbtn" id="btnVaultMenu"><i>💎</i><span>Kho báu</span><span class="badge" id="vaultBadge"></span></button>
         <button class="btn secondary mtile" id="btnTeamMenu"><i>🐾</i><span>Đồng đội</span></button>
         <button class="btn secondary mtile" id="btnDailyMenu"><i>📅</i><span>Điểm danh</span><span class="badge hot" id="dailyBadge"></span></button>
         <button class="btn secondary mtile" id="btnWheelMenu"><i>🎡</i><span>Vòng quay</span><span class="badge hot" id="wheelBadge"></span></button>
+        <button class="btn secondary mtile" id="btnRankMenu"><i>🏆</i><span>Xếp hạng</span><span class="badge hot" id="rankBadge"></span></button>
       </div>
+      <button class="evbanner" id="evBanner" hidden>🎉 CUỐI TUẦN: XU x2! Bấm vào chơi màn Tiệc thưởng x3</button>
       <button class="btn ghost" id="btnAccount">👤 Tài khoản</button>
       <div class="sndrow icons"><button class="btn ghost" id="btnMusic" title="Nhạc">🎵</button><button class="btn ghost" id="btnSound" title="Tiếng">🔊</button><button class="btn ghost" id="btnVoice" title="Giọng nói">🗣️</button><button class="btn ghost" id="btnVib" title="Rung">📳</button><button class="btn ghost" id="btnNotify" title="Nhắc nhở">🔔</button></div>
       <button class="btn ghost danger" id="btnDelAcct">🗑 Xóa tài khoản</button>
@@ -851,7 +869,10 @@ body::before { opacity: .12; inset: 0; animation: none !important; mask-image: n
       <p class="big">Điểm: <b id="winScore">0</b></p>
       <p class="coinline">Thưởng: 💰 <b id="winCoins">0</b> &nbsp; ⭐ <b id="winStarGain">0</b></p>
       <button class="btn video" id="btnDouble">▶ Xem video: NHÂN ĐÔI vàng</button>
+      <p class="evline" id="winEvent" hidden></p>
+      <p class="rankline" id="winRank" hidden></p>
       <button class="btn secondary" id="btnBuild">🏮 Dùng sao xây quán</button>
+      <div class="row2"><button class="btn secondary" id="btnWinMap">🗺️ Chọn màn</button><button class="btn secondary" id="btnWinRank">🏆 Xếp hạng</button></div>
       <button class="btn primary" id="btnNext">Màn tiếp theo</button>
     </div>
   </section>
@@ -864,7 +885,7 @@ body::before { opacity: .12; inset: 0; animation: none !important; mask-image: n
       <p class="coinline">Điểm: <b id="loseScore">0</b><span id="loseTarget" hidden></span></p>
       <button class="btn video" id="btnRevive">▶ Xem video: +5 lượt</button>
       <button class="btn secondary" id="btnRetry">Chơi lại</button>
-      <button class="btn ghost" id="btnLoseMenu">Về Menu</button>
+      <div class="row2"><button class="btn secondary" id="btnLoseMap">🗺️ Chọn màn</button><button class="btn ghost" id="btnLoseMenu">Về Menu</button></div>
     </div>
   </section>
 
@@ -898,6 +919,14 @@ body::before { opacity: .12; inset: 0; animation: none !important; mask-image: n
   </section>
 
   <!-- CHỌN MÀN (bản đồ) -->
+  <section class="overlay full" id="rankPage">
+    <div class="lmbar"><button class="back" id="btnRankBack">‹ Quay lại</button><b>Đua điểm</b><span class="pills" id="rankClock"></span></div>
+    <div class="rtabs"><button id="rtWeek" class="on">Tuần này</button><button id="rtAll">Mọi thời đại</button></div>
+    <div id="rankMine"></div>
+    <div id="rankList"></div>
+    <div id="rankMiles"></div>
+  </section>
+
   <section class="overlay full" id="levels">
     <div class="lmbar"><button class="back" id="btnLevelsBack">‹ Quay lại</button><b>Bản đồ món ngon</b><span class="pills">★ <b id="lmStars">0</b></span></div>
     <div id="levelScroll"><div id="levelMap"></div></div>
@@ -1863,7 +1892,15 @@ const Levels = (() => {
     ropes8:     [E, '.r....r.', E, '...rr...', '...rr...', E, '.r....r.', E],
     drop2:      ['..D..D..', E, E, E, E, E, E, E],
     drop3:      ['.D..D..D', E, E, E, E, E, E, E],
-    drop4:      ['.D.DD.D.', E, E, E, E, E, E, E]
+    drop4:      ['.D.DD.D.', E, E, E, E, E, E, E],
+    // ---- mẫu mới (1.0.13): giúp các màn sinh tự động đa dạng hơn ----
+    iceZig:     [E, 'ii......', '..ii....', '....ii..', '......ii', E, E, E],
+    iceX:       ['i......i', '.i....i.', '..i..i..', E, E, '..i..i..', '.i....i.', 'i......i'],
+    crateTwin:  [E, '.#.##.#.', E, E, E, E, '.#.##.#.', E],
+    crateRows:  [E, E, '.=.==.=.', E, E, '.#.##.#.', E, E],
+    ropeRing:   [E, '..r..r..', '.r....r.', E, E, '.r....r.', '..r..r..', E],
+    hole4:      ['x......x', E, E, '...xx...', '...xx...', E, E, 'x......x'],
+    iceSides:   [E, 'i......i', 'i......i', 'i......i', 'i......i', 'i......i', 'i......i', E]
   };
   const TIPS = {
     ice:   ['❄️', 'Băng', 'Ghép hoặc phá món nằm trên ô băng để làm vỡ băng. Băng 2 lớp cần 2 lần.'],
@@ -1922,8 +1959,8 @@ const Levels = (() => {
 
   function generate(n) {
     const r = rng(n * 7919 + 13), pick = a => a[(r() * a.length) | 0];
-    const shapes = [P.plain, P.diamond, P.cross];
-    const obst = [P.iceBottom, P.iceChecker, P.iceRing, P.iceCenter2, P.pillars, P.wall, P.wall2, P.ropes4, P.ropes8];
+    const shapes = [P.plain, P.diamond, P.cross, P.hole4];
+    const obst = [P.iceBottom, P.iceChecker, P.iceRing, P.iceCenter2, P.pillars, P.wall, P.wall2, P.ropes4, P.ropes8, P.iceZig, P.iceX, P.crateTwin, P.crateRows, P.ropeRing, P.iceSides];
     let map = pick(shapes);
     const k = 1 + (n > 40 ? 1 : 0) + (r() < .35 ? 1 : 0);
     for (let i = 0; i < k; i++) map = mix(map, pick(obst));
@@ -3256,7 +3293,7 @@ const UI = {
     const pend = Meta.pending(g.save);
     $('#shopBadge').textContent = pend >= 1 ? '💰 +' + pend : '';
     $('#shopBadge').classList.toggle('hot', Meta.canUpgrade(g.save));
-    Bg.setTier(Vault.lv(g.save));
+    Bg.setTier(Vault.lv(g.save)); if (typeof Social !== 'undefined') Social.refreshMenu(g);
     const vp = Vault.pending(g.save), vn = Vault.next(g.save);
     $('#vaultBadge').textContent = vp >= 1 ? '💰 +' + vp : '';
     $('#vaultBadge').classList.toggle('hot', Vault.canUpgrade(g.save));
@@ -3357,6 +3394,7 @@ const UI = {
     box.appendChild(av);
     $('#lmStars').textContent = Object.values(g.save.levelStars).reduce((a, b) => a + b, 0);
     UI.show('levels');
+    Social.mapFlags(g, box, n => n <= total ? pos(n) : { x: -999, y: -999 });
     const sc = $('#levelScroll'); sc.scrollTop = Math.max(0, q.y - sc.clientHeight * .6);
   },
 
@@ -4402,6 +4440,105 @@ const Wheel = {
 <script>
 'use strict';
 /* ==========================================================================
+ * social.js — ĐUA ĐIỂM TUẦN + BẢNG XẾP HẠNG (Supabase RPC qnm_leaderboard)
+ *             + SỰ KIỆN CUỐI TUẦN (xu x2, màn Tiệc thưởng x3 mỗi ngày một lần)
+ * Tuần tính theo giờ Việt Nam (UTC+7), bắt đầu từ thứ Hai.
+ * ========================================================================== */
+const Social = {
+  MILES: [{ at: 300, t: '💰 300', f: sv => { sv.coins += 300; } }, { at: 800, t: '🌪️+🔨', f: sv => { sv.items.sweep = (sv.items.sweep || 0) + 1; sv.items.hammer += 1; } },
+          { at: 1500, t: '💰 800', f: sv => { sv.coins += 800; } }, { at: 3000, t: '✨ x2 + 💰 1500', f: sv => { sv.items.wand = (sv.items.wand || 0) + 2; sv.coins += 1500; } }],
+  tab: 'week', cache: {}, _pos: null,
+  vn() { return new Date(Date.now() + 7 * 36e5); },
+  today() { return this.vn().toISOString().slice(0, 10); },
+  wk() { const d = this.vn(); d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7)); return d.toISOString().slice(0, 10); },
+  isWeekend() { const d = this.vn().getUTCDay(); return d === 0 || d === 6; },
+  coinMul() { return this.isWeekend() ? 2 : 1; },
+  weekly(sv) { if (!sv.weekly || sv.weekly.w !== this.wk()) sv.weekly = { w: this.wk(), s: 0, got: 0 }; return sv.weekly; },
+  addScore(sv, pts) { this.weekly(sv).s += pts; },
+  leftText() { const d = this.vn(), dow = (d.getUTCDay() + 6) % 7; const days = 6 - dow; return days > 0 ? 'Còn ' + days + ' ngày' : 'Hôm nay là ngày cuối'; },
+  /* ---- màn Tiệc thưởng ---- */
+  partyAvail(sv) { return this.isWeekend() && sv.partyDay !== this.today() && sv.level >= 3; },
+  partyLevel(sv) { const hi = Math.max(1, sv.level - 1), lo = Math.max(1, hi - 8); const h = (this.today().replace(/-/g, '') | 0) % (hi - lo + 1); return lo + h; },
+  startParty(g) {
+    if (!this.partyAvail(g.save)) return UI.toast(this.isWeekend() ? 'Hôm nay bạn đã dự tiệc rồi, mai quay lại nhé!' : 'Tiệc thưởng mở vào Thứ Bảy & Chủ Nhật', 2600);
+    g._partyNext = true; UI.hideAll(); g.startLevel(this.partyLevel(g.save), false);
+  },
+  refreshMenu(g) {
+    const b = $('#evBanner'); if (!b) return;
+    const on = this.isWeekend(); b.hidden = !on;
+    b.textContent = on ? (this.partyAvail(g.save) ? '🎉 CUỐI TUẦN: XU x2! Bấm chơi màn Tiệc thưởng x3' : '🎉 CUỐI TUẦN: mọi phần thưởng xu x2!') : '';
+    b.classList.toggle('ready', on && this.partyAvail(g.save));
+    const s = this.weekly(g.save).s, can = this.MILES.some((m, i) => s >= m.at && !(g.save.weekly.got & (1 << i)));
+    $('#rankBadge').textContent = can ? '🎁' : '';
+  },
+  /** Dòng phụ trên màn thắng. */
+  winExtra(g) {
+    const ev = $('#winEvent'), rk = $('#winRank'), w = this.weekly(g.save);
+    const t = [];
+    if (this.isWeekend()) t.push('🎉 Cuối tuần: xu x2');
+    if (g.partyWon) t.push('🥳 Tiệc thưởng x3');
+    ev.hidden = !t.length; ev.textContent = t.join(' · ');
+    rk.hidden = false; rk.textContent = '🏆 Điểm đua tuần: ' + w.s + ' (hạng đang tải…)';
+    this.fetch('week').then(r => {
+      const me = r && r.find(x => x.me);
+      rk.textContent = '🏆 Điểm đua tuần: ' + w.s + (me ? ' · Hạng ' + me.rank : '');
+    }).catch(() => { rk.textContent = '🏆 Điểm đua tuần: ' + w.s; });
+    Store.save(g.save);
+  },
+  async fetch(kind, force) {
+    const c = this.cache[kind]; if (c && !force && Date.now() - c.t < 20000) return c.v;
+    if (Auth.game) { try { await Auth.push(Auth.game.save); } catch (e) {} }          // đẩy điểm mới nhất trước khi xem hạng
+    const v = await Auth.api('/rest/v1/rpc/qnm_leaderboard', { method: 'POST', body: JSON.stringify({ p_kind: kind }) }, true);
+    this.cache[kind] = { t: Date.now(), v }; return v;
+  },
+  async open(g, kind) {
+    this.g = g; this.tab = kind || this.tab; UI.show('rankPage');
+    $('#rtWeek').classList.toggle('on', this.tab === 'week'); $('#rtAll').classList.toggle('on', this.tab === 'all');
+    $('#rankClock').textContent = this.tab === 'week' ? this.leftText() : '';
+    this.miles(g);
+    const L = $('#rankList'); L.innerHTML = '<p class="rk-empty">Đang tải bảng xếp hạng…</p>'; $('#rankMine').innerHTML = '';
+    const mine = this.tab;
+    try {
+      const rows = await this.fetch(mine, true); if (mine !== this.tab) return;
+      this.render(rows || [], mine);
+    } catch (e) { L.innerHTML = '<p class="rk-empty">Không tải được bảng xếp hạng. Kiểm tra mạng rồi thử lại.</p>'; }
+  },
+  render(rows, kind) {
+    const L = $('#rankList'), medal = ['🥇', '🥈', '🥉'], me = rows.find(r => r.me);
+    if (!rows.length) { L.innerHTML = '<p class="rk-empty">Chưa có ai trong bảng tuần này. Qua màn để chiếm hạng nhất!</p>'; return; }
+    $('#rankMine').innerHTML = me ? '<div class="rk-me">Bạn đứng <b>hạng ' + me.rank + '</b> · ' + (kind === 'week' ? me.score + ' điểm' : 'Màn ' + me.level + ' · ⭐' + me.stars) + '</div>' : '<div class="rk-me">Bạn chưa có điểm tuần này. Qua một màn để lên bảng!</div>';
+    const esc = s => String(s).replace(/[<>&]/g, '');
+    L.innerHTML = rows.map(r => '<div class="rk-row' + (r.me ? ' me' : '') + '"><span class="rk-n">' + (r.rank <= 3 ? medal[r.rank - 1] : r.rank) + '</span><span class="rk-name">' + esc(r.display_name) + (r.me ? ' (bạn)' : '') + '</span><span class="rk-lv">Màn ' + r.level + '</span><b class="rk-sc">' + (kind === 'week' ? r.score : '⭐' + r.stars) + '</b></div>').join('');
+  },
+  miles(g) {
+    const w = this.weekly(g.save), el = $('#rankMiles');
+    el.innerHTML = '<div class="rk-mh">Quà mốc điểm tuần (' + w.s + ' điểm)</div>' + this.MILES.map((m, i) => {
+      const done = w.got & (1 << i), ok = w.s >= m.at;
+      return '<div class="rk-mile ' + (done ? 'done' : ok ? 'ok' : '') + '"><span>' + m.at + ' điểm</span><span>' + m.t + '</span>' + (done ? '<u>✔</u>' : ok ? '<button class="btn primary" data-i="' + i + '">Nhận</button>' : '<u>🔒</u>') + '</div>';
+    }).join('');
+    el.querySelectorAll('button').forEach(b => b.onclick = () => {
+      const i = +b.dataset.i, m = this.MILES[i]; if (w.got & (1 << i)) return;
+      w.got |= (1 << i); m.f(g.save); Store.save(g.save); UI.hud(g); Sfx.coin && Sfx.coin(); UI.toast('🎁 Nhận quà: ' + m.t, 2200); this.miles(g); this.refreshMenu(g);
+    });
+  },
+  /** Cờ bạn chơi trên bản đồ (kiểu Candy Crush): lấy vài người ở màn khác nhau từ bảng mọi thời đại. */
+  async mapFlags(g, box, pos) {
+    try {
+      const rows = (await this.fetch('all')) || []; if (!$('#levels').classList.contains('show')) return;
+      const seen = {}; let n = 0;
+      rows.filter(r => !r.me).forEach(r => {
+        const lv = Math.min(r.level, g.save.level + 40); if (seen[lv] || n >= 6) return; seen[lv] = 1; n++;
+        const q = pos(lv), f = document.createElement('div'); f.className = 'lmflag'; f.style.left = (q.x + (q.x > box.clientWidth / 2 ? 52 : -52)) + 'px'; f.style.top = (q.y - 30) + 'px';
+        f.innerHTML = '<b>' + String(r.display_name).replace(/[<>&]/g, '').slice(0, 7) + '</b><i>👤</i>'; box.appendChild(f);
+      });
+    } catch (e) {}
+  }
+};
+
+</script>
+<script>
+'use strict';
+/* ==========================================================================
  * game.js — Bộ điều khiển game: vòng lặp (Game Loop), máy trạng thái, nhập liệu,
  * điều phối Grid (logic) <-> Renderer (hiển thị) <-> Tween (chuyển động) <-> Ads.
  *
@@ -4492,7 +4629,8 @@ class Game {
     this.token++; const tk = this.token;
     Tween.clear();
     const def = Levels.get(n); this.levelDef = def;
-    this.level = n; this.moves = def.moves;
+    this.party = !!this._partyNext; this._partyNext = false;
+    this.level = n; this.moves = def.moves + (this.party ? 3 : 0);
     this.score = 0; this.shownScore = 0; this.revives = 0;
     this.collected = {}; this.dropsGot = 0; this.introBoost = false;
     const ch = CONFIG.CHARS.find(c => c.id === this.save.chars.sel) || CONFIG.CHARS[0];
@@ -5113,7 +5251,12 @@ class Game {
     Voice.say('win' + stars, 5);
     { const bp = this._boardCenter(); Fx.edgeGlow('#ffd24a', 1400); Fx.shockwave(bp.x, bp.y, '#fff2a8', 3, 320); }
     const old = this.save.levelStars[this.level] || 0, replay = old > 0;
-    const coins = Math.round((50 + this.level * 10 + this.moves * 5) * (replay ? .3 : 1));   // chơi lại: thưởng xu giảm để không cày
+    const partyOk = this.party && Social.partyAvail(this.save);
+    let coins = Math.round((50 + this.level * 10 + this.moves * 5) * (replay && !partyOk ? .3 : 1));   // chơi lại: thưởng xu giảm để không cày
+    if (partyOk) { coins *= 3; this.save.partyDay = Social.today(); }
+    coins *= Social.coinMul();                                                                  // cuối tuần: xu x2
+    this.partyWon = partyOk;
+    Social.addScore(this.save, stars * 100 + (replay ? 0 : 50) + (partyOk ? 150 : 0));          // điểm đua tuần
     const starGain = Math.max(0, stars - old);                                                  // chỉ thưởng sao phần cải thiện
     this.winCoins = coins;
     this.save.coins += coins;
@@ -5130,6 +5273,7 @@ class Game {
       $('#winStarsRow').innerHTML = [0, 1, 2].map(i => '<i class="ws' + (i < stars ? ' on' : '') + '" style="animation-delay:' + (.35 + i * .38) + 's">★</i>').join('');
       $('#winStarsRow').style.color = '';
       $('#winStarGain').textContent = starGain;
+      Social.winExtra(this);
       $('#btnDouble').classList.remove('hidden');
       UI.show('win');
       Fx.countUp('#winScore', this.score, 1100); Fx.countUp('#winCoins', coins, 1100);
@@ -5162,6 +5306,7 @@ class Game {
     UI.loseGoals(this);
     $('#btnRevive').classList.toggle('hidden', this.revives >= CONFIG.MAX_REVIVES);
     { const el = $('#loseLives'); if (el) el.innerHTML = Lives.hearts(Math.max(0, Lives.count() - 1)); }
+    $('#btnLoseMap').onclick = () => { UI.hide('lose'); UI.levels(this); };
     UI.show('lose');
   }
 
@@ -5416,9 +5561,15 @@ window.addEventListener('DOMContentLoaded', async () => {
   setInterval(() => { if (document.hidden) return; Lives.refresh(); }, 1000);
 
   // Menu
-  $('#btnPlay').onclick = () => { Sfx.unlock(); game.startLevel(game.save.level); };
-  $('#btnLevelsMenu').onclick = () => { Sfx.unlock(); UI.levels(game); };
+  $('#btnPlay').onclick = () => { Sfx.unlock(); UI.levels(game); };   // CHƠI -> mở bản đồ chọn màn (màn hiện tại nằm giữa màn hình)
   $('#btnLevelsBack').onclick = () => UI.hide('levels');
+  $('#btnRankMenu').onclick = () => { Sfx.unlock(); Social.open(game, 'week'); };
+  $('#btnRankBack').onclick = () => UI.hide('rankPage');
+  $('#rtWeek').onclick = () => Social.open(game, 'week');
+  $('#rtAll').onclick = () => Social.open(game, 'all');
+  $('#evBanner').onclick = () => { Sfx.unlock(); Social.startParty(game); };
+  $('#btnWinMap').onclick = () => { UI.hide('win'); UI.levels(game); };
+  $('#btnWinRank').onclick = () => { UI.hide('win'); Social.open(game, 'week'); };
   $('#btnStart').onclick = () => { Sfx.unlock(); game.beginLevel(); };
   $('#btnIntroBack').onclick = () => game.goMenu();
   $('#btnIntroVideo').onclick = () => showRewardedAd(ok => { if (!ok) return UI.toast('Cần xem hết video để nhận +3 lượt'); game.introBoost = true; $('#btnIntroVideo').classList.add('hidden'); UI.toast('+3 lượt khi bắt đầu!'); });
