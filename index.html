@@ -4217,19 +4217,21 @@ const Bg = {
       col: petal ? ['#ffb3c6', '#ffd98a', '#ffe9f0'][(Math.random() * 3) | 0] : ['#ff9a5a', '#ffd24a', '#ff6a8a'][(Math.random() * 3) | 0], ph: Math.random() * 6 };
   },
   tick(dt) {
-    if (++this._skip % 2) return;                     // vẽ ở ~30fps cho nhẹ máy
+    if (++this._skip % (Perf.q === 0 ? 3 : 2)) return;                     // vẽ ~30fps (máy yếu ~20fps) cho nhẹ máy
     const c = this.ctx, W = this.cv.width, H = this.cv.height, s = dt / 1000 * 2;
     this.t += s; c.clearRect(0, 0, W, H);
     if (this.fever) { const g = c.createLinearGradient(0, H, 0, 0); g.addColorStop(0, 'rgba(255,90,20,.35)'); g.addColorStop(1, 'rgba(255,90,20,0)'); c.fillStyle = g; c.fillRect(0, 0, W, H); }
+    const nShow = [10, 18, 26][Perf.q];
     this.items.forEach((p, i) => {
+      if (i >= nShow) return;
       p.y += p.vy * s * (this.fever ? -1.6 : 1); p.x += (p.vx + Math.sin(this.t + p.ph) * 14) * s; p.rot += p.vr * s;
       if (p.y > H + 40 || p.y < -60) { this.items[i] = this.make(false); if (!this.items[i].mote && !this.items[i].steam) this.items[i].y = this.fever ? H + 20 : -20; }
       c.save(); c.translate(p.x, p.y); c.rotate(p.rot);
       if (p.mote) { const a = .55 + .45 * Math.sin(this.t * 3 + p.ph), r = p.r * (.6 + a * .5); c.globalAlpha = a * .9; c.fillStyle = p.col; c.beginPath();
         c.moveTo(0, -r * 1.5); c.lineTo(r * .3, -r * .3); c.lineTo(r * 1.5, 0); c.lineTo(r * .3, r * .3); c.lineTo(0, r * 1.5); c.lineTo(-r * .3, r * .3); c.lineTo(-r * 1.5, 0); c.lineTo(-r * .3, -r * .3); c.closePath(); c.fill(); }
-      else if (p.steam) { const g = c.createRadialGradient(0, 0, 0, 0, 0, p.r); g.addColorStop(0, 'rgba(255,255,255,.28)'); g.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = g; c.beginPath(); c.arc(0, 0, p.r, 0, 6.283); c.fill(); }
+      else if (p.steam) { c.globalAlpha = .22; Glow.draw(c, '#ffffff', 0, 0, p.r); }
       else if (p.petal) { c.fillStyle = p.col; c.globalAlpha = .75; c.beginPath(); c.ellipse(0, 0, p.r, p.r * .55, 0, 0, Math.PI * 2); c.fill(); }
-      else { const g = c.createRadialGradient(0, 0, 0, 0, 0, p.r); g.addColorStop(0, p.col); g.addColorStop(1, 'rgba(255,150,60,0)'); c.globalAlpha = .22; c.fillStyle = g; c.beginPath(); c.arc(0, 0, p.r, 0, Math.PI * 2); c.fill(); }
+      else { c.globalAlpha = .2; Glow.draw(c, p.col, 0, 0, p.r); }
       c.restore();
     });
   }
@@ -4649,6 +4651,7 @@ class Game {
     const fall = async (gem, r, c, from) => {
       const ty = R.cellY(r), dist = r - from;
       gem.x = R.cellX(c);
+      if (dist > 1) { gem.sx = .93; gem.sy = 1.1; }          // kéo giãn khi rơi xa
       await Tween.to(gem, { y: ty }, 120 + dist * 55, Ease.inQuad);
       await Tween.to(gem, { y: ty - 5 }, 70, Ease.outQuad);     // nảy nhẹ khi chạm đáy
       await Tween.to(gem, { y: ty }, 80, Ease.inQuad);
