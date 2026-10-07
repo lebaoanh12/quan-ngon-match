@@ -2953,7 +2953,7 @@ class Renderer {
     if (g.type === -3) { this.drawCart(ctx, g); return; }
     const sp = this.sprites[g.type + '|' + (g.special || '')];
     if (!sp) return;
-    let sc = g.scale;
+    let sc = g.scale * 1.15;   // món ăn to hơn (kiểu Candy)
     if (g.special) sc *= 1.06 + .08 * Math.sin(this.time * 6 + g.id);
     if (selected) sc *= 1.1 + .04 * Math.sin(this.time * 10);
     const h = view.hint;
@@ -4902,6 +4902,43 @@ const WorldMap = {
     ['Lai Châu', '🥩', 'Thịt trâu gác bếp', 'Sâm Lai Châu, gà đen'],
     ['Điện Biên', '🌾', 'Gạo Điện Biên', 'Xôi nếp nương, pa pỉnh tộp']
   ],
+  /* đặc sản của TẤT CẢ tỉnh cũ hợp nhất vào mỗi tỉnh mới: mỗi màn trong chặng rơi một đặc sản khác nhau, màn cuối (trùm) là đặc sản chính */
+  SPEC: [
+    '🦀 Cua Cà Mau|🍯 Mật ong U Minh|🍤 Tôm khô Rạch Gốc|🧂 Muối Bạc Liêu|🐟 Cá lóc nướng trui',
+    '🌴 Đường thốt nốt|🐟 Mắm Châu Đốc|🍜 Bún cá Châu Đốc|🥩 Bò bảy món Tri Tôn|🦑 Nước mắm Phú Quốc|🌶️ Tiêu Phú Quốc',
+    '🍲 Lẩu mắm|🍢 Nem nướng Cái Răng|🥮 Bánh pía Sóc Trăng|🍜 Bún nước lèo Sóc Trăng|🍍 Khóm Cầu Đúc',
+    '🍊 Bưởi Năm Roi|🥥 Dừa Bến Tre|🍬 Kẹo dừa Bến Tre|🍜 Bún nước lèo Trà Vinh|🍈 Sầu riêng Cái Mơn',
+    '🥭 Xoài Cao Lãnh|🍜 Hủ tiếu Mỹ Tho|🪷 Hạt sen Đồng Tháp|🍈 Vú sữa Lò Rèn|🌸 Hoa Sa Đéc',
+    '🥞 Bánh tráng phơi sương|🧂 Muối tôm Tây Ninh|🍈 Mãng cầu Bà Đen|🍍 Khóm Bến Lức|🍚 Gạo Nàng Thơm Chợ Đào',
+    '🍚 Cơm tấm Sài Gòn|🥖 Bánh mì Sài Gòn|🧋 Cà phê sữa đá|🍇 Măng cụt Lái Thiêu|🥘 Bánh khọt Vũng Tàu',
+    '🌰 Hạt điều Bình Phước|🍊 Bưởi Tân Triều|🍒 Chôm chôm Đồng Nai|🥭 Xoài|🌶️ Tiêu Bình Phước',
+    '🍓 Dâu tây Đà Lạt|🌿 Atiso Đà Lạt|🐉 Thanh long Bình Thuận|🐟 Nước mắm Phan Thiết|🥑 Bơ Đắk Nông',
+    '☕ Cà phê Buôn Ma Thuột|🥑 Bơ Đắk Lắk|🍈 Sầu riêng Krông Pắc|🦞 Tôm hùm Sông Cầu|🐟 Cá ngừ Phú Yên',
+    '🍢 Nem nướng Ninh Hòa|🪺 Yến sào Nha Trang|🍇 Nho Ninh Thuận|🍜 Bún sứa Nha Trang|🍖 Cừu nướng Ninh Thuận',
+    '🍡 Bánh ít lá gai|🍜 Phở khô Gia Lai|🍲 Bún chả cá Quy Nhơn|🥥 Dừa Tam Quan|🍷 Rượu Bàu Đá',
+    '🍯 Mạch nha Quảng Ngãi|🧄 Tỏi Lý Sơn|🌿 Sâm Ngọc Linh|🍢 Don Quảng Ngãi|🍬 Kẹo gương',
+    '🍝 Mì Quảng|🍜 Cao lầu Hội An|🥠 Bánh tráng cuốn thịt heo|🍗 Cơm gà Tam Kỳ|🌿 Sâm Ngọc Linh Quảng Nam',
+    '🍜 Bún bò Huế|🥟 Bánh bèo Huế|🍚 Cơm hến|🍧 Chè Huế|🥟 Bánh bột lọc',
+    '🥣 Cháo canh|🥞 Bánh xèo Quảng Bình|🌶️ Tiêu Khe Sanh|🦑 Mực nhảy Vũng Chùa|🍲 Lươn om Quảng Bình',
+    '🍬 Kẹo cu đơ|🍊 Bưởi Phúc Trạch|🍋 Cam bù Hương Sơn|🥜 Lạc Hà Tĩnh',
+    '🥘 Cháo lươn Nghệ An|🍊 Cam Vinh|🥫 Tương Nam Đàn|🍬 Kẹo lạc Nghệ An',
+    '🍖 Nem chua Thanh Hóa|🍬 Chè lam Phủ Quảng|🍰 Bánh gai Tứ Trụ|🦐 Hải sản Sầm Sơn',
+    '🍘 Cơm cháy Ninh Bình|🐐 Dê núi Ninh Bình|🍜 Phở Nam Định|🍌 Chuối ngự Đại Hoàng|🐟 Cá kho Vũ Đại',
+    '🥢 Phở Hà Nội|🍜 Bún chả|🐟 Chả cá Lã Vọng|🌾 Cốm làng Vòng|🍰 Bánh cốm',
+    '🍑 Nhãn lồng Hưng Yên|🐔 Gà Đông Tảo|🥮 Bánh cáy Thái Bình|🍯 Mật nhãn',
+    '🥖 Bánh mì cay Hải Phòng|🦀 Bánh đa cua|🍤 Nem cua bể|🍰 Bánh đậu xanh Hải Dương|🍇 Vải Thanh Hà',
+    '🦑 Chả mực Hạ Long|🐛 Sá sùng|🦆 Ngan Tiên Yên|🍵 Trà hoa vàng',
+    '🍒 Vải thiều Lục Ngạn|🍰 Bánh phu thê|🍖 Nem Bùi|🍜 Mì Chũ|🍃 Quan họ Bắc Ninh',
+    '🍵 Trà Tân Cương|🍊 Quýt Bắc Kạn|🍥 Bánh trứng kiến|🥢 Miến dong Bắc Kạn',
+    '🦆 Vịt quay Lạng Sơn|🍜 Phở chua|🍖 Khâu nhục|🍎 Na Chi Lăng',
+    '🌰 Hạt dẻ Trùng Khánh|🦆 Vịt quay Cao Bằng|🍜 Bánh cuốn Cao Bằng|🍬 Kẹo Cao Bằng',
+    '🍊 Cam sành Hàm Yên|🍯 Mật ong bạc hà Đồng Văn|🥟 Bánh tam giác mạch|🍵 Chè shan tuyết Hà Giang|🍖 Thắng dền',
+    '🍋 Bưởi Đoan Hùng|🍊 Cam Cao Phong|🍚 Cơm lam|🍖 Thịt chua Thanh Sơn|🥬 Su su Tam Đảo',
+    '🐟 Cá hồi Sa Pa|🍲 Thắng cố|🍵 Chè shan tuyết|🍚 Gạo nếp Tú Lệ|🍃 Quế Văn Chấn',
+    '🥛 Sữa Mộc Châu|🍑 Mận hậu|🍇 Sơn tra|🍖 Pa pỉnh tộp',
+    '🥩 Thịt trâu gác bếp|🌿 Sâm Lai Châu|🐔 Gà đen|🍚 Gạo Tam Đường',
+    '🌾 Gạo Điện Biên|🍚 Xôi nếp nương|🐟 Pa pỉnh tộp|🍖 Thịt gác bếp'
+  ],
   /* bảng màu pastel xoay vòng cho các chặng */
   PAL: [
     { top: '#d4f7e6', bot: '#7fe0b8', hill: '#2fbf8a', deco: ['🏮', '⛵', '🛵', '🌴', '🥥'] },
@@ -4915,13 +4952,15 @@ const WorldMap = {
   chapter(n) { return ((n - 1) / this.CH | 0) + 1; },
   theme(n) {
     const c = this.chapter(n) - 1, p = this.PROV[c % this.PROV.length], pal = this.PAL[c % this.PAL.length];
-    return { name: p[0], sh: p[0], ic: p[1], food: p[2], more: p[3], lap: (c / this.PROV.length | 0) + 1, top: pal.top, bot: pal.bot, hill: pal.hill, deco: [p[1]].concat(pal.deco.slice(0, 3), [p[1]]) };
+    const sp = (this.SPEC[c % this.PROV.length] || '').split('|').map(s => { const i = s.indexOf(' '); return [s.slice(0, i), s.slice(i + 1)]; }).filter(x => x[0]);
+    const k = (n - 1) % this.CH, it = (k === this.CH - 1 || !sp.length) ? [p[1], p[2]] : sp[k % sp.length];
+    return { name: p[0], sh: p[0], ic: it[0], food: it[1], main: [p[1], p[2]], all: sp, more: p[3], lap: (c / this.PROV.length | 0) + 1, top: pal.top, bot: pal.bot, hill: pal.hill, deco: [p[1]].concat(pal.deco.slice(0, 3), [p[1]]) };
   },
   /** Mở đặc sản khi qua màn cuối của chặng lần đầu: thưởng xu + hiện trên màn thắng. */
   onWin(g, old) {
     g._prov = null;
     if (g.level % this.CH !== 0 || old > 0) return;
-    const th = this.theme(g.level); g._prov = th; g.save.coins += 150; g.winCoins = (g.winCoins || 0) + 150;
+    const th = this.theme(g.level); th.ic = th.main[0]; th.food = th.main[1]; g._prov = th; g.save.coins += 150; g.winCoins = (g.winCoins || 0) + 150;
   },
   winExtra(g) {
     const th = g._prov; if (!th) return;
@@ -4933,7 +4972,7 @@ const WorldMap = {
     const sv = g.save, box = $('#albumList'), n = this.PROV.length; let got = 0, html = '';
     for (let c = 1; c <= n; c++) {
       const p = this.PROV[c - 1], ok = (sv.levelStars[c * this.CH] || 0) > 0; if (ok) got++;
-      html += '<div class="alb' + (ok ? ' ok' : '') + '"><i>' + (ok ? p[1] : '🔒') + '</i><div><b>' + c + '. ' + p[0] + '</b><small>' + (ok ? p[2] + ' · ' + p[3] : 'Qua màn ' + (c * this.CH) + ' để mở đặc sản') + '</small></div></div>';
+      html += '<div class="alb' + (ok ? ' ok' : '') + '"><i>' + (ok ? p[1] : '🔒') + '</i><div><b>' + c + '. ' + p[0] + '</b><small>' + (ok ? this.SPEC[c - 1].split('|').join(' · ') : 'Qua màn ' + (c * this.CH) + ' để mở đặc sản') + '</small></div></div>';
     }
     $('#albumCount').textContent = got + '/' + n; box.innerHTML = html; UI.show('album');
   },
