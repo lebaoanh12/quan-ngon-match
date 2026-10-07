@@ -678,6 +678,81 @@ body.droid .lmbar { padding-top: 8px; }
 #tutTip { position: absolute; left: 50%; bottom: 6px; transform: translate(-50%, 10px); max-width: 92%; background: rgba(255,226,122,.96); color: #4a2200; font-weight: 800; font-size: 14px; line-height: 1.25; text-align: center; padding: 8px 14px; border-radius: 14px; box-shadow: 0 3px 10px rgba(0,0,0,.35); opacity: 0; pointer-events: none; z-index: 29; transition: opacity .3s, transform .3s; }
 #tutTip.show { opacity: 1; transform: translate(-50%, 0); }
 
+/* ===== V8: GIAO DIỆN "LỒNG ĐÈN" (đỏ - vàng ấm, nút vàng bóng, khung gỗ viền vàng) ===== */
+:root { --lan1: #e8402a; --lan2: #b3142c; --lan3: #5a0a22; --paper: #fff7df; --paper2: #ffe29a; --gold-sh: #c98a1e; --ink: #7a1a10; --cream: #fff7df; }
+body { color: #fff; background: radial-gradient(120% 70% at 50% 0%, var(--lan1) 0%, var(--lan2) 45%, var(--lan3) 100%); }
+body::before { opacity: .12; inset: 0; animation: none !important; mask-image: none; -webkit-mask-image: none;
+  background: repeating-linear-gradient(45deg, #ffd24a 0 2px, transparent 2px 22px), repeating-linear-gradient(-45deg, #ffd24a 0 2px, transparent 2px 22px); }
+#app::before { height: 14px; background: repeating-linear-gradient(90deg, #ffd24a 0 26px, #e8402a 26px 52px); box-shadow: 0 3px 8px rgba(0,0,0,.35); border-radius: 0 0 12px 12px; }
+#app::after { display: none; }
+#hud { padding-top: 22px; }
+.pill { color: var(--ink); background: linear-gradient(180deg, var(--paper), var(--paper2)); border: 0; box-shadow: 0 3px 0 var(--gold-sh); font-weight: 800; }
+.pill b, .menu-pills .pill b { color: var(--ink); }
+.stat { border: 2px solid #ffd24a !important; box-shadow: 0 4px 0 rgba(0,0,0,.35) !important; }
+.stats .stat:nth-child(1) { background: linear-gradient(180deg, #ff7a59, #c8102e); color: #fff; }
+.stats .stat:nth-child(2) { background: linear-gradient(180deg, var(--paper), var(--paper2)); color: var(--ink); }
+.stats .stat:nth-child(3) { background: linear-gradient(180deg, #43c96b, #17803f); color: #fff; }
+.stats .stat:nth-child(2) span { color: var(--ink); }
+.progress { background: rgba(0,0,0,.38); border: 0; box-shadow: inset 0 2px 4px rgba(0,0,0,.4); }
+#team { background: linear-gradient(180deg, var(--paper), #f6d58a); color: var(--ink); border: 0; box-shadow: 0 4px 0 #b4791a; }
+#team .tname { color: var(--ink); }
+#board { box-shadow: 0 0 0 3px #ffd24a, 0 0 0 7px #8c4a22, 0 0 0 8px #5a2a10, 0 8px 18px rgba(0,0,0,.5); }
+.item { border: 0 !important; box-shadow: 0 4px 0 rgba(0,0,0,.4), inset 0 2px 0 #fff5; }
+.item em { background: #e63946; border: 0; box-shadow: 0 2px 0 #7a1020; } .item em.zero { background: #1f9d55; box-shadow: 0 2px 0 #0f5e32; }
+.item[data-item="hammer"] { background: linear-gradient(180deg, #ff7a45, #c4381a); }
+.item[data-item="swap"] { background: linear-gradient(180deg, #9b7bff, #5b36c9); }
+.item[data-item="moves"] { background: linear-gradient(180deg, #43c96b, #17803f); }
+.item[data-item="sweep"] { background: linear-gradient(180deg, #b45be0, #6a1b9a); }
+.item.pause { background: linear-gradient(180deg, #5ad1c4, #168a80); }
+.btn.primary { background: linear-gradient(180deg, #ffe27a 0%, #ffb300 55%, #f08a00 100%); color: #7a1a10; box-shadow: 0 6px 0 #a85a00, inset 0 2px 0 #fff9, 0 12px 20px rgba(0,0,0,.35); }
+.btn.secondary { background: linear-gradient(180deg, var(--paper), #f6d58a); color: var(--ink); text-shadow: none; box-shadow: 0 5px 0 #b4791a, inset 0 2px 0 #fff9; }
+.btn.secondary::before { display: none; }
+.btn.ghost { background: linear-gradient(180deg, var(--paper), #f6d58a); color: var(--ink); text-shadow: none; box-shadow: 0 4px 0 #b4791a, inset 0 2px 0 #fff9; }
+.btn.danger { background: transparent; box-shadow: none; color: #ffb3a8; text-shadow: none; }
+.badge { background: #e63946; color: #fff; box-shadow: 0 2px 0 #7a1020; } .badge.hot { background: #e63946; color: #fff; }
+.overlay { background: radial-gradient(circle at 50% 40%, rgba(150,20,40,.78), rgba(40,4,14,.92)) !important; }
+.overlay.full { background: radial-gradient(130% 70% at 50% 0%, var(--lan1), var(--lan2) 50%, var(--lan3)) !important; }
+.card { color: var(--ink); background: linear-gradient(var(--paper), #fff0c6) padding-box, linear-gradient(180deg, #ffe27a, #ffb300 55%, #b8620f) border-box; border: 5px solid transparent; box-shadow: 0 0 0 2px #7a3a08, 0 18px 40px rgba(40,0,10,.55); }
+.card h2, .card h1 { color: #c8102e; }
+.sub { color: var(--ink); }
+
+/* Menu chính: nền đỏ tràn màn, đèn lồng, lưới nút 3 cột */
+#menu { background: radial-gradient(120% 70% at 50% 0%, var(--lan1) 0%, var(--lan2) 45%, var(--lan3) 100%) !important; padding: 0; }
+#menu::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 18px; background: repeating-linear-gradient(90deg, #ffd24a 0 26px, #e8402a 26px 52px); border-radius: 0 0 14px 14px; box-shadow: 0 3px 8px rgba(0,0,0,.35); z-index: 3; }
+.card.menu { background: none !important; border: 0; box-shadow: none; width: min(100%, 420px); padding: 34px 20px 16px; color: #fff; position: relative; }
+.card.menu::before, .card.menu::after { display: none; }
+.card.menu .sub { color: #ffe9b8; margin: 0 0 12px; }
+.card.menu h1.logo .t1 { color: #ffe27a; font-size: 44px; letter-spacing: 2px; text-shadow: 0 4px 0 #a8200f, 0 8px 14px rgba(0,0,0,.45); }
+.card.menu h1.logo .t2 { background: linear-gradient(180deg, #ff9a2e, #e8402a); color: #fff; font-size: 16px; letter-spacing: 6px; box-shadow: 0 3px 0 #7a1a10; text-shadow: none; }
+.card.menu .btn.primary { font-size: 28px; padding: 20px 10px; border-radius: 26px; margin-bottom: 14px; }
+.lanterns { position: absolute; top: 62px; left: 0; right: 0; height: 80px; pointer-events: none; }
+.lanterns u { position: absolute; top: 0; width: 40px; height: 52px; border-radius: 50% / 42%; background: radial-gradient(circle at 35% 30%, #ff7a59, #c8102e); border-top: 5px solid #ffd24a; border-bottom: 5px solid #ffd24a; box-shadow: 0 0 22px 3px rgba(255,170,60,.55); text-decoration: none; }
+.lanterns u:first-child { left: 8%; } .lanterns u:last-child { right: 8%; top: 14px; }
+.lanterns u::before { content: ""; position: absolute; left: 50%; top: -24px; width: 2px; height: 19px; background: #ffd24a; }
+.mgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 6px 0 4px; }
+.mgrid .btn { margin: 0; padding: 12px 2px 10px; height: 92px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 14px; border-radius: 20px; position: relative; overflow: visible; }
+.mgrid .btn i { font-style: normal; font-size: 32px; line-height: 36px; }
+.mgrid .btn span:not(.badge) { font-weight: 800; }
+.mgrid .badge { position: absolute; top: -7px; right: -4px; margin: 0; font-size: 11px; padding: 0 7px; }
+.btn.secondary.vaultbtn { color: var(--ink); }
+.card.menu .sndrow.icons { justify-content: center; gap: 10px; margin-top: 12px; }
+.sndrow.icons .btn { width: 48px; height: 48px; padding: 0; margin: 0; border-radius: 50%; font-size: 21px; flex: none; position: relative; }
+.sndrow.icons .btn.off { opacity: .55; filter: grayscale(.8); }
+.sndrow.icons .btn.off::after { content: ""; position: absolute; left: 10px; right: 10px; top: 50%; height: 3px; background: #c8102e; transform: rotate(-35deg); border-radius: 2px; }
+.card.menu #btnAccount { margin-top: 12px; }
+.lanterns { top: 18px; height: 90px; }
+.lanterns u { top: 14px; width: 36px; height: 46px; }
+.lanterns u:last-child { top: 26px; }
+.lanterns u::before { top: -16px; height: 12px; }
+.card.menu { padding-top: 56px; }
+.btn.ghost::before { display: none; }
+.card.menu .btn.danger { margin-top: 10px; }
+.lanterns { top: -62px; }
+#menu .lanterns { position: absolute; top: 16px; left: 0; right: 0; height: 90px; z-index: 2; }
+.lmbar { color: #ffe9b8; text-shadow: 0 1px 2px rgba(0,0,0,.5); background: linear-gradient(180deg, rgba(120,10,30,.95), rgba(120,10,30,0)); }
+.lmbar .pills b { color: #ffe27a; }
+@media (max-height: 740px) { #menu .lanterns { display: none; } .card.menu { padding-top: 34px; } .mgrid .btn { height: 80px; } .mgrid .btn i { font-size: 28px; line-height: 30px; } .card.menu .btn.primary { padding: 14px 10px; font-size: 24px; } }
+
 </style>
 </head>
 <body>
@@ -737,21 +812,23 @@ body.droid .lmbar { padding-top: 8px; }
 
   <!-- MENU CHÍNH (hub) -->
   <section class="overlay show" id="menu">
+    <div class="lanterns"><u></u><u></u></div>
     <div class="card menu">
       <div class="menu-pills"><span class="pill">⭐ <b id="menuStars">0</b></span><span class="pill lifepill" id="menuLivesPill"><b id="menuLives">❤️ 5</b></span><span class="pill">💰 <b id="menuCoins">0</b></span></div>
       <div class="logo" id="logo"></div>
       <h1 class="logo"><span class="t1">VIET FOOD</span><span class="t2">MATCH PUZZLE</span></h1>
       <p class="sub">Xếp món ngon – Xây quán xịn</p>
       <button class="btn primary" id="btnPlay">CHƠI – Màn <span id="menuLevel">1</span></button>
-      <button class="btn secondary" id="btnLevelsMenu">🗺️ CHỌN MÀN</button>
-      <button class="btn secondary" id="btnShopMenu">🏮 QUÁN CỦA TÔI <span class="badge" id="shopBadge"></span></button>
-      <button class="btn secondary vaultbtn" id="btnVaultMenu">💎 KHO BÁU <span class="badge" id="vaultBadge"></span></button>
-      <button class="btn secondary" id="btnTeamMenu">🐾 ĐỒNG ĐỘI</button>
-      <button class="btn secondary" id="btnDailyMenu">📅 ĐIỂM DANH <span class="badge hot" id="dailyBadge"></span></button>
-      <button class="btn secondary" id="btnWheelMenu">🎡 VÒNG QUAY MAY MẮN <span class="badge hot" id="wheelBadge"></span></button>
+      <div class="mgrid">
+        <button class="btn secondary mtile" id="btnLevelsMenu"><i>🗺️</i><span>Chọn màn</span></button>
+        <button class="btn secondary mtile" id="btnShopMenu"><i>🏮</i><span>Quán</span><span class="badge" id="shopBadge"></span></button>
+        <button class="btn secondary mtile vaultbtn" id="btnVaultMenu"><i>💎</i><span>Kho báu</span><span class="badge" id="vaultBadge"></span></button>
+        <button class="btn secondary mtile" id="btnTeamMenu"><i>🐾</i><span>Đồng đội</span></button>
+        <button class="btn secondary mtile" id="btnDailyMenu"><i>📅</i><span>Điểm danh</span><span class="badge hot" id="dailyBadge"></span></button>
+        <button class="btn secondary mtile" id="btnWheelMenu"><i>🎡</i><span>Vòng quay</span><span class="badge hot" id="wheelBadge"></span></button>
+      </div>
       <button class="btn ghost" id="btnAccount">👤 Tài khoản</button>
-      <div class="sndrow"><button class="btn ghost" id="btnMusic">🎵 Nhạc: BẬT</button><button class="btn ghost" id="btnSound">🔊 Tiếng: BẬT</button><button class="btn ghost" id="btnVoice">🗣️ Giọng: BẬT</button></div>
-      <div class="sndrow"><button class="btn ghost" id="btnVib">📳 Rung: BẬT</button><button class="btn ghost" id="btnNotify">🔔 Nhắc nhở: BẬT</button></div>
+      <div class="sndrow icons"><button class="btn ghost" id="btnMusic" title="Nhạc">🎵</button><button class="btn ghost" id="btnSound" title="Tiếng">🔊</button><button class="btn ghost" id="btnVoice" title="Giọng nói">🗣️</button><button class="btn ghost" id="btnVib" title="Rung">📳</button><button class="btn ghost" id="btnNotify" title="Nhắc nhở">🔔</button></div>
       <button class="btn ghost danger" id="btnDelAcct">🗑 Xóa tài khoản</button>
     </div>
   </section>
@@ -761,8 +838,7 @@ body.droid .lmbar { padding-top: 8px; }
       <h2>Tạm dừng</h2>
       <button class="btn primary" id="btnResume">Tiếp tục</button>
       <button class="btn secondary" id="btnRestart">Chơi lại màn</button>
-      <div class="sndrow"><button class="btn ghost" id="btnMusic2">🎵 Nhạc: BẬT</button><button class="btn ghost" id="btnSound2">🔊 Tiếng: BẬT</button><button class="btn ghost" id="btnVoice2">🗣️ Giọng: BẬT</button></div>
-      <button class="btn ghost" id="btnVib2">📳 Rung: BẬT</button>
+      <div class="sndrow icons"><button class="btn ghost" id="btnMusic2" title="Nhạc">🎵</button><button class="btn ghost" id="btnSound2" title="Tiếng">🔊</button><button class="btn ghost" id="btnVoice2" title="Giọng nói">🗣️</button><button class="btn ghost" id="btnVib2" title="Rung">📳</button></div>
       <button class="btn ghost" id="btnPauseMenu">Về Menu</button>
     </div>
   </section>
@@ -5309,13 +5385,12 @@ window.addEventListener('DOMContentLoaded', async () => {
   setTimeout(() => Lives.dailyGift(), 1200);
   showBannerAd();                                   // banner cố định ở cạnh dưới
 
+  const setIc = (ids, on) => ids.forEach(id => { const e = $(id); if (e) e.classList.toggle('off', !on); });
   const soundLabel = () => {
-    $('#btnSound').textContent = '🔊 Tiếng: ' + (Sfx.on ? 'BẬT' : 'TẮT'); $('#btnSound2').textContent = $('#btnSound').textContent;
-    $('#btnMusic').textContent = '🎵 Nhạc: ' + (Sfx.musicOn ? 'BẬT' : 'TẮT'); $('#btnMusic2').textContent = $('#btnMusic').textContent;
-    $('#btnVib').textContent = '📳 Rung: ' + (game.save.vib === false ? 'TẮT' : 'BẬT'); $('#btnVib2').textContent = $('#btnVib').textContent;
-    $('#btnVoice').textContent = '🗣️ Giọng: ' + (Voice.on ? 'BẬT' : 'TẮT'); $('#btnVoice2').textContent = $('#btnVoice').textContent;
+    setIc(['#btnSound', '#btnSound2'], Sfx.on); setIc(['#btnMusic', '#btnMusic2'], Sfx.musicOn); setIc(['#btnVoice', '#btnVoice2'], Voice.on);
+    setIc(['#btnVib', '#btnVib2'], game.save.vib !== false); setIc(['#btnNotify'], game.save.notify !== false);
   };
-  const notifyLabel = () => { const b = $('#btnNotify'); if (b) b.textContent = '🔔 Nhắc nhở: ' + (game.save.notify === false ? 'TẮT' : 'BẬT'); };
+  const notifyLabel = () => soundLabel();
   $('#btnNotify').onclick = () => { game.save.notify = game.save.notify === false; Store.save(game.save); notifyLabel(); UI.toast(game.save.notify === false ? 'Đã tắt nhắc nhở' : 'Đã bật nhắc nhở: tim đầy, quà ngày…'); };
   // Vỏ Android hỏi trạng thái khi thoát game để đặt thông báo nhắc (tim đầy, quà điểm danh, nhớ bạn)
   window.QNM_notify = () => { const sv = game.save; return JSON.stringify({ on: sv.notify !== false, heartsMs: Lives.fullMs(), daily: Daily.available(sv), streak: Daily.streak(sv) }); };
