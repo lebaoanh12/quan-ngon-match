@@ -244,7 +244,7 @@ body::before { content: ""; position: fixed; inset: -50%; z-index: 0; pointer-ev
 .item { border: 0; border-radius: 18px; color: #fff; font-weight: 800; box-shadow: 0 4px 0 rgba(0,0,0,.4), inset 0 2px 0 #fff6; text-shadow: 0 1px 1px rgba(0,0,0,.5); }
 .item[data-item="hammer"] { background: linear-gradient(180deg, #ff7043, #d84315); }
 .item[data-item="swap"] { background: linear-gradient(180deg, #ab47bc, #6a1b9a); }
-.item[data-item="hint"] { background: linear-gradient(180deg, #ffca28, #f57c00); }
+.item[data-item="sweep"] { background: linear-gradient(180deg, #ab47bc, #6a1b9a); }
 .item.pause { background: linear-gradient(180deg, #78909c, #455a64); }
 .item.active { outline: 3px solid #fff; box-shadow: 0 0 20px #fff8; transform: translateY(-3px); }
 .item em { border-color: #fff; box-shadow: 0 2px 0 rgba(0,0,0,.3); }
@@ -417,7 +417,7 @@ body::before { opacity: .5; inset: -60%; background: repeating-conic-gradient(fr
 .item { color: #fff; border: 2.5px solid #fff; box-shadow: 0 4px 0 rgba(80,30,10,.45); }
 .item[data-item="hammer"] { background: linear-gradient(180deg, #ff7b4a, var(--chili2)); }
 .item[data-item="swap"] { background: linear-gradient(180deg, #9d7bff, #5b3fd1); }
-.item[data-item="hint"] { background: linear-gradient(180deg, #ffd84a, var(--sun2)); color: var(--ink); text-shadow: none; }
+.item[data-item="sweep"] { background: linear-gradient(180deg, #b45be0, #7a2bb0); color: #fff; }
 .item.pause { background: linear-gradient(180deg, #4fd8cc, #1d9a90); }
 .item em { background: var(--chili); border-color: #fff; } .item em.zero { background: var(--leaf); }
 
@@ -726,7 +726,7 @@ body.droid .lmbar { padding-top: 8px; }
   <footer id="bottom">
     <button class="item" data-item="hammer"><i>🔨</i><span>Búa</span><em id="cnt-hammer">3</em></button>
     <button class="item" data-item="swap"><i>🔀</i><span>Đổi chỗ</span><em id="cnt-swap">2</em></button>
-    <button class="item" data-item="hint"><i>💡</i><span>Gợi ý</span><em id="cnt-hint">2</em></button>
+    <button class="item" data-item="sweep"><i>🌪️</i><span>Lốc xoáy</span><em id="cnt-sweep">0</em></button>
     <button class="item" data-item="moves"><i>➕</i><span>+5 lượt</span><em id="cnt-moves">1</em></button>
     <button class="item" data-item="fish"><i>🐟</i><span>Cá thần</span><em id="cnt-fish">1</em></button>
     <button class="item" data-item="wand"><i>🪄</i><span>Đũa thần</span><em id="cnt-wand">1</em></button>
@@ -981,15 +981,15 @@ const CONFIG = {
 
   REVIVE_MOVES: 5,
   MAX_REVIVES: 2,
-  START_ITEMS: { hammer: 2, swap: 1, hint: 2, moves: 0, shuffle: 1, line: 0, color: 0, fish: 1, wand: 1 },
-  ITEM_PRICES: { hammer: 500, swap: 600, hint: 400, moves: 1400, shuffle: 450, line: 1000, color: 1250, fish: 1100, wand: 1200 },   // giá gốc, mua bằng xu ở Kho nguyên liệu
+  START_ITEMS: { hammer: 2, swap: 1, sweep: 0, moves: 0, shuffle: 1, line: 0, color: 0, fish: 1, wand: 1 },
+  ITEM_PRICES: { hammer: 500, swap: 600, sweep: 2200, moves: 1400, shuffle: 450, line: 1000, color: 1250, fish: 1100, wand: 1200 },   // giá gốc, mua bằng xu ở Kho nguyên liệu
   PANTRY_DAILY_MAX: 3,                 // mỗi loại chỉ mua tối đa 3 lần / ngày
   PANTRY_STEP: 0.8,                    // mỗi lần mua trong ngày, giá lần sau tăng thêm 80% giá gốc
   itemPrice(k, bought) { return Math.round(this.ITEM_PRICES[k] * (1 + this.PANTRY_STEP * (bought || 0)) / 10) * 10; },
   ITEM_DEFS: [
     { id: 'hammer', desc: 'Phá 1 món bất kỳ',  icon: '🔨', name: 'Búa',      tip: 'Chạm vào món muốn phá' },
     { id: 'swap', desc: 'Đổi chỗ 2 món bất kỳ',    icon: '🔀', name: 'Đổi chỗ',  tip: 'Chọn 2 món bất kỳ để đổi chỗ' },
-    { id: 'hint', desc: 'Chỉ nước đi tốt',    icon: '💡', name: 'Gợi ý',    tip: '' },
+    { id: 'sweep', desc: 'Cuốn sạch toàn bộ màn hình', icon: '🌪️', name: 'Lốc xoáy', tip: '' },
     { id: 'moves', desc: 'Cộng thêm 5 lượt đi',   icon: '➕', name: '+5 lượt',  tip: '' },
     { id: 'fish', desc: '3 chú cá bay tới phá chướng ngại', icon: '🐟', name: 'Cá thần', tip: '' },
     { id: 'wand', desc: 'Biến 4 món thành món đặc biệt',    icon: '🪄', name: 'Đũa thần', tip: '' }
@@ -3185,6 +3185,7 @@ const UI = {
     $('#vaultBadge').classList.toggle('hot', Vault.canUpgrade(g.save));
     $('#btnVaultMenu').classList.toggle('notify', Vault.canUpgrade(g.save) || vp >= 60);
     { const sv = g.save, b = $('#dailyBadge'); if (b) b.textContent = Daily.available(sv) ? 'NHẬN QUÀ' : (Daily.streak(sv) ? '🔥' + Daily.streak(sv) : ''); }
+    { const sv = g.save; if (sv.items && sv.items.hint > 0) { sv.coins += sv.items.hint * 150; sv.items.hint = 0; Store.save(sv); } }   // bỏ vật phẩm Gợi ý: đổi số còn lại thành xu
     $('#wheelBadge').textContent = g.save.wheelDay !== Daily.today() ? 'MIỄN PHÍ' : '';
     $('#btnShopMenu').classList.toggle('notify', Meta.canUpgrade(g.save) || pend >= 30);
   },
@@ -3287,7 +3288,7 @@ const UI = {
   chest(g, n) {
     const sv = g.save, ti = Vault.tierForLevel(n), r = Vault.reward(n, sv), claimed = sv.chests[n], ready = !claimed && (sv.levelStars[n] || 0) > 0;
     UI._chest = { g, n, r, ready, mult: 1, ti, busy: false };
-    const names = { hammer: '🔨', swap: '🔀', hint: '💡' };
+    const names = { hammer: '🔨', swap: '🔀', fish: '🐟', sweep: '🌪️' };
     $('#chestPrize').innerHTML = (r.coins ? UI._chipRaw('💰', r.coins) : '') + (r.stars ? UI._chipRaw('⭐', r.stars) : '') + Object.keys(r.items).map(k => UI._chipRaw(names[k], '+' + r.items[k])).join('');
     $('#chestTier').textContent = 'Rương ' + TIERS[ti].name + (Vault.bonus(sv) ? ' · Kho báu +' + Math.round(Vault.bonus(sv) * 100) + '%' : '');
     $('#chestTier').style.color = TIERS[ti].main === '#b87a3e' ? '#a8703a' : TIERS[ti].dark;
@@ -3897,7 +3898,7 @@ const Vault = {
   reward(n, save) {
     const ti = this.tierForLevel(n), big = n % 10 === 0, m = (1 + ti * .35) * (1 + (save ? this.bonus(save) : 0));
     const r = { coins: Math.round((100 + n * 10) * m), stars: big ? 2 + (ti >> 1) : ti >= 3 ? 1 : 0, items: {} };
-    if (big) { r.items.hammer = 1 + (ti >> 2); r.items.swap = 1; } else r.items.hint = 1 + (ti >> 1);
+    if (big) { r.items.hammer = 1 + (ti >> 2); r.items.swap = 1; } else r.items.fish = 1 + (ti >> 1);
     if (ti >= 4) r.items.hammer = (r.items.hammer || 0) + 1;
     return r;
   },
@@ -4242,7 +4243,7 @@ const Bg = {
 const Daily = {
   REWARDS: [
     { t: '💰 150',  coins: 150 }, { t: '🔨 +1', items: { hammer: 1 } }, { t: '🐟 +1', items: { fish: 1 } }, { t: '💰 300', coins: 300 },
-    { t: '🪄 +1', items: { wand: 1 } }, { t: '💡 +2', items: { hint: 2 } }, { t: '🎁 Lớn', coins: 800, stars: 3, items: { fish: 1, wand: 1 } }
+    { t: '🪄 +1', items: { wand: 1 } }, { t: '🌪️ +1', items: { sweep: 1 } }, { t: '🎁 Lớn', coins: 800, stars: 3, items: { fish: 1, wand: 1 } }
   ],
   fmt(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); },
   today() { return this.fmt(new Date()); },
@@ -4271,7 +4272,7 @@ const Daily = {
 const Wheel = {
   PRIZES: [
     { t: '💰 50',  coins: 50,  c: '#e0402a' }, { t: '💰 150', coins: 150, c: '#ff9a2e' }, { t: '⭐ 1', stars: 1, c: '#ffd24a' },
-    { t: '🔨 +1',  items: { hammer: 1 }, c: '#3fb95c' }, { t: '💰 300', coins: 300, c: '#2fa8d8' }, { t: '💡 +1', items: { hint: 1 }, c: '#a64dff' },
+    { t: '🔨 +1',  items: { hammer: 1 }, c: '#3fb95c' }, { t: '💰 300', coins: 300, c: '#2fa8d8' }, { t: '🌪️ +1', items: { sweep: 1 }, c: '#a64dff' },
     { t: '⭐ 2',   stars: 2, c: '#ff7fb0' }, { t: '💰 800', coins: 800, c: '#d9342b' }
   ],
   angle: 0, spinning: false, extraUsed: 0,
@@ -4832,7 +4833,7 @@ class Game {
     }
     if (this._giftNew) this._giftNew[kind] = false;
     const spend = () => { this.save.items[kind]--; Store.save(this.save); UI.hud(this); };
-    if (kind === 'hint') { spend(); this.showHint(true); return; }
+    if (kind === 'sweep') { spend(); this.mode = null; this.selected = null; this.setActiveItem(); return this.useSweep(); }
     if (kind === 'moves') {
       spend(); this.moves += CONFIG.MOVES_ITEM; UI.hud(this); Sfx.special();
       this.renderer.floatText(this.renderer.size / 2, this.renderer.size * .45, '+' + CONFIG.MOVES_ITEM + ' LƯỢT!', '#7dffb0', 30);
@@ -4903,6 +4904,24 @@ class Game {
     await this.afterResolve(tk);
   }
 
+  /** LỐC XOÁY: quét toàn bộ màn hình, mọi món và chướng ngại đều bị đánh trúng một lần. */
+  async useSweep() {
+    this.state = 'busy'; const tk = this.token, g = this.grid, R = this.renderer, seeds = [];
+    g.cells.forEach((row, r) => row.forEach((x, c) => { const b = g.blocks[r][c]; if (b < 0) return; if (x || b > 0) seeds.push({ r, c }); }));
+    if (!seeds.length) { this.state = 'idle'; return; }
+    Sfx.special(); Sfx.boom(.5); Sfx.vib(120); Voice.say('skill', 3);
+    R.floatText(R.size / 2, R.size * .4, '🌪️ LỐC XOÁY!', '#e3b3ff', 32);
+    { const bp = this._boardCenter(); Fx.shockwave(bp.x, bp.y, '#d9a0ff', 3, 340); Fx.edgeGlow('#b45be0', 900); Fx.shake($('#stage'), 8); }
+    this.flash('#d9a0ff', .35);
+    for (let i = 0; i < 4; i++) R.fly('🌪️', R.size * (.15 + .23 * i), R.H + R.cell, R.size / 2, R.size / 2, i * 90, 520);
+    await Tween.wait(620);
+    if (tk !== this.token) return;
+    await this.resolve({ seeds, noTrigger: new Set() }, [], tk);
+    if (tk !== this.token) return;
+    UI.hud(this);
+    await this.afterResolve(tk);
+  }
+
   /** ĐŨA THẦN: 4 món thường bị biến thành món đặc biệt (tia ngang / tia dọc / bom) rồi bàn tự ổn định. */
   async useWand() {
     this.state = 'busy'; const tk = this.token, g = this.grid, R = this.renderer, normal = [];
@@ -4930,8 +4949,8 @@ class Game {
   giftItem(why, force) {
     if (!force && this.gifts >= CONFIG.GIFT_MAX_PER_LEVEL) return;
     if (!force) this.gifts++;
-    const pool = ['hammer', 'swap', 'hint', 'moves', 'fish', 'wand'];
-    const w = { hammer: 3, swap: 2, hint: 3, moves: 1, fish: 3, wand: 2 };
+    const pool = ['hammer', 'swap', 'sweep', 'moves', 'fish', 'wand'];
+    const w = { hammer: 3, swap: 3, moves: 1, fish: 3, wand: 2, sweep: 1 };
     const bag = []; pool.forEach(k => { for (let i = 0; i < w[k]; i++) bag.push(k); });
     const k = bag[(Math.random() * bag.length) | 0], d = CONFIG.ITEM_DEFS.find(x => x.id === k);
     this.save.items[k] = (this.save.items[k] || 0) + 1; Store.save(this.save);
@@ -4953,7 +4972,7 @@ class Game {
     if (!t) { el.classList.remove('show'); return; }
     const used = t.m0 - this.moves; let txt = '';
     if (t.n === 1) txt = used === 0 ? '👆 Vuốt 2 món cạnh nhau để xếp 3 món giống nhau' : used === 1 ? '✨ Giỏi lắm! Xếp 4 món liền nhau để tạo món đặc biệt' : used === 2 ? '🎯 Làm xong mục tiêu trước khi hết lượt nhé!' : '';
-    else txt = used === 0 ? '🎯 Xem MỤC TIÊU phía trên, làm xong trước khi hết lượt' : used === 1 ? '💡 Bí nước đi? Bấm Gợi ý ở thanh dưới' : '';
+    else txt = used === 0 ? '🎯 Xem MỤC TIÊU phía trên, làm xong trước khi hết lượt' : used === 1 ? '💡 Đứng yên vài giây, game sẽ tự chỉ nước đi cho bạn' : '';
     if (!txt) { this.tutEnd(); return; }
     el.textContent = txt; el.classList.add('show');
   }
@@ -5007,8 +5026,8 @@ class Game {
     if (this.tut) this.tutEnd();
     if (this.save.fails && this.save.fails[this.level]) { delete this.save.fails[this.level]; }
     if (this.level === 1 && this.save.level <= 1 && !this.save.seen.tutGift) {   // quà sau màn 1 để người chơi biết có vật phẩm
-      this.save.seen.tutGift = 1; this.save.items.hint += 2; this.save.items.hammer += 1;
-      setTimeout(() => UI.toast('🎁 Quà tân thủ: 💡 Gợi ý x2 + 🔨 Búa x1', 3000), 1800);
+      this.save.seen.tutGift = 1; this.save.items.sweep = (this.save.items.sweep || 0) + 1; this.save.items.hammer += 1;
+      setTimeout(() => UI.toast('🎁 Quà tân thủ: 🌪️ Lốc xoáy x1 + 🔨 Búa x1', 3000), 1800);
     }
     Sfx.win(); this.renderer.confetti();
     UI.toast('Hoàn thành màn ' + this.level + '!', 2000);
