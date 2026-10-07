@@ -984,7 +984,8 @@ const CONFIG = {
   GIFT_MAX_PER_LEVEL: 3,               // số quà vật phẩm tối đa nhận được trong 1 màn (từ combo/đơn VIP/món đặc biệt)
   SKILL_MAX_CASTS: 999,                // không giới hạn số lần tung chiêu (chỉ tốn năng lượng, mỗi lần sau đắt hơn)
   SKILL_GAIN: 0.55,                    // năng lượng nhận được cho mỗi món bị phá
-  skillEnergy(base, n, cast) { return Math.round(base * (1.5 + Math.min(n, 60) * 0.04) * (1 + Math.min(cast, 6) * .5)); },   // mua bằng xu ở màn Quán
+  CAST_MULT: [0.45, 0.9, 1.3, 1.7, 2.1, 2.5, 2.9],   // hệ số năng lượng theo lần tung chiêu trong màn: lần 1 dễ (0.45), lần 2 gấp đôi, các lần sau tăng dần
+  skillEnergy(base, n, cast) { const m = this.CAST_MULT; return Math.max(6, Math.round(base * (1.5 + Math.min(n, 60) * 0.04) * m[Math.min(cast, m.length - 1)])); },   // mua bằng xu ở màn Quán
   IDLE_HINT_MS: 4500,
   ENERGY_ADS_PER_LEVEL: 2,             // số lần xem video nạp đầy năng lượng đồng đội / màn
 
