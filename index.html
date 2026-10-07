@@ -4391,7 +4391,7 @@ class Game {
     await Promise.all(tasks);
     if (tk !== this.token) return;
     this.state = 'idle'; this.lastAction = performance.now();
-    if (!this.save.run) { this.save.run = 1; Store.save(this.save); }   // đánh dấu đang chơi dở: thoát giữa chừng sẽ mất tim
+    if (!this.save.run) { this.save.run = 1; this.save.runAt = Date.now(); Store.save(this.save); }   // đánh dấu đang chơi dở: thoát giữa chừng sẽ mất tim
     Voice.say('start', 1);
   }
 
@@ -4513,7 +4513,7 @@ class Game {
       return;
     }
     this.moves--; UI.hud(this); this._potKilled = 0;
-    if (this.save.run === 1) { this.save.run = 4; Store.save(this.save); }   // đã đi nước đầu: bỏ dở sẽ mất tim
+    if (this.save.run === 1) { this.save.run = 4; this.save.runAt = Date.now(); Store.save(this.save); }   // đã đi nước đầu: bỏ dở sẽ mất tim
     const wasFever = this.feverMoves > 0;
     await this.resolve(eff, [a, b], tk);
     if (tk !== this.token) return;
@@ -4910,7 +4910,7 @@ class Game {
   lose() {
     this.state = 'over'; Sfx.lose(); Voice.say('lose', 5);
     { const bp = this._boardCenter(); Fx.edgeGlow('#3a5bd9', 1500); Fx.shake($('#stage'), 8); Fx.shockwave(bp.x, bp.y, '#7a8cff', 2, 260); Fx.sweep('rgba(40,50,110,.55)'); }
-    this.save.run = 2;                                 // thua màn: sẽ trừ 1 tim
+    this.save.run = 2; this.save.runAt = Date.now();   // thua màn: sẽ trừ 1 tim
     Store.save(this.save);
     $('#loseScore').textContent = this.score; $('#loseTarget').textContent = this.target;
     UI.loseGoals(this);
@@ -4923,7 +4923,7 @@ class Game {
     showRewardedAd(async ok => {
       if (!ok) return UI.toast('Cần xem hết video để nhận thêm lượt');
       this.revives++; this.moves += CONFIG.REVIVE_MOVES;
-      this.save.run = 4;   // hồi sinh (kiểu Candy Crush): chơi tiếp, không trừ tim; sau đó thua hoặc bỏ dở thì mới mất 1 tim
+      this.save.run = 4; this.save.runAt = Date.now();   // hồi sinh (kiểu Candy Crush): chơi tiếp, không trừ tim; sau đó thua hoặc bỏ dở thì mới mất 1 tim
       Store.save(this.save);
       UI.hide('lose'); UI.hud(this);
       this.state = 'busy';
@@ -5136,7 +5136,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   Bg.init(); Fx.init();
   Auth.load(); const gotHash = Auth.consumeHash();
   const game = window.game = new Game();
-  if (game.save.run) { const lost = game.save.run === 2 || game.save.run === 4; game.save.run = 0; if (lost) Lives.spend(); Store.save(game.save); }   // lần trước đã thua mà chưa trừ tim -> trừ 1 tim
+  if (game.save.run) { const fresh = Date.now() - (game.save.runAt || 0) < 20 * 60 * 1000; const lost = fresh && (game.save.run === 2 || game.save.run === 4); game.save.run = 0; if (lost) Lives.spend(); Store.save(game.save); }   // chỉ trừ tim nếu vừa thua/thoát trong vòng 20 phút; để qua đêm thì bỏ qua (không phạt oan khi mở lại)   // lần trước đã thua mà chưa trừ tim -> trừ 1 tim
   UI.hud(game); UI.team(game);
   setTimeout(() => Lives.dailyGift(), 1200);
   showBannerAd();                                   // banner cố định ở cạnh dưới
