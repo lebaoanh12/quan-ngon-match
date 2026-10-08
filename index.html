@@ -1152,6 +1152,13 @@ body::before { opacity: 1; inset: 0; mask-image: none; -webkit-mask-image: none;
 #goalTip b{display:block;font-size:14px;font-weight:900;margin-bottom:2px;color:#b3470e}
 #goalTip span{display:block}
 
+/* combo = lửa: cam -> đỏ -> đỏ thẫm */
+#announce.l2{background-image:linear-gradient(180deg,#fff,#ffc24a 55%,#ff8a1c)}
+#announce.l3{background-image:linear-gradient(180deg,#fff,#ff9a3c 55%,#ff5a1f);text-shadow:0 4px 0 rgba(70,10,0,.8),0 0 22px rgba(255,120,30,.9)}
+#announce.l4{background-image:linear-gradient(180deg,#ffe9b0,#ff6a1a 55%,#e8261a);text-shadow:0 4px 0 rgba(70,5,0,.85),0 0 26px rgba(255,80,20,.95)}
+#announce.l5{background-image:linear-gradient(180deg,#ffd9a0,#ff3b1f 55%,#c20f12);text-shadow:0 4px 0 rgba(60,0,0,.9),0 0 32px rgba(255,50,20,1)}
+#announce.l6{background-image:linear-gradient(90deg,#ffd24a,#ff6a1a,#e8160f,#ff6a1a,#ffd24a);background-size:200% 100%;text-shadow:0 4px 0 rgba(60,0,0,.9),0 0 38px rgba(255,60,10,1);animation:ann 1s ease-out forwards,rainbowtxt .7s linear infinite}
+
 </style>
 <style>
 /* ===== V13 – Chợ đêm Việt Food: gọn, một tâm điểm, dock đáy ===== */
@@ -3284,6 +3291,21 @@ class Renderer {
   }
   rays(x, y, color = '#fff2a8', maxR = this.size) { this.fx.push({ t: 'rays', x, y, life: 0, max: 650, maxR, color }); }
   punchZoom(a) { this.punch = Math.max(this.punch, a); }
+  /** Ngọn lửa bay lên (vẽ bằng ảnh quầng sáng dựng sẵn, cộng sáng): n hạt, spread = độ rộng. */
+  flame(x, y, n = 6, spread = 1) {
+    const cap = Perf.cap(); if (this.fx.length > cap * .8) return;
+    n = Math.max(2, Math.round(n * Perf.mulBurst()));
+    if (this.fx.length > cap * .5) n = Math.max(2, n >> 1);
+    for (let i = 0; i < n; i++) {
+      this.fx.push({ t: 'flame', x: x + (Math.random() - .5) * this.cell * .9 * spread, y: y + (Math.random() - .3) * this.cell * .35, vx: (Math.random() - .5) * 40 * spread,
+        vy: -(70 + Math.random() * 130), life: -Math.random() * 120, max: 520 + Math.random() * 420, size: this.cell * (.30 + Math.random() * .26), ph: Math.random() * 6 });
+    }
+  }
+  /** Bức tường lửa dọc đáy bàn khi combo cao. */
+  fireWall(level = 1) {
+    const n = Math.min(14, 4 + level * 2);
+    for (let i = 0; i < n; i++) this.flame(this.pad + Math.random() * (this.size - this.pad * 2), this.H - this.pad * .5, 1, .5);
+  }
   ring(x, y, maxR, color = '#fff') { this.fx.push({ t: 'ring', x, y, life: 0, max: 450, maxR, color }); this.shake = Math.max(this.shake, 6); }
   beam(orient, r, c, color = '#fff6b0') {
     this.fx.push({ t: 'beam', orient, pos: orient === 'h' ? this.cellY(r) : this.cellX(c), life: 0, max: 380, color });
@@ -3319,6 +3341,7 @@ class Renderer {
     for (const f of this.fx) {
       f.life += dt;
       if (f.t === 'ember') { f.x += (f.vx + Math.sin(f.life / 160) * 18) * s; f.y += f.vy * s; }
+      else if (f.t === 'flame') { if (f.life > 0) { f.x += (f.vx + Math.sin(f.life / 110 + f.ph) * 26) * s; f.y += f.vy * s; f.vy *= (1 - .6 * s); } }
       else if (f.t === 'star') { if (f.life > 0) { f.y += f.vy * s; f.rot += 4 * s; } }
       else if (f.t === 'shard') { f.vy += 520 * s; f.x += f.vx * s; f.y += f.vy * s; f.rot += f.vr * s; }
       else if (f.t === 'text') f.y -= 38 * s;
@@ -3548,9 +3571,17 @@ class Renderer {
     ctx.save();
     switch (f.t) {
       case 'ember':
-        ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1 - p;
-        circ(ctx, f.x, f.y, f.size, '#ff9a2a');
+        ctx.globalCompositeOperation = Perf.q >= 1 ? 'lighter' : 'source-over'; ctx.globalAlpha = (1 - p) * .9;
+        if (Perf.q >= 1) Glow.draw(ctx, '#ff6a1a', f.x, f.y, f.size * 3.2); else circ(ctx, f.x, f.y, f.size, '#ff9a2a');
         break;
+      case 'flame': {
+        if (f.life < 0) break;
+        ctx.globalCompositeOperation = Perf.q >= 1 ? 'lighter' : 'source-over';
+        const k = 1 - p, col = p < .25 ? '#fff0a0' : p < .6 ? '#ff9a2a' : '#e8261a', sz = f.size * (.35 + k * .85);
+        ctx.globalAlpha = Math.min(1, k * 1.5) * (Perf.q >= 1 ? .85 : .6);
+        Glow.draw(ctx, col, f.x, f.y, sz * 1.6);
+        if (p < .45) { ctx.globalAlpha = (.45 - p) * 1.6; Glow.draw(ctx, '#fff7c8', f.x, f.y + sz * .15, sz * .6); }
+        break; }
       case 'puff':
         ctx.globalAlpha = (1 - p) * .55; circ(ctx, f.x, f.y - p * this.cell * .3, f.size * (.5 + p * 1.1), f.color);
         break;
@@ -5743,8 +5774,29 @@ class Game {
     if (this.save.run) { const lost = this.save.run === 2 || this.save.run === 4; this.save.run = 0; if (lost) Lives.spend(); Store.save(this.save); }   // 2: đã thua; 4: bỏ dở sau khi đã đi nước đầu -> trừ tim; 1: chưa đi nước nào -> không mất; 
   }
 
+  /** Chụp trạng thái màn đang chơi dở (để thoát ra menu rồi vào lại vẫn chơi tiếp). */
+  snapshot() {
+    const g = this.grid, strip = x => { if (!x) return null; const o = {}; for (const k in x) if (!['x', 'y', 'scale', 'alpha', 'rot'].includes(k)) o[k] = x[k]; return o; };
+    return { level: this.level, moves: this.moves, score: this.score, collected: this.collected, dropsGot: this.dropsGot, specMade: this.specMade,
+      bestCombo: this.bestCombo || 0, comboTotal: this.comboTotal || 0, revives: this.revives || 0, energy: this.energy || 0, party: !!this.party,
+      cells: g.cells.map(row => row.map(strip)), blocks: g.blocks, ice: g.ice, pot: g.pot, belts: g.belts, dropsPending: g.dropsPending || 0, _id: g._id };
+  }
+  applySnap(sn) {
+    const g = this.grid;
+    this.moves = sn.moves; this.score = sn.score; this.shownScore = sn.score; this.collected = sn.collected || {}; this.dropsGot = sn.dropsGot || 0; this.specMade = sn.specMade || {};
+    this.bestCombo = sn.bestCombo; this.comboTotal = sn.comboTotal; this.revives = sn.revives; this.energy = sn.energy || 0; this.party = !!sn.party;
+    const R = this.renderer;
+    g.blocks = sn.blocks; g.ice = sn.ice; g.pot = sn.pot; g.belts = sn.belts || []; g.dropsPending = sn.dropsPending || 0; g._id = sn._id || g._id;
+    g.cells = sn.cells.map(row => row.map(x => x ? Object.assign({ x: 0, y: 0, scale: 1, alpha: 1, rot: 0 }, x) : null));
+    this.save.run = 4; this.save.runAt = Date.now(); this._resumed = true;
+  }
+
   async startLevel(n, skipIntro = false) {
     this._flyPend = {};
+    this._resumed = false;
+    let snap = null;
+    { const rs = this.save.resume; this.save.resume = null;
+      if (rs && rs.level === n && Lives.has()) { snap = rs; this.save.run = 0; } }
     this.settleRun();
     if (!Lives.has()) {                               // hết tim: chặn vào màn, mở bảng mua/chờ tim
       this.token++; Tween.clear(); this.state = 'menu';
@@ -5773,9 +5825,9 @@ class Game {
     this.goals = Levels.build(def, this.grid);
     const sg = this.goals.find(g => g.t === 'score'); this.target = sg ? sg.n : 0;
     if (!this.grid.findHint()) this.grid.shuffle();
-    this.plantGoal();
+    if (snap) { try { this.applySnap(snap); } catch (e) { this._resumed = false; } } else this.plantGoal();
     UI.hideAll();
-    $('#score').textContent = 0;
+    $('#score').textContent = this.score | 0;
     UI.hud(this); UI.team(this); UI.extra(this);
     { const st = $('#stage'); if (st && Math.abs((st.clientHeight - 20) - (this.renderer.maxH || 0)) > 2) this.layout(); }   // thanh HUD đổi chiều cao -> tính lại cỡ bàn để không đè lên thẻ đồng đội
     this.state = 'busy';
@@ -5791,7 +5843,7 @@ class Game {
     if (tk !== this.token) return;
     UI.hide('intro');
     if (this.introBoost) { this.moves += 3; UI.hud(this); }
-    { const f = (this.save.fails || {})[this.level] || 0;       // thua liên tiếp: tự cộng lượt để đỡ nản (từ lần thua thứ 2)
+    if (!this._resumed) { const f = (this.save.fails || {})[this.level] || 0;       // thua liên tiếp: tự cộng lượt để đỡ nản (từ lần thua thứ 2)
       if (f >= 2 && this.level >= 3) { const add = Math.min(6, (f - 1) * 2); this.moves += add; UI.hud(this); setTimeout(() => UI.toast('💝 Hỗ trợ: +' + add + ' lượt cho bạn!', 2200), 900); } }
     const R = this.renderer, tasks = [];
     this.grid.cells.forEach((row, r) => row.forEach((gem, c) => {
@@ -5839,8 +5891,10 @@ class Game {
     }, 0) / this.goals.length;
   }
 
-  goMenu() {
-    this.settleRun();
+  goMenu(keep) {
+    if (keep && this.state === 'idle' && this.save.run === 4 && this.grid && this.moves > 0 && !this.goalsDone()) {
+      try { this.save.resume = this.snapshot(); Store.save(this.save); } catch (e) { this.save.resume = null; this.settleRun(); }
+    } else this.settleRun();
     setTimeout(() => Lives.dailyGift(), 600);
     this.token++; Tween.clear();
     this.state = 'menu';
@@ -5984,10 +6038,13 @@ class Game {
       UI.hud(this);
       const cx = cells.reduce((s, p) => s + R.cellX(p.c), 0) / Math.max(1, cells.length);
       const cy = cells.reduce((s, p) => s + R.cellY(p.r), 0) / Math.max(1, cells.length);
-      { const col = combo >= 5 ? '#ff2e9a' : combo >= 3 ? '#8a3ffc' : this.feverMoves > 0 ? '#ff9f1c' : '#ffffff';
+      { const FIRE = ['#ffffff', '#ffb02e', '#ff8a1c', '#ff5a1f', '#ff3b1f', '#e8160f', '#d10a1a'], fc = FIRE[Math.min(combo, 6)];
+        const col = combo >= 2 ? fc : this.feverMoves > 0 ? '#ff9f1c' : '#ffffff';
         R.floatText(cx, cy, '+' + pts, col, 26 + Math.min(combo, 5) * 4);
-        if (combo >= 2) R.floatText(cx, cy - R.cell * .75, 'x' + combo, combo >= 5 ? '#8a3ffc' : '#8a3ffc', 20 + combo * 2);
-        R.burst(cx, cy, combo >= 5 ? '#ff2e9a' : combo >= 3 ? '#8a3ffc' : '#8a3ffc', 6 + combo * 3); R.ring(cx, cy, R.cell * (.9 + combo * .12), col === '#ffffff' ? '#8a3ffc' : col);
+        if (combo >= 2) R.floatText(cx, cy - R.cell * .75, 'x' + combo, '#ff3b1f', 22 + combo * 3);
+        R.burst(cx, cy, combo >= 2 ? [fc, '#ffb02e', '#ff5a1f'][(Math.random() * 3) | 0] : '#ffb02e', 6 + combo * 3); R.ring(cx, cy, R.cell * (.9 + combo * .12), combo >= 2 ? fc : '#ff8a1c');
+        if (combo >= 2) R.flame(cx, cy, 3 + combo * 2, 1 + combo * .15);
+        if (combo >= 4) R.fireWall(combo - 3);
         try { const sc = document.getElementById('score'); sc.classList.remove('bump'); void sc.offsetWidth; sc.classList.add('bump'); } catch (e) {} }
       Sfx.match(combo);
 
@@ -6688,12 +6745,12 @@ class Game {
       this.announce(WORDS[Math.min(combo, 6)] + (combo > 2 ? ' x' + combo : ''), combo);
       Voice.say('c' + Math.min(combo, 6), combo >= 4 ? 2 : 1);
       R.punchZoom(.012 * Math.min(combo, 6)); Sfx.vib(15 + combo * 8);
-      if (combo >= 4) { this.flash('#fff3b0', .35); this.slow(380, .45); R.rays(cx, cx, '#ffe27a'); }
+      if (combo >= 4) { this.flash('#ff7a2a', .38); this.slow(380, .45); R.rays(cx, cx, '#ff9a3c'); }
       // lớp hiệu ứng toàn màn: càng combo cao càng rực rỡ
       const bp = this._boardCenter();
       if (combo >= 3) Fx.dim(650, .38);
-      if (combo >= 3) Fx.edgeGlow(['#e8267a', '#e8267a', '#e8267a', '#8a3ffc', '#ff5a8a', '#b266ff'][Math.min(combo, 6) - 1] || '#e8267a', 600);
-      if (combo >= 4) { Fx.shockwave(bp.x, bp.y, '#12b76a', 2, 200 + combo * 25); Fx.burst(bp.x, bp.y, ['#e8267a', '#e8267a', '#8a3ffc'], 18 + combo * 6, 1 + combo * .1); }
+      if (combo >= 3) Fx.edgeGlow(['#ff9a2a', '#ff7a1a', '#ff5a1f', '#ff3b1f', '#e8160f', '#d10a1a'][Math.min(combo, 6) - 1] || '#ff5a1f', 600 + combo * 60);
+      if (combo >= 4) { Fx.shockwave(bp.x, bp.y, '#ff5a1f', 2, 200 + combo * 25); Fx.burst(bp.x, bp.y, ['#ff3b1f', '#ff9a2a', '#ffd24a'], 18 + combo * 6, 1 + combo * .1); }
       if (combo >= 5) { Fx.sweep(); Fx.shake($('#stage'), 5 + combo); }
       if (combo >= 6) { Fx.firework(bp.x + (Math.random() - .5) * 160, bp.y - 90); }
     }
@@ -6918,7 +6975,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   $('#btnPause').onclick = () => { if (game.state === 'idle' || game.state === 'busy') UI.show('pause'); };
   $('#btnResume').onclick = () => UI.hide('pause');
   $('#btnRestart').onclick = () => { UI.hide('pause'); game.startLevel(game.level, true); };
-  $('#btnPauseMenu').onclick = () => game.goMenu();
+  $('#btnPauseMenu').onclick = () => game.goMenu(true);
 
   // Thắng
   $('#btnDouble').onclick = () => game.doubleReward();
