@@ -1068,6 +1068,45 @@ body::before { opacity: 1; inset: 0; mask-image: none; -webkit-mask-image: none;
 .shopwin .menuboard { top: 20px; }
 .card.menu h1.logo { margin-top: 30px; }
 
+/* ===== MENU NGOÀI — PHONG CÁCH MIỀN QUÊ: quán bên đồng lúa (mái tranh, nón lá, bảng tre) ===== */
+
+#menu{background:radial-gradient(60px 60px at 82% 14%,#fff7b0 0,#ffe27a 40%,transparent 70%),linear-gradient(180deg,#8fd9f5 0%,#d3f2e6 36%,#a8e58f 58%,#58b24e 80%,#2f7f3a 100%)!important}
+#menu .awning{height:58px;background:repeating-linear-gradient(100deg,#e0aa4a 0 7px,#b97a24 7px 12px,#cf9638 12px 17px);clip-path:polygon(0 0,100% 0,100.0% 62%,96.4% 100%,92.9% 62%,89.3% 100%,85.7% 62%,82.1% 100%,78.6% 62%,75.0% 100%,71.4% 62%,67.9% 100%,64.3% 62%,60.7% 100%,57.1% 62%,53.6% 100%,50.0% 62%,46.4% 100%,42.9% 62%,39.3% 100%,35.7% 62%,32.1% 100%,28.6% 62%,25.0% 100%,21.4% 62%,17.9% 100%,14.3% 62%,10.7% 100%,7.1% 62%,3.6% 100%,0 62%);box-shadow:none}
+#menu .awning::after{display:none}
+#menu .lanterns u{width:58px;height:30px;border:0;border-radius:50% 50% 8% 8%/100% 100% 8% 8%;clip-path:polygon(50% 0,100% 100%,0 100%);background:repeating-linear-gradient(90deg,#f1d28a 0 6px,#d3a94f 6px 9px);box-shadow:none;top:50px!important}
+#menu .lanterns u::before{top:-22px;background:#8a5a22} #menu .lanterns u::after{display:none}
+.card.menu h1.logo{background:repeating-linear-gradient(90deg,#b8d65a 0 28px,#8fb53a 28px 31px,#c9e46a 31px 36px);border:4px solid #5a7a22;box-shadow:0 0 0 3px #3c5414,0 8px 0 #2c3e0e,0 14px 20px rgba(20,60,20,.4),inset 0 2px 0 rgba(255,255,255,.5)}
+.card.menu h1.logo .t1{color:#fff3b0;text-shadow:0 3px 0 #5a3a10,2px 2px 0 #5a3a10,-2px -2px 0 #5a3a10,2px -2px 0 #5a3a10,-2px 2px 0 #5a3a10}
+.card.menu h1.logo .t2{background:linear-gradient(180deg,#e8643a,#b8341a)}
+.card.menu h1.logo::before,.card.menu h1.logo::after{background:#8a5a22}
+.shopwin{background:linear-gradient(180deg,#9fe0f7 0%,#d6f4e8 40%,#7ccf6a 41%,#58b24e 55%,#3e9a3e 56%,#7ccf6a 57%,#4aa84a 75%,#2f7f3a 100%);border-color:#8a5a22;box-shadow:0 0 0 2px #e6c36a,0 6px 0 #4a3010,0 12px 18px rgba(20,60,20,.4)}
+.shopwin::before{height:0}
+.shopwin .shopcounter{background:repeating-linear-gradient(90deg,rgba(0,0,0,.1) 0 2px,transparent 2px 30px),linear-gradient(180deg,#b88a4a,#8a5a22 40%,#5a3a14);border-top-color:#e6c36a}
+.shopwin .menuboard{background:linear-gradient(180deg,#a8743a,#7a4a1c);border-color:#d9b36a}
+.shopwin .chef em{width:54px;height:22px;margin-left:-27px;top:-8px;background:linear-gradient(180deg,#f1d28a,#c99a3c);border-radius:50% 50% 0 0/100% 100% 0 0;clip-path:polygon(50% 0,100% 100%,0 100%);box-shadow:none}
+.shopwin .sub{color:#fff8d0}
+.mgrid .btn{background:linear-gradient(180deg,#fffdf0,#f3e9b8);border-color:#6a8a2a;box-shadow:0 0 0 2px #d9e87a,0 5px 0 #3c5414,0 10px 14px rgba(20,60,20,.35),inset 0 3px 0 #fff}
+.card.menu .btn.ghost,.sndrow.icons .btn{background:linear-gradient(180deg,#9bbd4a,#6a8a2a)!important;border-color:#e6f08a!important;color:#fff!important;text-shadow:0 1px 2px #243a08!important;box-shadow:0 4px 0 #2c3e0e!important}
+#menu .counter{background:linear-gradient(180deg,#5a3a14 0,#5a3a14 10px,#3b9a3b 10px,#2f7f3a 100%);border-top:0}
+.card.menu .btn.danger{color:#1d4a10!important;text-shadow:0 1px 0 rgba(255,255,255,.6)}
+.menu-pills .pill{background:linear-gradient(180deg,#fffdf0,#f3e9b8)}
+
+/* VIET FOOD nổi bật */
+.card.menu h1.logo { margin: 34px 2px 8px; padding: 12px 8px 24px; border-width: 5px; animation: signGlow 2.6s ease-in-out infinite; }
+.card.menu h1.logo .t1 { font-size: 46px; letter-spacing: 3px; color: #fff6b8; -webkit-text-stroke: 2px #4a2a08; paint-order: stroke fill;
+  text-shadow: 0 4px 0 #b8341a, 0 7px 0 #5a2a08, 0 0 26px rgba(255,255,255,.7); animation: logoPop 2.6s ease-in-out infinite; }
+.card.menu h1.logo .t2 { font-size: 15px; box-shadow: 0 3px 0 #6a1408; border: 2px solid #ffe08a; color: #fff; }
+@keyframes signGlow { 0%,100% { box-shadow: 0 0 0 3px #3c5414, 0 8px 0 #2c3e0e, 0 14px 20px rgba(20,60,20,.4), 0 0 0 rgba(255,240,120,0); } 50% { box-shadow: 0 0 0 3px #3c5414, 0 8px 0 #2c3e0e, 0 14px 20px rgba(20,60,20,.4), 0 0 30px rgba(255,240,120,.85); } }
+@keyframes logoPop { 0%,100% { transform: scale(1); } 50% { transform: scale(1.04); } }
+/* chữ trên nền tối/nhiều màu: trắng + viền đậm */
+.shopwin .sub { color: #fff !important; -webkit-text-stroke: 3px #3a2208; paint-order: stroke fill; text-shadow: none; }
+.shopwin .menuboard { color: #fff; } .shopwin .menuboard b { color: #ffe27a; }
+.menu-pills .pill, .menu-pills .pill b { color: #3a2208 !important; }
+.card.menu .btn.danger { color: #fff !important; -webkit-text-stroke: 2px #1d4a10; paint-order: stroke fill; text-shadow: none; }
+.mgrid .btn span:not(.badge) { color: #3a2208 !important; }
+.card.menu h1.logo { margin-bottom: 26px; }
+.card.menu .btn.danger, #menu .btn.ghost.danger { background: transparent !important; border: 0 !important; box-shadow: none !important; }
+
 </style>
 </head>
 <body>
