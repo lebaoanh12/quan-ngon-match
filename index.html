@@ -2996,7 +2996,7 @@ class Renderer {
   constructor(canvas) {
     this.cv = canvas;
     this.ctx = canvas.getContext('2d');
-    this.dpr = Math.min(window.devicePixelRatio || 1, 2);
+    this.dpr = Math.min(window.devicePixelRatio || 1, 2.5);   // nét hơn 2x cũ, vẫn nhẹ; máy yếu tự hạ về 2x ở resize()
     this.fx = [];
     this.shake = 0;
     this.time = 0;
@@ -3009,6 +3009,7 @@ class Renderer {
   resize(size, maxH) {
     if (maxH) this.maxH = maxH; else maxH = this.maxH || size;
     this.size = size;
+    this.dpr = Math.min(window.devicePixelRatio || 1, (typeof Perf !== 'undefined' && Perf.q === 0) ? 2 : 2.5);
     const d = this.dpr;
     this.cell = (size - this.pad * 2) / this.n;
     this.ch = Math.min(this.cell * 1.28, Math.max(this.cell, (maxH - this.pad * 2) / this.n));
@@ -3017,6 +3018,7 @@ class Renderer {
     this.cv.style.height = this.H + 'px';
     this.cv.width = Math.round(size * d);
     this.cv.height = Math.round(this.H * d);
+    this.ctx.imageSmoothingEnabled = true; this.ctx.imageSmoothingQuality = 'high';
     this.buildSprites();
   }
 
@@ -3129,10 +3131,10 @@ class Renderer {
     // viền bằng cách vẽ hình lệch nhiều hướng (bóng đặc không mờ)
     const stamp = (rad, col) => {
       g.save(); g.shadowColor = col; g.shadowBlur = 0;
-      for (let i = 0; i < 28; i++) { const a = i / 28 * Math.PI * 2; g.shadowOffsetX = Math.cos(a) * rad + 4000; g.shadowOffsetY = Math.sin(a) * rad; g.fillText(emoji, -4000, y); }
+      for (let i = 0; i < 44; i++) { const a = i / 44 * Math.PI * 2; g.shadowOffsetX = Math.cos(a) * rad + 4000; g.shadowOffsetY = Math.sin(a) * rad; g.fillText(emoji, -4000, y); }
       g.restore();
     };
-    stamp(LW * 1.9, T.dark); stamp(LW * 1.35, T.base); stamp(LW * .75, '#ffffff');
+    stamp(LW * 1.7, T.dark); stamp(LW * 1.2, T.base); stamp(LW * .7, '#ffffff');
     g.save(); g.shadowColor = 'rgba(30,15,0,.35)'; g.shadowBlur = LW * 1.2; g.shadowOffsetY = LW * .8; g.fillText(emoji, 0, y); g.restore();
     g.fillText(emoji, 0, y);
   }
@@ -3494,6 +3496,7 @@ class Renderer {
 
   /** Khuôn mặt dễ thương: 'normal' | 'blink' | 'happy' (^ ^) | 'wow' (miệng tròn) */
   drawFace(ctx, type, expr) {
+    if (this.regional && this.regional[type]) return;   // ô đặc sản kiểu nhãn dán: không vẽ mặt (tránh chấm đen lạc trên hình)
     const f = type === -2 ? { y: .12, k: .9 } : CONFIG.TYPES[type].face, R = this.cell * .44, k = f.k, cy = f.y * R;
     const gap = .28 * R * k, rx = .13 * R * k, ry = .17 * R * k;
     ctx.lineCap = 'round';
