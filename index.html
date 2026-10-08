@@ -1128,6 +1128,15 @@ body::before { opacity: 1; inset: 0; mask-image: none; -webkit-mask-image: none;
   .card.menu .menu-pills { padding: 0 40px; } .card.menu .menu-pills .pill { padding: 2px 6px; font-size: 12px; }
 }
 
+/* Đặc sản ở màn giới thiệu */
+.specbox{margin:6px 0 2px}
+.spechead{font-size:12px;font-weight:900;color:#7a3a00;text-align:center;margin-bottom:4px}
+.specrow{display:flex;flex-wrap:wrap;gap:5px;justify-content:center}
+.spec{display:inline-flex;align-items:center;gap:4px;background:#fff;border:2px solid #f2d9a8;border-radius:14px;padding:2px 9px 2px 4px;font-size:11.5px;font-weight:800;color:#5a2a00;max-width:48%;line-height:1.15}
+.spec img{width:34px;height:34px;flex:none;object-fit:contain}
+.spec i{font-style:normal;font-size:24px;width:34px;text-align:center;flex:none}
+@media (max-height:700px){.spec img{width:28px;height:28px}.spec i{font-size:20px;width:28px}.spec{font-size:10.5px}}
+
 </style>
 <style>
 /* ===== V13 – Chợ đêm Việt Food: gọn, một tâm điểm, dock đáy ===== */
@@ -1353,6 +1362,7 @@ body::before { opacity: 1; inset: 0; mask-image: none; -webkit-mask-image: none;
       <p class="coinline">Số lượt: <b id="introMoves">0</b></p>
       <p class="coinline" id="introStars" style="font-size:.85em"></p>
       <div id="introGoals" class="goalrow"></div>
+      <div id="introSpec" class="specbox"></div>
       <div id="introTips"></div>
       <div id="introStreak" class="streak"></div>
       <button class="btn video" id="btnIntroVideo">▶ Xem video: +3 lượt</button>
@@ -3027,7 +3037,8 @@ class Renderer {
     else {
       // bóng đổ tiếp đất
       g.fillStyle = 'rgba(0,0,0,.25)'; g.beginPath(); g.ellipse(0, R * .92, R * .72, R * .13, 0, 0, Math.PI * 2); g.fill();
-      FOOD_DRAW[type](g, R, 2 * d, CONFIG.TYPES[type]);
+      if (this.regional && this.regional[type]) this.drawRegional(g, R, 2 * d, CONFIG.TYPES[type], this.regional[type]);
+      else FOOD_DRAW[type](g, R, 2 * d, CONFIG.TYPES[type]);
       if (special === 'line_h' || special === 'line_v') this.drawBolt(g, R, d, special === 'line_h');
       else if (special === 'bomb') this.drawBombRing(g, R, d);
     }
@@ -3072,6 +3083,42 @@ class Renderer {
     rg.addColorStop(0, 'rgba(255,230,120,.95)'); rg.addColorStop(1, 'rgba(255,90,40,0)');
     g.fillStyle = rg; g.beginPath(); g.arc(0, 0, R * .5, 0, Math.PI * 2); g.fill();
     g.restore();
+  }
+
+  /** Đặc sản vùng miền: thay 3 ô (số 2, 4, 5) bằng 3 đặc sản của tỉnh; 3 ô cốt lõi (phở, bánh mì, trà sữa) giữ nguyên. */
+  setRegion(items) {
+    const slots = [2, 4, 5], key = items ? items.map(x => x[0]).join('') : '';
+    if (this._regKey === key) return; this._regKey = key;
+    const pal = [
+      { light: '#c8f5cf', base: '#2fb35a', dark: '#0f5a26' },     // xanh lá
+      { light: '#cfe6ff', base: '#3d8ee8', dark: '#12417d' },     // xanh dương
+      { light: '#e4d4ff', base: '#8a54ee', dark: '#3d1a85' }      // tím
+    ];
+    const orig = CONFIG._typesOrig || (CONFIG._typesOrig = slots.map(t => Object.assign({}, CONFIG.TYPES[t])));
+    this.regional = null;
+    slots.forEach((t, i) => {
+      if (items && items[i]) { Object.assign(CONFIG.TYPES[t], pal[i], { name: items[i][1], face: { y: .62, k: .42 } }); (this.regional = this.regional || {})[t] = items[i][0]; }
+      else Object.assign(CONFIG.TYPES[t], orig[i]);
+    });
+    if (this.sprites) {
+      const sp = [null, 'line_h', 'line_v', 'bomb'];
+      slots.forEach(t => sp.forEach(s => { this.sprites[t + '|' + (s || '')] = this.makeSprite(t, s); }));
+    }
+  }
+  /** Ô đặc sản không có vòng tròn: hình đặc sản to, viền trắng + viền màu nhận diện (xanh lá / xanh dương / tím) kiểu nhãn dán. */
+  drawRegional(g, R, LW, T, emoji) {
+    g.fillStyle = '#000';   // alpha của fillStyle ảnh hưởng cả emoji màu: phải đặt đục
+    g.font = Math.round(R * 1.36) + 'px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    const y = -.02 * R;
+    // viền bằng cách vẽ hình lệch nhiều hướng (bóng đặc không mờ)
+    const stamp = (rad, col) => {
+      g.save(); g.shadowColor = col; g.shadowBlur = 0;
+      for (let i = 0; i < 28; i++) { const a = i / 28 * Math.PI * 2; g.shadowOffsetX = Math.cos(a) * rad + 4000; g.shadowOffsetY = Math.sin(a) * rad; g.fillText(emoji, -4000, y); }
+      g.restore();
+    };
+    stamp(LW * 1.9, T.dark); stamp(LW * 1.35, T.base); stamp(LW * .75, '#ffffff');
+    g.save(); g.shadowColor = 'rgba(30,15,0,.35)'; g.shadowBlur = LW * 1.2; g.shadowOffsetY = LW * .8; g.fillText(emoji, 0, y); g.restore();
+    g.fillText(emoji, 0, y);
   }
 
   /** Đặc sản của tỉnh (rơi xuống hàng đáy): đĩa trắng viền vàng + biểu tượng món. */
@@ -3956,6 +4003,7 @@ const UI = {
     $('#introMoves').textContent = d.moves;
     { const n = g.starNeed(); $('#introStars').innerHTML = '★ ' + n.s1 + ' · ★★ ' + n.s2 + ' · ★★★ ' + n.s3 + ' điểm'; }
     $('#introGoals').innerHTML = g.goals.map(x => UI._chipHtml(x, g)).join('');
+    UI.introSpec(g);
     const tips = [], sv = g.save;
     const kinds = new Set(g.goals.map(x => x.t));
     d.map.join('').split('').forEach(ch => { if ('iI'.includes(ch)) kinds.add('ice'); if ('#='.includes(ch)) kinds.add('crate'); if (ch === 'r') kinds.add('rope'); if (ch === 'D') kinds.add('drop'); if (ch === 'P') kinds.add('pot'); if (ch === 'V') kinds.add('cart'); if (ch === 'T') kinds.add('timer'); });
@@ -3967,6 +4015,18 @@ const UI = {
     $('#btnIntroVideo').classList.remove('hidden');
     Streak.render(g);
     UI.show('intro');
+  },
+  /** Dải "Đặc sản" ở màn giới thiệu: icon + tên, để người chơi biết các ô trên bàn là món gì. */
+  introSpec(g) {
+    const box = $('#introSpec'); if (!box) return; box.innerHTML = '';
+    if (typeof WorldMap === 'undefined') return;
+    try {
+      const th = WorldMap.theme(g.level), R = g.renderer, on = WorldMap.regionOn(g.level), it = on ? WorldMap.regionItems(g.level) : null;
+      let chips = '';
+      if (it) chips = [2, 4, 5].map((t, i) => { const sp = R.sprites[t + '|']; return '<span class="spec"><img src="' + (sp ? sp.toDataURL() : '') + '"><b>' + it[i][1] + '</b></span>'; }).join('');
+      else chips = th.all.slice(0, 3).map(x => '<span class="spec"><i>' + x[0] + '</i><b>' + x[1] + '</b></span>').join('');
+      box.innerHTML = '<div class="spechead">' + (it ? '🍽️ Đặc sản ' + th.name + ' trên bàn' : '📍 Đặc sản ' + th.name) + '</div><div class="specrow">' + chips + '</div>';
+    } catch (e) {}
   },
   /** Chọn vật tăng cường trước màn (học Candy Crush): bấm để chọn, hết thì bấm dấu + xem video nhận 1 cái. */
   starBanner(k) {
@@ -5365,8 +5425,21 @@ const WorldMap = {
   theme(n) {
     const c = this.chapter(n) - 1, p = this.PROV[c % this.PROV.length], pal = this.PAL[c % this.PAL.length];
     const sp = (this.SPEC[c % this.PROV.length] || '').split('|').map(s => { const i = s.indexOf(' '); return [s.slice(0, i), s.slice(i + 1)]; }).filter(x => x[0]);
-    const k = (n - 1) % this.CH, it = (k === this.CH - 1 || !sp.length) ? [p[1], p[2]] : sp[k % sp.length];
+    const rg = this.regionOn(n) ? this.regionItems(n) : null, pool = rg ? sp.filter(x => !rg.some(y => y[0] === x[0])) : sp, use = pool.length ? pool : sp;   // đặc sản rơi không trùng ô ghép
+    const k = (n - 1) % this.CH, it = (k === this.CH - 1 || !sp.length) ? [p[1], p[2]] : use[k % use.length];
     return { name: p[0], sh: p[0], ic: it[0], food: it[1], main: [p[1], p[2]], all: sp, more: p[3], lap: (c / this.PROV.length | 0) + 1, top: pal.top, bot: pal.bot, hill: pal.hill, deco: [p[1]].concat(pal.deco.slice(0, 3), [p[1]]) };
+  },
+  /** Màn nào dùng ô đặc sản tỉnh: xen kẽ với bộ 6 ô cổ điển. 5 màn đầu luôn cổ điển (học chơi); trong chặng, màn chẵn và màn cuối chặng dùng đặc sản. */
+  regionOn(n) {
+    if (n < 6) return false;
+    const k = (n - 1) % this.CH;
+    return k % 2 === 1 || k === this.CH - 1;
+  },
+  /** 3 đặc sản của tỉnh dùng làm ô ghép trên bàn (bỏ món trùng dáng với phở / bánh mì / trà sữa). */
+  regionItems(n) {
+    const c = (this.chapter(n) - 1) % this.PROV.length, bad = { '🍜': 1, '🥖': 1, '🧋': 1, '☕': 1, '🥢': 1, '🍲': 1 }, seen = {}, out = [];
+    (this.SPEC[c] || '').split('|').forEach(s => { const i = s.indexOf(' '), e = s.slice(0, i); if (e && !bad[e] && !seen[e] && out.length < 3) { seen[e] = 1; out.push([e, s.slice(i + 1)]); } });
+    return out.length === 3 ? out : null;
   },
   /** Mở đặc sản khi qua màn cuối của chặng lần đầu: thưởng xu + hiện trên màn thắng. */
   onWin(g, old) {
@@ -5602,6 +5675,7 @@ class Game {
     this.setActiveItem();
     this.renderer.setView(def.size || CONFIG.COLS);
     this._finale = false; this._starK = 0; this._pre = {}; this._streakGot = '';
+    try { this.renderer.setRegion(WorldMap.regionOn(n) ? WorldMap.regionItems(n) : null); } catch (e) {}
     try { const th = WorldMap.theme(n); this.renderer.setDrop(th.ic); Levels.TIPS.drop = [th.ic, th.food, 'Đặc sản không ghép được. Hãy phá món bên dưới để đặc sản rơi xuống hàng đáy.']; } catch (e) {}
     this.grid = new Grid(CONFIG.ROWS, CONFIG.COLS, def.colors);
     this.grid.n = this.renderer.n; this.grid.off = this.renderer.off;
