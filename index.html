@@ -3161,6 +3161,7 @@ class Renderer {
   }
   /** Ô đặc sản không có vòng tròn: hình đặc sản to, viền trắng + viền màu nhận diện (xanh lá / xanh dương / tím) kiểu nhãn dán. */
   drawRegional(g, R, LW, T, emoji) {
+    if (Ico.has(emoji)) { g.save(); g.translate(0, -.02 * R); Ico.draw(g, R * .98, T, LW); g.restore(); return; }
     g.fillStyle = '#000';   // alpha của fillStyle ảnh hưởng cả emoji màu: phải đặt đục
     g.font = Math.round(R * 1.36) + 'px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
     const y = -.02 * R;
@@ -3185,6 +3186,7 @@ class Renderer {
     g.strokeStyle = '#e0a21c'; g.lineWidth = 3 * d; g.stroke();
     g.beginPath(); g.arc(0, .02 * R, .74 * R, 0, Math.PI * 2); g.strokeStyle = 'rgba(224,162,28,.45)'; g.lineWidth = 1.5 * d; g.stroke();
     g.font = Math.round(R * 1.15) + 'px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    if (Ico.has(emoji)) { g.save(); g.translate(0, R * .05); Ico.draw(g, R * .62, null, 0); g.restore(); return; }
     g.fillText(emoji, 0, R * .08);
   }
 
@@ -3672,6 +3674,41 @@ Renderer.flameSprite = function () {
   return (Renderer._fs = cv);
 };
 
+
+/* Icon vẽ tay cho món không có emoji (thanh long). Ico.has(e) / Ico.html(e) / Ico.txt(e) */
+const Ico = {
+  CUSTOM: { '🐉': 'dragon' },
+  has(e) { return !!this.CUSTOM[e]; },
+  txt(e) { return this.has(e) ? '🌸' : e; },
+  /** Vẽ thanh long tâm (0,0), bán kính s; T = {dark,base} để vẽ viền nhãn dán (bỏ qua = không viền). */
+  draw(g, s, T, LW) {
+    const sil = new Path2D();
+    sil.ellipse(0, .06 * s, .62 * s, .78 * s, 0, 0, Math.PI * 2);
+    [[-.5, -.25, -.82, -.5], [.5, -.25, .82, -.5], [-.58, .22, -.86, .22], [.58, .22, .86, .22], [-.25, -.68, -.42, -.94], [.25, -.68, .42, -.94], [-.3, .7, -.52, .94], [.3, .7, .52, .94]].forEach(a => {
+      sil.moveTo(a[0] * s, a[1] * s); sil.quadraticCurveTo((a[0] + a[2]) * s * .55, (a[1] + a[3]) * s * .5 - .12 * s, a[2] * s, a[3] * s);
+      sil.quadraticCurveTo((a[0] + a[2]) * s * .5 + .12 * s, (a[1] + a[3]) * s * .55, a[0] * s + .2 * s * Math.sign(a[0] || 1) * -1, a[1] * s + .22 * s); sil.closePath();
+    });
+    g.lineJoin = 'round';
+    if (T) { g.strokeStyle = T.dark; g.lineWidth = LW * 3.4; g.stroke(sil); g.strokeStyle = T.base; g.lineWidth = LW * 2.4; g.stroke(sil); g.strokeStyle = '#fff'; g.lineWidth = LW * 1.4; g.stroke(sil); }
+    // lá xanh
+    g.fillStyle = '#3fbf4a'; g.fill(sil);
+    // thân hồng
+    const gr = g.createLinearGradient(-.6 * s, -.7 * s, .6 * s, .8 * s); gr.addColorStop(0, '#ff5fae'); gr.addColorStop(1, '#d4147a');
+    g.beginPath(); g.ellipse(0, .06 * s, .6 * s, .76 * s, 0, 0, Math.PI * 2); g.fillStyle = gr; g.fill();
+    g.lineWidth = Math.max(1.5, s * .05); g.strokeStyle = '#9c0b57'; g.stroke();
+    // vảy xanh nhỏ trên thân
+    g.fillStyle = '#4fd05a';
+    [[-.35, -.35], [.35, -.35], [-.4, .15], [.4, .15], [-.25, .6], [.25, .6], [0, -.1]].forEach(p => { g.beginPath(); g.ellipse(p[0] * s, p[1] * s, .09 * s, .15 * s, p[0] * 1.2, 0, Math.PI * 2); g.fill(); });
+    // bóng sáng
+    g.fillStyle = 'rgba(255,255,255,.45)'; g.beginPath(); g.ellipse(-.25 * s, -.25 * s, .1 * s, .22 * s, .5, 0, Math.PI * 2); g.fill();
+  },
+  html(e) {
+    if (!this.has(e)) return e;
+    if (!this._u) { const c = document.createElement('canvas'); c.width = c.height = 96; const g = c.getContext('2d'); g.translate(48, 50); this.draw(g, 32, null, 0); this._u = c.toDataURL(); }
+    return '<img class="ico" src="' + this._u + '" style="height:1.1em;width:1.1em;vertical-align:-.2em">';
+  }
+};
+
 </script>
 <script>
 'use strict';
@@ -4015,7 +4052,7 @@ const UI = {
     const i = this.goalInfo(g, gm);
     let ic = i.ic;
     if (/^T\d$/.test(ic)) { const sp = gm.renderer && gm.renderer.sprites[ic.slice(1) + '|']; ic = sp ? '<img src="' + sp.toDataURL() + '">' : '🍜'; }
-    else ic = '<i>' + ic + '</i>';
+    else ic = '<i>' + (typeof Ico !== 'undefined' ? Ico.html(ic) : ic) + '</i>';
     return '<div class="gchip' + (i.rem === 0 ? ' ok' : '') + '"' + (g.t === 'collect' ? ' data-ty="' + g.type + '"' : ' data-k="' + g.t + '"') + '>' + ic + '<b>' + i.txt + '</b></div>';
   },
   /** Mọi loại mục tiêu (băng, thùng, nồi, xe, dừa, món đặc biệt, combo…): icon bay từ chỗ xảy ra lên chip, tới nơi số mới giảm. pts = toạ độ canvas [{x,y}]. */
@@ -4027,7 +4064,7 @@ const UI = {
       const tx = cr.left + cr.width / 2, ty = cr.top + cr.height / 2;
       pts.slice(0, 8).forEach((p, i) => {
         const sx = rc.left + p.x, sy = rc.top + p.y, d = i * 55;
-        const el = document.createElement('div'); el.textContent = icon;
+        const el = document.createElement('div'); el.innerHTML = (typeof Ico !== 'undefined' ? Ico.html(icon) : icon);
         el.style.cssText = 'position:fixed;left:0;top:0;width:40px;height:40px;margin:-20px 0 0 -20px;z-index:320;pointer-events:none;font-size:32px;line-height:40px;text-align:center;filter:drop-shadow(0 0 6px #fff) drop-shadow(0 2px 2px rgba(8,6,50,.8));will-change:transform,opacity';
         document.body.appendChild(el);
         el.animate([
@@ -4098,7 +4135,7 @@ const UI = {
     switch (x.t) {
       case 'score': return ['⭐ Điểm', 'Đạt ít nhất ' + x.n + ' điểm trước khi hết lượt. Ghép nhiều món cùng lúc và tạo combo để lên điểm nhanh.'];
       case 'collect': { const nm = (CONFIG.TYPES[x.type] || {}).name || 'món này'; return ['🎯 Thu thập ' + nm, 'Ghép đủ ' + x.n + ' món "' + nm + '" (ghép từ 3 món giống nhau trở lên). Số trên ô là số còn thiếu.']; }
-      case 'drop': { const th = (typeof WorldMap !== 'undefined') ? WorldMap.theme(gm.level) : { ic: '🥥', food: 'Dừa' }; return ['⬇️ Đưa ' + th.food + ' xuống đáy', 'Có ' + x.n + ' ' + th.ic + ' ' + th.food + ' trên bàn, không ghép được. Hãy phá các món bên dưới để nó rơi xuống hàng cuối cùng.']; }
+      case 'drop': { const th = (typeof WorldMap !== 'undefined') ? WorldMap.theme(gm.level) : { ic: '🥥', food: 'Dừa' }; return ['⬇️ Đưa ' + th.food + ' xuống đáy', 'Có ' + x.n + ' ' + Ico.txt(th.ic) + ' ' + th.food + ' trên bàn, không ghép được. Hãy phá các món bên dưới để nó rơi xuống hàng cuối cùng.']; }
       case 'special': return x.kind === 'rainbow' ? ['🌈 Ngũ sắc', 'Tạo ' + x.n + ' Ngũ sắc: ghép 5 món thẳng hàng.'] : x.kind === 'bomb' ? ['💣 Bom', 'Tạo ' + x.n + ' Bom: ghép 5 món theo hình chữ L hoặc T.'] : ['✨ Món đặc biệt', 'Tạo ' + x.n + ' món đặc biệt: ghép 4 món thẳng hàng sẽ có Chiêu dọc/ngang.'];
       case 'combo': return ['🔥 Combo', 'Đạt tổng ' + x.n + ' combo. Mỗi lần ghép xong mà món rơi xuống tự ghép tiếp là 1 combo; cộng dồn qua nhiều lượt, không cần liền một lượt.'];
       case 'ice': return ['❄️ Phá băng', 'Phá ' + x.n + ' lớp băng. ' + tip('ice')];
@@ -5600,7 +5637,7 @@ const WorldMap = {
     const sv = g.save, box = $('#albumList'), n = this.PROV.length; let got = 0, html = '';
     for (let c = 1; c <= n; c++) {
       const p = this.PROV[c - 1], ok = (sv.levelStars[c * this.CH] || 0) > 0; if (ok) got++;
-      html += '<div class="alb' + (ok ? ' ok' : '') + '"><i>' + (ok ? p[1] : '🔒') + '</i><div><b>' + c + '. ' + p[0] + '</b><small>' + (ok ? this.SPEC[c - 1].split('|').join(' · ') : 'Qua màn ' + (c * this.CH) + ' để mở đặc sản') + '</small></div></div>';
+      html += '<div class="alb' + (ok ? ' ok' : '') + '"><i>' + (ok ? p[1] : '🔒') + '</i><div><b>' + c + '. ' + p[0] + '</b><small>' + (ok ? this.SPEC[c - 1].split('|').join(' · ').replace(/🐉/g, '🌸') : 'Qua màn ' + (c * this.CH) + ' để mở đặc sản') + '</small></div></div>';
     }
     $('#albumCount').textContent = got + '/' + n; box.innerHTML = html; UI.show('album');
   },
@@ -5840,7 +5877,7 @@ class Game {
     this.renderer.setView(def.size || CONFIG.COLS, def.cols || def.size || CONFIG.COLS);
     this._finale = false; this._starK = 0; this._pre = {}; this._streakGot = '';
     try { this.renderer.setRegion(WorldMap.regionOn(n) ? WorldMap.regionItems(n) : null); } catch (e) {}
-    try { const th = WorldMap.theme(n); this.renderer.setDrop(th.ic); Levels.TIPS.drop = [th.ic, th.food, 'Đặc sản không ghép được. Hãy phá món bên dưới để đặc sản rơi xuống hàng đáy.']; } catch (e) {}
+    try { const th = WorldMap.theme(n); this.renderer.setDrop(th.ic); Levels.TIPS.drop = [Ico.txt(th.ic), th.food, 'Đặc sản không ghép được. Hãy phá món bên dưới để đặc sản rơi xuống hàng đáy.']; } catch (e) {}
     this.grid = new Grid(CONFIG.ROWS, CONFIG.COLS, def.colors);
     this.grid.n = this.renderer.n; this.grid.off = this.renderer.off; this.grid.nc = this.renderer.nc;
     this.goals = Levels.build(def, this.grid);
@@ -6121,7 +6158,7 @@ class Game {
       if (!got.length) return;
       got.forEach(d => {
         this.dropsGot++; UI.flyGen(this, 'drop', [{ x: d.gem.x, y: d.gem.y }], WorldMap.theme(this.level).ic);
-        R.burst(d.gem.x, d.gem.y, '#5fd068', 10); R.floatText(d.gem.x, d.gem.y - R.cell * .4, '+1 ' + WorldMap.theme(this.level).ic, '#1fae3a', 22);
+        R.burst(d.gem.x, d.gem.y, '#5fd068', 10); R.floatText(d.gem.x, d.gem.y - R.cell * .4, '+1 ' + Ico.txt(WorldMap.theme(this.level).ic), '#1fae3a', 22);
       });
       Sfx.match(3); Sfx.vib(30);
       UI.hud(this);
