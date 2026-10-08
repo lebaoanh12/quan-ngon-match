@@ -4048,7 +4048,7 @@ const UI = {
       case 'collect': { const nm = (CONFIG.TYPES[x.type] || {}).name || 'món này'; return ['🎯 Thu thập ' + nm, 'Ghép đủ ' + x.n + ' món "' + nm + '" (ghép từ 3 món giống nhau trở lên). Số trên ô là số còn thiếu.']; }
       case 'drop': { const th = (typeof WorldMap !== 'undefined') ? WorldMap.theme(gm.level) : { ic: '🥥', food: 'Dừa' }; return ['⬇️ Đưa ' + th.food + ' xuống đáy', 'Có ' + x.n + ' ' + th.ic + ' ' + th.food + ' trên bàn, không ghép được. Hãy phá các món bên dưới để nó rơi xuống hàng cuối cùng.']; }
       case 'special': return x.kind === 'rainbow' ? ['🌈 Ngũ sắc', 'Tạo ' + x.n + ' Ngũ sắc: ghép 5 món thẳng hàng.'] : x.kind === 'bomb' ? ['💣 Bom', 'Tạo ' + x.n + ' Bom: ghép 5 món theo hình chữ L hoặc T.'] : ['✨ Món đặc biệt', 'Tạo ' + x.n + ' món đặc biệt: ghép 4 món thẳng hàng sẽ có Chiêu dọc/ngang.'];
-      case 'combo': return ['🔥 Combo', 'Tạo chuỗi combo x' + x.n + ' trong MỘT lượt: sau khi ghép, món rơi xuống tự ghép tiếp liên hoàn. Số trên ô là combo cao nhất bạn đã đạt (vd 3/' + x.n + ').'];
+      case 'combo': return ['🔥 Combo', 'Đạt tổng ' + x.n + ' combo. Mỗi lần ghép xong mà món rơi xuống tự ghép tiếp là 1 combo; cộng dồn qua nhiều lượt, không cần liền một lượt.'];
       case 'ice': return ['❄️ Phá băng', 'Phá ' + x.n + ' lớp băng. ' + tip('ice')];
       case 'crate': return ['📦 Phá thùng gỗ', 'Phá ' + x.n + ' thùng. ' + tip('crate')];
       case 'rope': return ['🔗 Cắt dây', 'Cắt ' + x.n + ' dây buộc. ' + tip('rope')];
@@ -5682,7 +5682,7 @@ class Game {
     this.revives = 0;
     this.energy = 0; this.energyMax = 18; this.energyAds = 0; this.casts = 0; this.gifts = 0;
     this.fever = 0; this.feverMoves = 0; this.order = null;
-    this.goals = []; this.collected = {}; this.dropsGot = 0; this.specMade = {}; this.bestCombo = 0; this.levelDef = null; this.introBoost = false;
+    this.goals = []; this.collected = {}; this.dropsGot = 0; this.specMade = {}; this.bestCombo = 0; this.comboTotal = 0; this.levelDef = null; this.introBoost = false;
     this.slowT = 0; this.slowScale = 1;
     this.mode = null;          // null | 'hammer' | 'swap'
     this.selected = null;      // viên đang chọn (chạm-chạm)
@@ -5756,7 +5756,7 @@ class Game {
     this.party = !!this._partyNext; this._partyNext = false;
     this.level = n; this.moves = def.moves + (this.party ? 3 : 0);
     this.score = 0; this.shownScore = 0; this.revives = 0;
-    this.collected = {}; this.dropsGot = 0; this.specMade = {}; this.bestCombo = 0; this.introBoost = false;
+    this.collected = {}; this.dropsGot = 0; this.specMade = {}; this.bestCombo = 0; this.comboTotal = 0; this.introBoost = false;
     const ch = CONFIG.CHARS.find(c => c.id === this.save.chars.sel) || CONFIG.CHARS[0];
     this.casts = 0; this.gifts = 0; this._giftNew = {};
     this.energy = 0; this.energyMax = CONFIG.skillEnergy(ch.energy, n, 0); this.energyAds = 0;
@@ -5824,7 +5824,7 @@ class Game {
       case 'collect': return Math.max(0, g.n - (this.collected[g.type] || 0));
       case 'drop':    return Math.max(0, g.n - this.dropsGot);
       case 'special': { const s = this.specMade || {}; const have = g.kind === 'any' || !g.kind ? (s.any || 0) : (s[g.kind] || 0); return Math.max(0, g.n - have); }
-      case 'combo':   return Math.max(0, g.n - (this.bestCombo || 0));
+      case 'combo':   return Math.max(0, g.n - (this.comboTotal || 0));
       case 'ice': case 'crate': case 'rope': case 'pot': case 'cart': return this.grid ? this.grid.count(g.t) : 0;
     }
     return 0;
@@ -5958,7 +5958,8 @@ class Game {
       if (first && eff) seeds.push(...eff.seeds);
       groups.forEach(gr => seeds.push(...gr.cells));
       if (!seeds.length) break;
-      combo++; if (combo > (this.bestCombo || 0)) { this.bestCombo = combo; if (combo >= 2) UI.flyGen(this, 'combo', [{ x: R.cellX(3.5), y: R.cellY(3.5) }], '🔥', false); }
+      combo++; if (combo > (this.bestCombo || 0)) this.bestCombo = combo;
+      if (combo >= 2) { this.comboTotal = (this.comboTotal || 0) + 1; UI.flyGen(this, 'combo', [{ x: R.cellX(3.5), y: R.cellY(3.5) }], '🔥', false); }   // mục tiêu combo: cộng dồn mỗi lần món rơi tự ghép tiếp
 
       const clr = g.computeClear(seeds, first && eff ? eff.noTrigger : null);
       const spawnMap = new Map();
