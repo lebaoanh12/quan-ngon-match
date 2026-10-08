@@ -1581,6 +1581,8 @@ body::before { opacity: 1; inset: 0; mask-image: none; -webkit-mask-image: none;
  * config.js — Toàn bộ thông số cân bằng game + cấu hình quảng cáo ở MỘT chỗ.
  * QUÁN NGON MATCH: xếp món ăn Việt, nhận sao xây quán, đồng đội tung chiêu.
  * ========================================================================== */
+/** Biểu tượng Đũa thần: 🪄 nếu máy có font (Android 11+), không thì 🎇 để khỏi hiện ô vuông. */
+const WAND_IC = (() => { try { const c = document.createElement('canvas').getContext('2d'); c.font = '32px sans-serif'; const a = c.measureText('🪄').width, b = c.measureText('\uFFFF').width, d = c.measureText('🎇').width; return (a > 0 && Math.abs(a - b) > .5 && a > 8) ? '🪄' : '🎇'; } catch (e) { return '🎇'; } })();
 const CONFIG = {
   SIDE_GAP: 10,   // chừa lề 2 bên bàn chơi (px)
   ROWS: 8,
@@ -1603,7 +1605,7 @@ const CONFIG = {
     { id: 'sweep', desc: 'Cuốn sạch toàn bộ màn hình', icon: '🌪️', name: 'Lốc xoáy', tip: '' },
     { id: 'moves', desc: 'Cộng thêm 5 lượt đi',   icon: '➕', name: '+5 lượt',  tip: '' },
     { id: 'fish', desc: '3 chú cá bay tới phá chướng ngại', icon: '🐟', name: 'Cá thần', tip: '' },
-    { id: 'wand', desc: 'Biến 4 món thành món đặc biệt',    icon: '✨', name: 'Đũa thần', tip: '' }
+    { id: 'wand', desc: 'Biến 4 món thành món đặc biệt',    icon: WAND_IC, name: 'Đũa thần', tip: '' }
   ],
   MOVES_ITEM: 5,
   GIFT_MAX_PER_LEVEL: 3,               // số quà vật phẩm tối đa nhận được trong 1 màn (từ combo/đơn VIP/món đặc biệt)
@@ -3385,7 +3387,7 @@ class Renderer {
     if (hinted) sc *= 1 + .09 * (.5 + .5 * Math.sin(this.time * 4.2)) ;
     const w = sp.width / this.dpr;
     ctx.save();
-    ctx.globalAlpha = g.alpha;
+    ctx.globalAlpha = g.alpha * (hinted ? .6 + .4 * (.5 + .5 * Math.sin(this.time * 4.2)) : 1);   // gợi ý: hai ô chớp nhẹ liên tục, không viền
     ctx.translate(g.x, g.y + (view.idle && !selected ? Math.sin(this.time * 2.2 + c * .7 + r * .45) * this.cell * .018 : 0));
     ctx.rotate(g.special === 'rainbow' ? .1 * Math.sin(this.time * 3 + g.id) : g.rot);
     if (g.special && g.alpha > .5) this.drawHalo(ctx, g);
@@ -3408,11 +3410,6 @@ class Renderer {
     const t = this.time, cell = this.cell, ch = this.ch, s = .5 + .5 * Math.sin(t * 4.2);   // nhịp thở mượt ~0.7 lần/giây
     const ax = this.cellX(h.a.c), ay = this.cellY(h.a.r), bx = this.cellX(h.b.c), by = this.cellY(h.b.r);
     ctx.save();
-    for (const [x, y] of [[ax, ay], [bx, by]]) {
-      this.rr(ctx, x - cell / 2 + 3, y - ch / 2 + 3, cell - 6, ch - 6, 12);
-      ctx.fillStyle = 'rgba(255,255,255,' + (.10 + .16 * s) + ')'; ctx.fill();
-      ctx.strokeStyle = 'rgba(255,90,54,' + (.55 + .4 * s) + ')'; ctx.lineWidth = 3 + 1.5 * s; ctx.stroke();
-    }
     const p = (t * 1.4) % 1.6, k = Math.min(1, p / 1.1), e = k * k * (3 - 2 * k);   // tay trượt rồi nghỉ một nhịp
     const hx = ax + (bx - ax) * e, hy = ay + (by - ay) * e;
     ctx.globalAlpha = p > 1.3 ? Math.max(0, 1 - (p - 1.3) / .3) : 1;
@@ -4084,7 +4081,7 @@ const UI = {
       ['🌪️', 'Lốc xoáy', 'Quét qua cả bàn, phá món trên toàn bộ bàn.'],
       ['➕', '+5 lượt', 'Thêm 5 lượt đi cho màn đang chơi.'],
       ['🐟', 'Cá thần', 'Cá bơi tới phá các chướng ngại nguy hiểm trước: bom hẹn giờ, nồi, thùng, băng, dây.'],
-      ['✨', 'Đũa thần', 'Biến 4 món thường thành món đặc biệt (tia ngang, tia dọc, bom).']
+      [WAND_IC, 'Đũa thần', 'Biến 4 món thường thành món đặc biệt (tia ngang, tia dọc, bom).']
     ].map(x => row(x[0], x[1], x[2]));
     $('#guideList').innerHTML = sec('🎯 Chướng ngại', obs) + sec('✨ Món đặc biệt', spc) + sec('🎒 Vật phẩm', its);
     UI.show('guide');
@@ -4112,7 +4109,7 @@ const UI = {
   boosters(g) {
     const box = $('#introBoost'); if (!box) return;
     if (g.level < 3) { box.innerHTML = ''; return; }
-    const defs = [['moves', '➕', '+5 lượt'], ['wand', '✨', 'Đũa thần'], ['fish', '🐟', 'Cá thần']];
+    const defs = [['moves', '➕', '+5 lượt'], ['wand', WAND_IC, 'Đũa thần'], ['fish', '🐟', 'Cá thần']];
     box.innerHTML = '<div class="bst-h">Chọn vật tăng cường</div><div class="bst-row"></div>';
     const row = box.querySelector('.bst-row');
     defs.forEach(([k, ic, nm]) => {
@@ -6784,6 +6781,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   };
   $('#btnAlbum').onclick = () => WorldMap.album(game);
   $('#btnAlbumBack').onclick = () => UI.hide('album');
+  { const wi = document.querySelector('[data-item="wand"] i'); if (wi) wi.textContent = WAND_IC; }
   document.addEventListener('click', e => { const c = e.target.closest && e.target.closest('.gchip'); if (c) UI.goalTip(c); else { const t = document.getElementById('goalTip'); if (t) t.classList.remove('show'); } });
   $('#btnGuide').onclick = () => UI.guide();
   $('#btnGuideBack').onclick = () => UI.hide('guide');
