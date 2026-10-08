@@ -1137,6 +1137,15 @@ body::before { opacity: 1; inset: 0; mask-image: none; -webkit-mask-image: none;
 .spec i{font-style:normal;font-size:24px;width:34px;text-align:center;flex:none}
 @media (max-height:700px){.spec img{width:28px;height:28px}.spec i{font-size:20px;width:28px}.spec{font-size:10.5px}}
 
+/* Cẩm nang */
+#guideList{padding:10px 14px 24px;overflow-y:auto;flex:1}
+#guideList .gtitle{font-size:15px;font-weight:900;color:#ffd36b;margin:12px 2px 6px;text-shadow:0 2px 4px rgba(0,0,0,.5)}
+#menu .guidebtn{right:58px;font-size:17px;border:1px solid rgba(255,255,255,.28);color:#fff;font-weight:900}
+#guide{z-index:45;flex-direction:column;overflow-y:auto;background:linear-gradient(180deg,#2a1250,#4a1a58 60%,#2a0f33)}
+#guide .lmbar{flex:0 0 auto;position:sticky;top:0;z-index:2}
+#guideList{width:100%;max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:8px}
+#guideList .gtitle{margin-bottom:2px}
+
 </style>
 <style>
 /* ===== V13 – Chợ đêm Việt Food: gọn, một tâm điểm, dock đáy ===== */
@@ -1209,6 +1218,8 @@ body::before { opacity: 1; inset: 0; mask-image: none; -webkit-mask-image: none;
 #menu .mgrid .mtile i{width:38px;height:38px;font-size:20px;border-radius:13px}
 }
 @media (max-width:380px){#menu .mgrid .mtile>span:not(.badge){font-size:9.5px;letter-spacing:-.2px}#menu .menu-pills{gap:5px}#menu .menu-pills .pill{padding:5px 8px !important;font-size:12px !important}}
+#menu .cog.guidebtn{right:56px;padding:0;color:#fff;font-weight:900;font-size:17px;font-family:inherit}
+#menu .menu-pills{right:100px !important}
 
 </style>
 </head>
@@ -1275,7 +1286,7 @@ body::before { opacity: 1; inset: 0; mask-image: none; -webkit-mask-image: none;
     <div class="counter"></div>
     <div class="card menu">
       <div class="menu-pills"><span class="pill">⭐ <b id="menuStars">0</b></span><span class="pill lifepill" id="menuLivesPill"><b id="menuLives">❤️ 5</b></span><span class="pill">💰 <b id="menuCoins">0</b></span></div>
-      <input type="checkbox" id="cogT" hidden><label for="cogT" class="cog" title="Cài đặt">⚙️</label>
+      <input type="checkbox" id="cogT" hidden><label for="cogT" class="cog" title="Cài đặt">⚙️</label><button class="cog guidebtn" id="btnGuide" title="Cẩm nang">❓</button>
       <h1 class="logo"><span class="t1">VIET FOOD</span><span class="t2">MATCH PUZZLE</span></h1>
       <div class="shopwin">
         <div class="menuboard"><b>THỰC ĐƠN</b><span>🍜 Phở · Bún</span><span>🥖 Bánh mì</span><span>🧋 Trà sữa</span></div>
@@ -1384,6 +1395,11 @@ body::before { opacity: 1; inset: 0; mask-image: none; -webkit-mask-image: none;
   <section class="overlay full" id="album">
     <div class="lmbar"><button class="back" id="btnAlbumBack">‹ Quay lại</button><b>Sổ đặc sản</b><span class="pills"><b id="albumCount">0/34</b></span></div>
     <div id="albumList"></div>
+  </section>
+
+  <section class="overlay full" id="guide">
+    <div class="lmbar"><button class="back" id="btnGuideBack">‹ Quay lại</button><b>Cẩm nang</b><span class="pills"></span></div>
+    <div id="guideList"></div>
   </section>
 
   <section class="overlay full" id="levels">
@@ -4010,11 +4026,28 @@ const UI = {
     if (d.belts && d.belts.length) kinds.add('belt');
     g.goals.forEach(x => { if (x.t === 'special') kinds.add(x.kind === 'rainbow' ? 'rainbow' : 'special'); });
     ['ice', 'crate', 'rope', 'drop', 'pot', 'cart', 'timer', 'belt', 'special', 'rainbow', 'combo'].forEach(k => { if (kinds.has(k) && !sv.seen[k]) { tips.push(k); } });
-    $('#introTips').innerHTML = tips.map(k => { const t = Levels.TIPS[k]; return '<div class="tip"><i>' + t[0] + '</i><div><b>' + t[1] + '</b><span>' + t[2] + '</span></div></div>'; }).join('');
+    $('#introTips').innerHTML = '';   // phần giới thiệu kỹ năng nằm ở Cẩm nang (menu ngoài)
     tips.forEach(k => { sv.seen[k] = 1; }); if (tips.length) Store.save(sv);
     $('#btnIntroVideo').classList.remove('hidden');
     Streak.render(g);
     UI.show('intro');
+  },
+  /** Cẩm nang (menu ngoài): giải thích chướng ngại, món đặc biệt và vật phẩm. */
+  guide() {
+    const T = Levels.TIPS, row = (ic, name, txt) => '<div class="tip"><i>' + ic + '</i><div><b>' + name + '</b><span>' + txt + '</span></div></div>';
+    const sec = (title, items) => '<h3 class="gtitle">' + title + '</h3>' + items.join('');
+    const obs = ['ice', 'crate', 'rope', 'drop', 'pot', 'cart', 'timer', 'belt'].map(k => row(T[k][0], T[k][1], T[k][2]));
+    const spc = ['special', 'rainbow', 'combo'].map(k => row(T[k][0], T[k][1], T[k][2]));
+    const its = [
+      ['🔨', 'Búa', 'Chạm vào 1 món (hoặc thùng) để đập vỡ ngay.'],
+      ['🔀', 'Đổi chỗ', 'Chọn 2 món để đổi chỗ cho nhau, dùng để tạo hàng ghép.'],
+      ['🌪️', 'Lốc xoáy', 'Quét qua cả bàn, phá món trên toàn bộ bàn.'],
+      ['➕', '+5 lượt', 'Thêm 5 lượt đi cho màn đang chơi.'],
+      ['🐟', 'Cá thần', 'Cá bơi tới phá các chướng ngại nguy hiểm trước: bom hẹn giờ, nồi, thùng, băng, dây.'],
+      ['✨', 'Đũa thần', 'Biến 4 món thường thành món đặc biệt (tia ngang, tia dọc, bom).']
+    ].map(x => row(x[0], x[1], x[2]));
+    $('#guideList').innerHTML = sec('🎯 Chướng ngại', obs) + sec('✨ Món đặc biệt', spc) + sec('🎒 Vật phẩm', its);
+    UI.show('guide');
   },
   /** Dải "Đặc sản" ở màn giới thiệu: icon + tên, để người chơi biết các ô trên bàn là món gì. */
   introSpec(g) {
@@ -6711,6 +6744,8 @@ window.addEventListener('DOMContentLoaded', async () => {
   };
   $('#btnAlbum').onclick = () => WorldMap.album(game);
   $('#btnAlbumBack').onclick = () => UI.hide('album');
+  $('#btnGuide').onclick = () => UI.guide();
+  $('#btnGuideBack').onclick = () => UI.hide('guide');
   // đổi tên hiển thị (hiện trên bảng xếp hạng)
   const openNick = () => { $('#inNick').value = Auth.name(); $('#nickMsg').textContent = ''; $('#nickMsg').classList.remove('ok'); UI.show('nameBox'); };
   $('#btnRename').onclick = openNick;
