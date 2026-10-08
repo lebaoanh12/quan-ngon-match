@@ -5473,8 +5473,8 @@ const WorldMap = {
   },
   /** 3 đặc sản của tỉnh dùng làm ô ghép trên bàn (bỏ món trùng dáng với phở / bánh mì / trà sữa). */
   regionItems(n) {
-    const c = (this.chapter(n) - 1) % this.PROV.length, bad = { '🍜': 1, '🥖': 1, '🧋': 1, '☕': 1, '🥢': 1, '🍲': 1 }, seen = {}, out = [];
-    (this.SPEC[c] || '').split('|').forEach(s => { const i = s.indexOf(' '), e = s.slice(0, i); if (e && !bad[e] && !seen[e] && out.length < 3) { seen[e] = 1; out.push([e, s.slice(i + 1)]); } });
+    const c = (this.chapter(n) - 1) % this.PROV.length, bad = { '🍜': 1, '🥖': 1, '🧋': 1, '☕': 1, '🥢': 1, '🍲': 1, '🧂': 1 }, ovr = { '🍢': '🍖', '🍘': '🍚', '🥫': '🍯' }, seen = {}, out = [];
+    (this.SPEC[c] || '').split('|').forEach(s => { const i = s.indexOf(' '), e0 = s.slice(0, i), e = ovr[e0] || e0; if (e0 && !bad[e0] && !seen[e] && out.length < 3) { seen[e] = 1; out.push([e, s.slice(i + 1)]); } });
     return out.length === 3 ? out : null;
   },
   /** Mở đặc sản khi qua màn cuối của chặng lần đầu: thưởng xu + hiện trên màn thắng. */
