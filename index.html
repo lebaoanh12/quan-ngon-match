@@ -1891,17 +1891,17 @@ const Tween = {
  *   Glow.get(màu) = ảnh quầng sáng vẽ sẵn (thay cho shadowBlur: rẻ hơn rất nhiều).
  * ========================================================================== */
 const Perf = {
-  q: 1, ema: 22, acc: 0, good: 0, bad: 0,
+  q: (typeof navigator !== 'undefined' && ((navigator.deviceMemory && navigator.deviceMemory <= 3) || (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4))) ? 0 : 1, ema: 22, acc: 0, good: 0, bad: 0,
   mulBurst() { return [.45, .8, 1.15][this.q]; },
-  cap() { return [90, 170, 280][this.q]; },
+  cap() { return [64, 120, 220][this.q]; },
   sample(dt) {
     if (dt <= 0 || dt > 120) return;
     this.ema += (dt - this.ema) * .06;
     this.acc += dt;
     if (this.acc < 1000) return;
     this.acc = 0;
-    if (this.ema < 19) { this.good++; this.bad = 0; } else if (this.ema > 28) { this.bad++; this.good = 0; } else { this.good = 0; this.bad = 0; }
-    if (this.good >= 4 && this.q < 2) { this.q++; this.good = 0; this.apply(); }          // mượt liên tục 4 giây -> nâng
+    if (this.ema < 18.5) { this.good++; this.bad = 0; } else if (this.ema > 23) { this.bad++; this.good = 0; } else { this.good = 0; this.bad = 0; }
+    if (this.good >= 6 && this.q < 2) { this.q++; this.good = 0; this.apply(); }          // mượt liên tục 4 giây -> nâng
     else if (this.bad >= 2 && this.q > 0) { this.q--; this.bad = 0; this.apply(); }      // giật 2 giây -> hạ ngay
   },
   apply() {
@@ -3059,7 +3059,7 @@ class Renderer {
   constructor(canvas) {
     this.cv = canvas;
     this.ctx = canvas.getContext('2d');
-    this.dpr = Math.min(window.devicePixelRatio || 1, 2.5);   // nét hơn 2x cũ, vẫn nhẹ; máy yếu tự hạ về 2x ở resize()
+    this.dpr = Math.min(window.devicePixelRatio || 1, 2);
     this.fx = [];
     this.shake = 0;
     this.time = 0;
@@ -3072,7 +3072,7 @@ class Renderer {
   resize(size, maxH) {
     if (maxH) this.maxH = maxH; else maxH = this.maxH || size;
     this.reqSize = size;
-    this.dpr = Math.min(window.devicePixelRatio || 1, (typeof Perf !== 'undefined' && Perf.q === 0) ? 2 : 2.5);
+    this.dpr = Math.min(window.devicePixelRatio || 1, (typeof Perf !== 'undefined' && Perf.q === 0) ? 1.5 : 2);   // 1.0.26: hạ trần độ phân giải để mượt (ít điểm ảnh hơn ~36%)
     const d = this.dpr;
     this.cell = Math.min((size - this.pad * 2) / this.nc, (maxH - this.pad * 2) / this.n);   // bàn 7 cột x 8 hàng: ô to hơn nhưng không vượt chiều cao
     size = Math.round(this.cell * this.nc + this.pad * 2); this.size = size;
@@ -3500,6 +3500,16 @@ class Renderer {
     ctx.restore();
   }
 
+  /** Emoji vẽ sẵn (fillText emoji mỗi khung rất chậm trên Android): trả về canvas đã cache. */
+  emo(e, px) {
+    px = Math.max(8, Math.round(px)); const k = e + '|' + px, c = this._emo || (this._emo = {});
+    if (c[k]) return c[k];
+    const d = this.dpr, cv = document.createElement('canvas'); cv.width = cv.height = Math.ceil(px * 1.4 * d); const g = cv.getContext('2d');
+    g.scale(d, d); g.font = px + 'px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#000'; g.fillText(e, px * .7, px * .72);
+    cv._w = px * 1.4; return (c[k] = cv);
+  }
+  drawEmo(ctx, e, px, x, y) { const s = this.emo(e, px); ctx.drawImage(s, x - s._w / 2, y - s._w / 2, s._w, s._w); }
+
   drawCart(ctx, g) {
     const cell = this.cell, hp = g.hp || 1;
     ctx.save(); ctx.globalAlpha = g.alpha; ctx.translate(g.x, g.y); ctx.scale(g.scale, g.scale);
@@ -3509,8 +3519,7 @@ class Renderer {
     ctx.strokeStyle = '#6b3d17'; ctx.lineWidth = 2.5; ctx.stroke();
     ctx.fillStyle = '#6b3d17';
     for (const sx of [-1, 1]) { ctx.beginPath(); ctx.arc(sx * w * .28, h / 2 - 1, cell * .09, 0, 7); ctx.fill(); }
-    ctx.font = Math.round(cell * .36) + 'px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#fff'; ctx.fillText(hp > 1 ? '🛒' + hp : '🛒', 0, -2);
+    this.drawEmo(ctx, '🛒', cell * .36, hp > 1 ? -cell * .05 : 0, -2); if (hp > 1) { ctx.font = 'bold ' + Math.round(cell * .22) + 'px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#fff'; ctx.fillText(String(hp), cell * .17, -2); }
     ctx.font = 'bold ' + Math.round(cell * .22) + 'px sans-serif'; ctx.fillStyle = '#fff';
     ctx.fillText((g.dir || 1) > 0 ? '▶' : '◀', 0, h / 2 - 4);
     ctx.restore();
@@ -3547,7 +3556,7 @@ class Renderer {
       const x = this.pad + (c - this.off + .5) * cell, y = this.pad + (r - this.off + .5) * ch, ph = .5 + .5 * Math.sin(t * 4 + c);
       ctx.save();
       ctx.fillStyle = 'rgba(255,110,40,' + (.35 + .2 * ph) + ')'; ctx.beginPath(); ctx.arc(x, y, cell * .46, 0, 7); ctx.fill();
-      ctx.font = Math.round(cell * .56) + 'px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('🍲', x, y + 1);
+      this.drawEmo(ctx, '🍲', cell * .56, x, y + 1);
       ctx.restore();
     }
   }
@@ -3564,6 +3573,7 @@ class Renderer {
         ctx.strokeStyle = 'rgba(255,255,255,.95)'; ctx.lineWidth = Math.max(2.5, cell * .05);
     ctx.beginPath(); ctx.arc(0, 0, cell * (.47 + .03 * ph), 0, 7); ctx.stroke();
     ctx.shadowBlur = 0;
+    if (Perf.q === 0) { ctx.restore(); return; }                       // máy yếu: chỉ vẽ quầng + viền
     // 2 vòng sóng lan ra ngoài
     for (let i = 0; i < 2; i++) {
       const f = ((t * .9 + i * .5) % 1);
@@ -5834,7 +5844,10 @@ class Game {
     Tween.update(dt);
     this.renderer.update(dt);
     Perf.sample(rdt); Bg.tick(rdt); Fx.tick(rdt); Vault.tick(ts);
-    if (this.grid && this.state !== 'menu') this.renderer.draw(this.grid, { selected: this.selected, hint: this.hint, idle: this.state === 'idle', exit: this.goals.some(g => g.t === 'drop') });
+    // 1.0.26: đứng yên (không kéo, không hiệu ứng) chỉ vẽ lại bàn 30 khung/giây -> nhẹ máy, bớt nóng
+    const calm = this.state === 'idle' && !this.selected && !this.drag && !this.renderer.fx.length && !(Fx.list && Fx.list.length) && !this.renderer.shake && !this.renderer.punch;
+    this._skip = calm ? !this._skip : false;
+    if (this.grid && this.state !== 'menu' && !this._skip) this.renderer.draw(this.grid, { selected: this.selected, hint: this.hint, idle: this.state === 'idle' && Perf.q > 0, exit: this.goals.some(g => g.t === 'drop') });
 
     // điểm chạy số
     if (this.shownScore !== this.score) {
@@ -5843,7 +5856,7 @@ class Game {
       $('#score').textContent = this.shownScore;
     }
     Meta.tick(this, ts);
-    this.drawPortrait(ts);
+    if (!this._pt || ts - this._pt > 66) { this._pt = ts; this.drawPortrait(ts); }   // chân dung mèo: ~15 khung/giây là đủ
     // tự gợi ý khi người chơi đứng yên
     if (this.state === 'idle' && !this.hint && !this.mode && ts - this.lastAction > (this.tut ? 700 : CONFIG.IDLE_HINT_MS)) this.showHint(false);
     requestAnimationFrame(t => this.loop(t));
@@ -6904,6 +6917,14 @@ window.addEventListener('DOMContentLoaded', async () => {
   if (window.AndroidAds) document.body.classList.add('droid');   // app Android: vỏ native đã đệm tai thỏ
   AdManager.init();
   Bg.init(); Fx.init();
+  // 1.0.26: vẽ sẵn các ảnh hiệu ứng lúc rảnh để khi combo/nổ không bị khựng
+  setTimeout(() => { try {
+    ['#ff3b1f', '#ff8a1c', '#ffb02e', '#e8267a', '#ff7a2a', '#ffd24a', '#7fe8ff', '#ff9ae6', '#ff9a3c', '#ffffff', '#5fd068', 'rgb(255,80,20)', 'rgb(255,40,210)', 'rgb(0,170,255)', 'rgb(30,200,60)'].forEach(c => Glow.get(c));
+    if (Renderer.flameSprite) Renderer.flameSprite();
+    const k = document.createElement('canvas').getContext('2d'); Fx._coin(k, 8);
+    ['#ffd24a', '#ff3b1f', '#ff9ae6'].forEach(c => { try { Fx._raySprite(c); Fx._edgeSprite(c); } catch (e) {} });
+    Perf.apply();
+  } catch (e) {} }, 1200);
   Auth.load(); const gotHash = Auth.consumeHash();
   const game = window.game = new Game();
   if (game.save.run) { const fresh = Date.now() - (game.save.runAt || 0) < 20 * 60 * 1000; const lost = fresh && (game.save.run === 2 || game.save.run === 4); game.save.run = 0; if (lost) Lives.spend(); Store.save(game.save); }   // chỉ trừ tim nếu vừa thua/thoát trong vòng 20 phút; để qua đêm thì bỏ qua (không phạt oan khi mở lại)   // lần trước đã thua mà chưa trừ tim -> trừ 1 tim
