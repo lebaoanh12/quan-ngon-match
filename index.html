@@ -2433,12 +2433,20 @@ const Levels = (() => {
     crateRows:  [E, E, '.=.==.=.', E, E, '.#.##.#.', E, E],
     ropeRing:   [E, '..r..r..', '.r....r.', E, E, '.r....r.', '..r..r..', E],
     hole4:      ['x......x', E, E, '...xx...', '...xx...', E, E, 'x......x'],
-    iceSides:   [E, 'i......i', 'i......i', 'i......i', 'i......i', 'i......i', 'i......i', E]
+    iceSides:   [E, 'i......i', 'i......i', 'i......i', 'i......i', 'i......i', 'i......i', E],
+    // ---- mẫu mới (1.0.26): thùng sắt 3 máu (%) và băng dày 3 lớp (J) ----
+    steelWall:  [E, E, E, '..%%%%..', E, E, E, E],
+    steelPillars: [E, E, '.%....%.', E, E, '.%....%.', E, E],
+    thickCenter: [E, E, '..JJJJ..', '..J..J..', '..J..J..', '..JJJJ..', E, E]
   };
   const TIPS = {
     ice:   ['❄️', 'Băng', 'Ghép hoặc phá món nằm trên ô băng để làm vỡ băng. Băng 2 lớp cần 2 lần.'],
     crate: ['📦', 'Thùng gỗ', 'Ghép món NGAY CẠNH thùng hoặc dùng chiêu nổ trúng thùng để phá. Thùng chặn đường rơi của món.'],
     rope:  ['🔗', 'Dây buộc', 'Món bị buộc không đổi chỗ được, nhưng ghép nó với món khác để cắt dây.'],
+    steel: ['🔩', 'Thùng sắt', 'Thùng sắt rất cứng: cần phá 3 lần. Ghép món NGAY CẠNH hoặc dùng chiêu nổ trúng thùng, mỗi lần giảm 1 máu.'],
+    thick: ['🧊', 'Băng dày', 'Băng 3 lớp: phải phá món nằm trên ô băng 3 lần mới vỡ hết.'],
+    big:   ['💪', 'Ghép lớn', 'Ghép 5 món trở lên trong MỘT lần (hàng 5 thẳng hoặc hình L/T) để tính 1 lần ghép lớn.'],
+    boom:  ['💥', 'Kích nổ', 'Tạo món đặc biệt rồi ghép/kích nổ nó. Mỗi món đặc biệt nổ được tính 1 lần.'],
     drop:  ['🥥', 'Dừa', 'Dừa không ghép được. Hãy phá món bên dưới để dừa rơi xuống hàng đáy.'],
     collect: ['🎯', 'Thu thập', 'Ghép đủ số món theo yêu cầu.'],
     score: ['⭐', 'Điểm', 'Đạt đủ số điểm mục tiêu.'],
@@ -2505,23 +2513,40 @@ const Levels = (() => {
     const useDrop = r() < .3;
     if (useDrop) map = mix(map, pick([P.drop2, P.drop3, P.drop4]));
     if (terr) map = map.map((row, rr) => [...row].map((ch, cc) => (terr[rr][cc] === 'x' ? 'x' : ch)).join(''));
+    {   // vật cản mới: dùng rng riêng để không làm đổi các màn cũ (màn nào cũng luôn giống nhau)
+      const r2 = rng(n * 104729 + 7), a = r2(), b = r2();
+      if (n >= 45 && !terr) {
+        if (n === 45) map = mix(map, P.steelWall);
+        else if (n === 52) map = mix(map, P.thickCenter);
+        else {
+          if (a < .3) map = map.map(x => x.replace(/=/g, '%')); 
+          if (a < .3 && !/%/.test(map.join(''))) map = mix(map, P.steelPillars);
+          if (n > 52 && b > .72) map = map.map(x => x.replace(/I/g, 'J'));
+          if (n > 52 && b > .72 && !/J/.test(map.join(''))) map = mix(map, P.thickCenter);
+        }
+      } else if (n >= 45) {
+        if (n === 45) map = map.map((row, rr) => (rr === 3 ? row.replace(/\./g, (m, i) => (i >= 2 && i <= 5 ? '%' : m)) : row));
+        else if (a < .25) map = map.map(x => x.replace(/[#=]/g, '%'));
+      }
+    }
     const txt = map.join('');
     const goals = [];
-    if (/[iI]/.test(txt)) goals.push(I());
-    if (/[#=]/.test(txt)) goals.push(K());
+    if (/[iIJ]/.test(txt)) goals.push(I());
+    if (/[#=%]/.test(txt)) goals.push(K());
     if (/r/.test(txt)) goals.push(R());
     if (/D/.test(txt)) goals.push(D((txt.match(/D/g) || []).length + (r() < .5 ? 1 : 0)));
     if (goals.length < 3) goals.push(r() < .35 ? S(2400) : C((r() * 6) | 0, 12 + ((r() * 6) | 0)));
     if (goals.length < 3 && r() < .6) { const t0 = goals.find(x => x.t === 'collect'); let t2 = (r() * 6) | 0; if (t0 && t2 === t0.type) t2 = (t2 + 1) % 6; goals.push(C(t2, 10 + ((r() * 6) | 0))); }
     // ----- BÀN CHƠI SỐNG (từ màn 27): nồi lan, bom hẹn giờ, băng chuyền, xe đẩy; mỗi cơ chế ra mắt 1 màn riêng rồi mới trộn -----
     const live = liveMechanics(n, r, map, goals);
-    return L(live.map, 30 + Math.max(0, live.goals.length - 2) * 3, 6, live.goals.slice(0, 3), 8, live.extra);
+    const hard = (/%/.test(live.map.join('')) ? 3 : 0) + (/J/.test(live.map.join('')) ? 3 : 0);
+    return L(live.map, 30 + Math.max(0, live.goals.length - 2) * 3 + hard, 6, live.goals.slice(0, 3), 8, live.extra);
   }
 
   const INTRO = { 27: 'pot', 31: 'timer', 35: 'belt', 39: 'cart' };
   function liveMechanics(n, r, map, goals) {
     const extra = {};
-    if (n < 27) return { map, goals, extra };
+    if (n < 27 || n === 45 || n === 52) return { map, goals, extra };   // 45: ra mắt thùng sắt, 52: ra mắt băng dày (không trộn cơ chế khác)
     let kinds = [];
     if (INTRO[n]) kinds = [INTRO[n]];
     else if (n > 39 && r() < .55) {
@@ -2554,7 +2579,7 @@ const Levels = (() => {
       if (cands.length) { const rr = cands[rnd(cands.length)]; extra.belts = [{ row: rr, dir: r() < .5 ? 1 : -1 }]; }
     }
     { const m = rows.map(x => x.join('')).join('');          // bỏ mục tiêu của vật cản đã bị dọn khỏi bản đồ (VD: hàng nhường chỗ cho băng chuyền)
-      const has = { ice: /[iI]/.test(m), crate: /[#=]/.test(m), rope: /r/.test(m) };
+      const has = { ice: /[iIJ]/.test(m), crate: /[#=%]/.test(m), rope: /r/.test(m) };
       for (let i = g2.length - 1; i >= 0; i--) if (has[g2[i].t] === false) g2.splice(i, 1); }
     if (!g2.some(g => g.t !== 'pot' && g.t !== 'cart')) g2.push(r() < .5 ? S(2000 + (n > 50 ? 500 : 0)) : C(rnd(6), 14 + rnd(6)));
     return { map: rows.map(x => x.join('')), goals: g2, extra };
@@ -2564,7 +2589,7 @@ const Levels = (() => {
   const ramp = n => { const m = Math.max(0, n - 4); return { goal: Math.min(2.1, 1 + m * .025), moves: Math.max(.64, 1 - m * .011) }; };
   /** THU GỌN 8x8 -> 7x7 (icon to hơn ~14%): bỏ 1 hàng + 1 cột ít ảnh hưởng nhất (ưu tiên ở giữa, giữ đối xứng).
    *  Trả về bản đồ 8x8 mới (7x7 ở góc trên-trái, phần còn lại là ô khuyết 'x'), hoặc null nếu không thu được an toàn. */
-  const OB = 'iIr#=D';
+  const OB = 'iIJr#=%D';
   const cntOb = rows => { const o = {}; rows.join('').split('').forEach(ch => { if (OB.includes(ch)) o[ch] = (o[ch] || 0) + 1; }); return o; };
   /** Bỏ 1 cột (ít chướng ngại nhất; ưu tiên cột đã toàn ô khuyết), cột cuối thành ô khuyết 'x'. Trả null nếu mất quá nhiều. */
   function dropCol(map) {
@@ -2611,6 +2636,8 @@ const Levels = (() => {
     else if (m === 4) g = { t: 'combo', n: 3 + (n > 40 ? 1 : 0) + (n > 90 ? 1 : 0) };
     else if (m === 6 && n >= 13) g = { t: 'special', kind: 'bomb', n: 2 + (n > 50 ? 1 : 0) };
     else if (m === 0 && n >= 14) g = { t: 'special', kind: 'rainbow', n: 1 + (n > 70 ? 1 : 0) };
+    else if (m === 3 && n >= 20) g = { t: 'big', n: 1 + (n > 60 ? 1 : 0) + (n > 110 ? 1 : 0) };
+    else if (m === 5 && n >= 18) g = [{ t: 'boom', n: 3 + up }, { t: 'special', kind: 'line', n: 3 + up }][((n / 7) | 0) % 2];
     else if (m === 1 && n >= 15) g = [{ t: 'special', kind: 'any', n: 4 + up }, { t: 'combo', n: 3 }][n % 2];
     if (!g) return goals;
     const out = goals.filter(x => x.t !== 'drop' || goals.length < 3);
@@ -2640,6 +2667,8 @@ const Levels = (() => {
       if (ch === '#') grid.blocks[r][c] = 1;
       else if (ch === '=') grid.blocks[r][c] = 2;
       else if (ch === 'x') grid.blocks[r][c] = -1;
+      else if (ch === '%') grid.blocks[r][c] = 3;
+      else if (ch === 'J') grid.ice[r][c] = 3;
       else if (ch === 'i') grid.ice[r][c] = 1;
       else if (ch === 'I') grid.ice[r][c] = 2;
       else if (ch === 'r') ropes.push([r, c]);
@@ -3075,6 +3104,7 @@ class Renderer {
     this.sprites['-2|drop'] = this.makeSprite(-2, 'drop');
     this.sprites['crate|1'] = this.makeSprite('crate', 1);
     this.sprites['crate|2'] = this.makeSprite('crate', 2);
+    this.sprites['crate|3'] = this.makeSprite('crate', 3);
   }
 
   makeSprite(type, special) {
@@ -3209,14 +3239,19 @@ class Renderer {
   drawCrate(g, R, d, hp) {
     const LW = 2 * d, h = R * .98;
     const body = () => { g.beginPath(); g.moveTo(-h + .16 * R, -h); g.arcTo(h, -h, h, h, .16 * R); g.arcTo(h, h, -h, h, .16 * R); g.arcTo(-h, h, -h, -h, .16 * R); g.arcTo(-h, -h, h, -h, .16 * R); g.closePath(); };
-    const gr = g.createLinearGradient(0, -h, 0, h); gr.addColorStop(0, '#d9a05a'); gr.addColorStop(1, '#8f5c2c');
+    const gr = g.createLinearGradient(0, -h, 0, h); if (hp >= 3) { gr.addColorStop(0, '#aeb8c6'); gr.addColorStop(1, '#5d6978'); } else { gr.addColorStop(0, '#d9a05a'); gr.addColorStop(1, '#8f5c2c'); }
     body(); g.fillStyle = gr; g.fill();
     g.save(); body(); g.clip();
     g.strokeStyle = 'rgba(60,30,10,.55)'; g.lineWidth = LW * .9;
     [-.5, 0, .5].forEach(y => { g.beginPath(); g.moveTo(-h, y * h); g.lineTo(h, y * h); g.stroke(); });       // ván gỗ
     g.lineWidth = LW * 1.8; g.strokeStyle = 'rgba(90,50,20,.8)';
     g.beginPath(); g.moveTo(-h, -h); g.lineTo(h, h); g.moveTo(h, -h); g.lineTo(-h, h); g.stroke();             // thanh chéo
-    if (hp >= 2) {
+    if (hp >= 3) {                                              // thùng sắt: tấm thép + đinh tán + đai vàng cảnh báo
+      g.fillStyle = 'rgba(255,255,255,.28)'; g.fillRect(-h, -h + .05 * h, 2 * h, .12 * h);
+      g.strokeStyle = '#2a323c'; g.lineWidth = LW * .9; g.beginPath(); g.moveTo(-h, 0); g.lineTo(h, 0); g.moveTo(0, -h); g.lineTo(0, h); g.stroke();
+      g.fillStyle = '#f2c230'; g.fillRect(-h, -.12 * h, 2 * h, .24 * h); g.strokeRect(-h, -.12 * h, 2 * h, .24 * h);
+      g.fillStyle = '#222'; for (let i = -3; i <= 3; i++) { g.beginPath(); g.moveTo((i - .5) * .3 * h, -.12 * h); g.lineTo((i + .1) * .3 * h, -.12 * h); g.lineTo((i + .6) * .3 * h, .12 * h); g.lineTo((i) * .3 * h, .12 * h); g.fill(); }
+    } else if (hp >= 2) {
       g.fillStyle = '#7d8896'; g.strokeStyle = '#2a323c'; g.lineWidth = LW * .8;
       [-h, h - .3 * h].forEach(y => { g.fillRect(-h, y, 2 * h, .3 * h); g.strokeRect(-h, y, 2 * h, .3 * h); });
       g.fillStyle = 'rgba(255,255,255,.35)'; g.fillRect(-h, -h + .04 * h, 2 * h, .06 * h);
@@ -3406,15 +3441,16 @@ class Renderer {
       const ice = grid.ice[r][c];
       if (ice > 0) {                                    // băng phủ lên ô (nhìn xuyên thấy món bên dưới)
         this.rr(ctx, x + 1.5, y + 1.5, cell - 3, ch - 3, 7);
-        ctx.fillStyle = ice >= 2 ? 'rgba(60,160,235,.55)' : 'rgba(90,190,255,.38)'; ctx.fill();
-        ctx.strokeStyle = ice >= 2 ? '#2f8fe0' : '#5bb8f5'; ctx.lineWidth = ice >= 2 ? 2.6 : 1.5; ctx.stroke();
+        ctx.fillStyle = ice >= 3 ? 'rgba(30,90,200,.68)' : ice >= 2 ? 'rgba(60,160,235,.55)' : 'rgba(90,190,255,.38)'; ctx.fill();
+        ctx.strokeStyle = ice >= 3 ? '#1b4fb8' : ice >= 2 ? '#2f8fe0' : '#5bb8f5'; ctx.lineWidth = ice >= 3 ? 3.6 : ice >= 2 ? 2.6 : 1.5; ctx.stroke();
         ctx.strokeStyle = 'rgba(255,255,255,.65)'; ctx.lineWidth = 2; ctx.beginPath();
         ctx.moveTo(x + cell * .16, y + cell * .4); ctx.lineTo(x + cell * .4, y + cell * .16); ctx.moveTo(x + cell * .16, y + cell * .62); ctx.lineTo(x + cell * .62, y + cell * .16); ctx.stroke();
+        if (ice >= 3) { ctx.fillStyle = '#fff'; ctx.font = 'bold ' + Math.round(cell * .26) + 'px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.strokeStyle = '#1b4fb8'; ctx.lineWidth = 3; ctx.strokeText('3', x + cell * .82, y + cell * .2); ctx.fillText('3', x + cell * .82, y + cell * .2); }
         if (ice >= 2) { ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(x + cell * .84, y + cell * .6); ctx.lineTo(x + cell * .6, y + cell * .84); ctx.stroke(); }
       }
       const hp = grid.blocks[r][c];
       if (hp > 0) {
-        const sp = this.sprites['crate|' + Math.min(hp, 2)], w = sp.width / this.dpr;
+        const sp = this.sprites['crate|' + Math.min(hp, 3)], w = sp.width / this.dpr;
         ctx.drawImage(sp, x + cell / 2 - w / 2, y + ch / 2 - w / 2, w, w);
       }
     }
@@ -4038,7 +4074,9 @@ const UI = {
       case 'score':   return { ic: '⭐', txt: rem > 0 ? rem : '✔', rem };
       case 'collect': { const pend = (gm._flyPend && gm._flyPend[g.type]) || 0; return { ic: 'T' + g.type, txt: rem + pend > 0 ? rem + pend : '✔', rem: rem + pend }; }   // số trên chip chỉ giảm khi món bay tới nơi
       case 'drop':    return { ic: (typeof WorldMap !== 'undefined' ? WorldMap.theme(gm.level).ic : '🥥'), txt: rem > 0 ? rem : '✔', rem };
-      case 'special': return { ic: g.kind === 'rainbow' ? '🌈' : g.kind === 'bomb' ? '💣' : '✨', txt: rem > 0 ? rem : '✔', rem };
+      case 'special': return { ic: g.kind === 'rainbow' ? '🌈' : g.kind === 'bomb' ? '💣' : g.kind === 'line' ? '⚡' : '✨', txt: rem > 0 ? rem : '✔', rem };
+      case 'big':     return { ic: '💪', txt: rem > 0 ? rem : '✔', rem };
+      case 'boom':    return { ic: '💥', txt: rem > 0 ? rem : '✔', rem };
       case 'combo':   return { ic: '🔥', txt: rem > 0 ? Math.max(0, g.n - rem) + '/' + g.n : '✔', rem };   // hiện tiến độ combo tốt nhất (vd 3/5)
       case 'ice':     return { ic: '❄️', txt: rem > 0 ? rem : '✔', rem };
       case 'crate':   return { ic: '📦', txt: rem > 0 ? rem : '✔', rem };
@@ -4136,7 +4174,9 @@ const UI = {
       case 'score': return ['⭐ Điểm', 'Đạt ít nhất ' + x.n + ' điểm trước khi hết lượt. Ghép nhiều món cùng lúc và tạo combo để lên điểm nhanh.'];
       case 'collect': { const nm = (CONFIG.TYPES[x.type] || {}).name || 'món này'; return ['🎯 Thu thập ' + nm, 'Ghép đủ ' + x.n + ' món "' + nm + '" (ghép từ 3 món giống nhau trở lên). Số trên ô là số còn thiếu.']; }
       case 'drop': { const th = (typeof WorldMap !== 'undefined') ? WorldMap.theme(gm.level) : { ic: '🥥', food: 'Dừa' }; return ['⬇️ Đưa ' + th.food + ' xuống đáy', 'Có ' + x.n + ' ' + Ico.txt(th.ic) + ' ' + th.food + ' trên bàn, không ghép được. Hãy phá các món bên dưới để nó rơi xuống hàng cuối cùng.']; }
-      case 'special': return x.kind === 'rainbow' ? ['🌈 Ngũ sắc', 'Tạo ' + x.n + ' Ngũ sắc: ghép 5 món thẳng hàng.'] : x.kind === 'bomb' ? ['💣 Bom', 'Tạo ' + x.n + ' Bom: ghép 5 món theo hình chữ L hoặc T.'] : ['✨ Món đặc biệt', 'Tạo ' + x.n + ' món đặc biệt: ghép 4 món thẳng hàng sẽ có Chiêu dọc/ngang.'];
+      case 'special': return x.kind === 'rainbow' ? ['🌈 Ngũ sắc', 'Tạo ' + x.n + ' Ngũ sắc: ghép 5 món thẳng hàng.'] : x.kind === 'bomb' ? ['💣 Bom', 'Tạo ' + x.n + ' Bom: ghép 5 món theo hình chữ L hoặc T.'] : x.kind === 'line' ? ['⚡ Chiêu dọc/ngang', 'Tạo ' + x.n + ' Chiêu dọc/ngang: ghép 4 món thẳng hàng.'] : ['✨ Món đặc biệt', 'Tạo ' + x.n + ' món đặc biệt: ghép 4 món thẳng hàng sẽ có Chiêu dọc/ngang.'];
+      case 'big': return ['💪 Ghép lớn', 'Ghép từ 5 món trở lên trong MỘT lần (5 thẳng hàng hoặc hình L/T) đủ ' + x.n + ' lần.'];
+      case 'boom': return ['💥 Kích nổ', 'Cho nổ ' + x.n + ' món đặc biệt (chiêu dọc/ngang, bom, ngũ sắc). Tạo chúng rồi ghép hoặc chạm trúng.'];
       case 'combo': return ['🔥 Combo', 'Đạt tổng ' + x.n + ' combo. Mỗi lần ghép xong mà món rơi xuống tự ghép tiếp là 1 combo; cộng dồn qua nhiều lượt, không cần liền một lượt.'];
       case 'ice': return ['❄️ Phá băng', 'Phá ' + x.n + ' lớp băng. ' + tip('ice')];
       case 'crate': return ['📦 Phá thùng gỗ', 'Phá ' + x.n + ' thùng. ' + tip('crate')];
@@ -4169,10 +4209,10 @@ const UI = {
     UI.introSpec(g);
     const tips = [], sv = g.save;
     const kinds = new Set(g.goals.map(x => x.t));
-    d.map.join('').split('').forEach(ch => { if ('iI'.includes(ch)) kinds.add('ice'); if ('#='.includes(ch)) kinds.add('crate'); if (ch === 'r') kinds.add('rope'); if (ch === 'D') kinds.add('drop'); if (ch === 'P') kinds.add('pot'); if (ch === 'V') kinds.add('cart'); if (ch === 'T') kinds.add('timer'); });
+    d.map.join('').split('').forEach(ch => { if ('iIJ'.includes(ch)) kinds.add('ice'); if ('#=%'.includes(ch)) kinds.add('crate'); if (ch === '%') kinds.add('steel'); if (ch === 'J') kinds.add('thick'); if (ch === 'r') kinds.add('rope'); if (ch === 'D') kinds.add('drop'); if (ch === 'P') kinds.add('pot'); if (ch === 'V') kinds.add('cart'); if (ch === 'T') kinds.add('timer'); });
     if (d.belts && d.belts.length) kinds.add('belt');
     g.goals.forEach(x => { if (x.t === 'special') kinds.add(x.kind === 'rainbow' ? 'rainbow' : 'special'); });
-    ['ice', 'crate', 'rope', 'drop', 'pot', 'cart', 'timer', 'belt', 'special', 'rainbow', 'combo'].forEach(k => { if (kinds.has(k) && !sv.seen[k]) { tips.push(k); } });
+    ['ice', 'crate', 'rope', 'drop', 'pot', 'cart', 'timer', 'belt', 'steel', 'thick', 'special', 'rainbow', 'combo', 'big', 'boom'].forEach(k => { if (kinds.has(k) && !sv.seen[k]) { tips.push(k); } });
     $('#introTips').innerHTML = '';   // phần giới thiệu kỹ năng nằm ở Cẩm nang (menu ngoài)
     tips.forEach(k => { sv.seen[k] = 1; }); if (tips.length) Store.save(sv);
     $('#btnIntroVideo').classList.remove('hidden');
@@ -4183,8 +4223,8 @@ const UI = {
   guide() {
     const T = Levels.TIPS, row = (ic, name, txt) => '<div class="tip"><i>' + ic + '</i><div><b>' + name + '</b><span>' + txt + '</span></div></div>';
     const sec = (title, items) => '<h3 class="gtitle">' + title + '</h3>' + items.join('');
-    const obs = ['ice', 'crate', 'rope', 'drop', 'pot', 'cart', 'timer', 'belt'].map(k => row(T[k][0], T[k][1], T[k][2]));
-    const spc = ['special', 'rainbow', 'combo'].map(k => row(T[k][0], T[k][1], T[k][2]));
+    const obs = ['ice', 'thick', 'crate', 'steel', 'rope', 'drop', 'pot', 'cart', 'timer', 'belt'].map(k => row(T[k][0], T[k][1], T[k][2]));
+    const spc = ['special', 'rainbow', 'combo', 'big', 'boom'].map(k => row(T[k][0], T[k][1], T[k][2]));
     const its = [
       ['🔨', 'Búa', 'Chạm vào 1 món (hoặc thùng) để đập vỡ ngay.'],
       ['🔀', 'Đổi chỗ', 'Chọn 2 món để đổi chỗ cho nhau, dùng để tạo hàng ghép.'],
@@ -5936,6 +5976,8 @@ class Game {
       case 'drop':    return Math.max(0, g.n - this.dropsGot);
       case 'special': { const s = this.specMade || {}; const have = g.kind === 'any' || !g.kind ? (s.any || 0) : (s[g.kind] || 0); return Math.max(0, g.n - have); }
       case 'combo':   return Math.max(0, g.n - (this.comboTotal || 0));
+      case 'big':     return Math.max(0, g.n - ((this.specMade || {}).big || 0));
+      case 'boom':    return Math.max(0, g.n - ((this.specMade || {}).boom || 0));
       case 'ice': case 'crate': case 'rope': case 'pot': case 'cart': return this.grid ? this.grid.count(g.t) : 0;
     }
     return 0;
@@ -6075,6 +6117,10 @@ class Game {
       if (combo >= 2) { this.comboTotal = (this.comboTotal || 0) + 1; UI.flyGen(this, 'combo', [{ x: R.cellX(3.5), y: R.cellY(3.5) }], '🔥', false); }   // mục tiêu combo: cộng dồn mỗi lần món rơi tự ghép tiếp
 
       const clr = g.computeClear(seeds, first && eff ? eff.noTrigger : null);
+      { const sm = this.specMade = this.specMade || {};                     // mục tiêu mới: ghép lớn (>=5 món/lần) và kích nổ món đặc biệt
+        const nb = groups.filter(x => x.cells.length >= 5).length, ne = clr.sources.length;
+        if (nb) { sm.big = (sm.big || 0) + nb; UI.flyGen(this, 'big', [{ x: R.cellX(3.5), y: R.cellY(3.5) }], '💪', false); }
+        if (ne) { sm.boom = (sm.boom || 0) + ne; UI.flyGen(this, 'boom', clr.sources.slice(0, 4).map(s => ({ x: R.cellX(s.c), y: R.cellY(s.r) })), '💥', false); } }
       const spawnMap = new Map();
       groups.forEach(gr => { if (gr.special && gr.spawn) spawnMap.set(g.key(gr.spawn.r, gr.spawn.c), gr); });
       const cells = clr.cells.filter(p => !spawnMap.has(g.key(p.r, p.c)));
@@ -6307,11 +6353,11 @@ class Game {
   /** Mục tiêu tạo Bom/Ngũ sắc: nếu trên bàn không còn nước nào tạo được thì bố trí sẵn 1 thế (không tự ghép). */
   plantGoal() {
     try {
-      const g = this.grid, goal = this.goals.find(x => x.t === 'special' && this.goalRemaining(x) > 0);
+      const g = this.grid, goal = this.goals.find(x => (x.t === 'special' || x.t === 'big' || x.t === 'boom') && this.goalRemaining(x) > 0);
       if (!goal) return;
-      const want = goal.kind || 'any', N = g.n, NC = g.nc || g.n;
+      const want = goal.t === 'big' ? 'rainbow' : goal.t === 'boom' ? 'any' : (goal.kind || 'any'), N = g.n, NC = g.nc || g.n;
       const makes = (a, b) => { const A = g.get(a.r, a.c), B = g.get(b.r, b.c); if (!A || !B || A.type < 0 || B.type < 0 || A.special || B.special) return false;
-        g.cells[a.r][a.c] = B; g.cells[b.r][b.c] = A; const gr = g.findGroups(); g.cells[a.r][a.c] = A; g.cells[b.r][b.c] = B; return gr.some(x => want === 'any' ? !!x.special : x.special === want); };
+        g.cells[a.r][a.c] = B; g.cells[b.r][b.c] = A; const gr = g.findGroups(); g.cells[a.r][a.c] = A; g.cells[b.r][b.c] = B; return gr.some(x => want === 'any' ? !!x.special : want === 'line' ? (x.special === 'line_h' || x.special === 'line_v') : want === 'rainbow' && goal.t === 'big' ? x.cells.length >= 5 : x.special === want); };
       for (let r = 0; r < N; r++) for (let c = 0; c < NC; c++) for (const [dr, dc] of [[0, 1], [1, 0]]) {
         if (r + dr < N && c + dc < NC && makes({ r, c }, { r: r + dr, c: c + dc })) return;
       }
