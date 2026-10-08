@@ -5773,6 +5773,7 @@ class Game {
     this.goals = Levels.build(def, this.grid);
     const sg = this.goals.find(g => g.t === 'score'); this.target = sg ? sg.n : 0;
     if (!this.grid.findHint()) this.grid.shuffle();
+    this.plantGoal();
     UI.hideAll();
     $('#score').textContent = 0;
     UI.hud(this); UI.team(this); UI.extra(this);
@@ -6188,7 +6189,45 @@ class Game {
     return this.win();
   }
 
+  /** Mục tiêu tạo Bom/Ngũ sắc: nếu trên bàn không còn nước nào tạo được thì bố trí sẵn 1 thế (không tự ghép). */
+  plantGoal() {
+    try {
+      const g = this.grid, goal = this.goals.find(x => x.t === 'special' && this.goalRemaining(x) > 0);
+      if (!goal) return;
+      const want = goal.kind || 'any', N = g.n, NC = g.nc || g.n;
+      const makes = (a, b) => { const A = g.get(a.r, a.c), B = g.get(b.r, b.c); if (!A || !B || A.type < 0 || B.type < 0 || A.special || B.special) return false;
+        g.cells[a.r][a.c] = B; g.cells[b.r][b.c] = A; const gr = g.findGroups(); g.cells[a.r][a.c] = A; g.cells[b.r][b.c] = B; return gr.some(x => want === 'any' ? !!x.special : x.special === want); };
+      for (let r = 0; r < N; r++) for (let c = 0; c < NC; c++) for (const [dr, dc] of [[0, 1], [1, 0]]) {
+        if (r + dr < N && c + dc < NC && makes({ r, c }, { r: r + dr, c: c + dc })) return;
+      }
+      const ok = (r, c) => { if (r < 0 || c < 0 || r >= N || c >= NC) return false; const x = g.get(r, c); return !!x && x.type >= 0 && !x.special && !x.fixed; };
+      const T = ([a, b]) => [b, a];
+      const pats = want === 'bomb'
+        ? [{ X: [[0, 0], [0, 1], [-1, 2], [1, 2], [2, 2]], Y: [0, 2], sw: [[-1, 2], [0, 2]] }]
+        : want === 'rainbow' ? [{ X: [[0, 0], [0, 1], [0, 3], [0, 4], [-1, 2]], Y: [0, 2], sw: [[-1, 2], [0, 2]] }]
+          : [{ X: [[0, 0], [0, 1], [0, 3], [-1, 2]], Y: [0, 2], sw: [[-1, 2], [0, 2]] }];
+      pats.push({ X: pats[0].X.map(T), Y: T(pats[0].Y), sw: pats[0].sw.map(T) });
+      const cand = [];
+      for (let r = 0; r < N; r++) for (let c = 0; c < NC; c++) pats.forEach(p => {
+        if (p.X.concat([p.Y]).every(([a, b]) => ok(r + a, c + b))) cand.push({ r, c, p });
+      });
+      cand.sort(() => Math.random() - .5);
+      const nt = Math.max(3, g.colors | 0);
+      for (const { r, c, p } of cand.slice(0, 40)) {
+        const cells = p.X.concat([p.Y]).map(([a, b]) => g.get(r + a, c + b)), old = cells.map(x => x.type);
+        for (let X = 0; X < nt; X++) for (let Y = 0; Y < nt; Y++) {
+          if (X === Y) continue;
+          p.X.forEach(([a, b]) => { g.get(r + a, c + b).type = X; }); g.get(r + p.Y[0], c + p.Y[1]).type = Y;
+          const A = { r: r + p.sw[0][0], c: c + p.sw[0][1] }, B = { r: r + p.sw[1][0], c: c + p.sw[1][1] };
+          if (g.findGroups().length === 0 && makes(A, B)) { this.hint = null; return; }
+        }
+        cells.forEach((x, i) => { x.type = old[i]; });
+      }
+    } catch (e) {}
+  }
+
   async ensurePlayable(tk) {
+    this.plantGoal();
     if (!this.grid.findHint()) await this.shuffle(tk);
     if (tk !== this.token) return;
     this.state = 'idle'; this.lastAction = performance.now(); this.hint = null;
