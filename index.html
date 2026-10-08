@@ -3293,12 +3293,12 @@ class Renderer {
   punchZoom(a) { this.punch = Math.max(this.punch, a); }
   /** Ngọn lửa bay lên (vẽ bằng ảnh quầng sáng dựng sẵn, cộng sáng): n hạt, spread = độ rộng. */
   flame(x, y, n = 6, spread = 1) {
-    const cap = Perf.cap(); if (this.fx.length > cap * .8) return;
+    const cap = Perf.cap(); if (this.fx.length > cap * 1.1) return;
     n = Math.max(2, Math.round(n * Perf.mulBurst()));
     if (this.fx.length > cap * .5) n = Math.max(2, n >> 1);
     for (let i = 0; i < n; i++) {
       this.fx.push({ t: 'flame', x: x + (Math.random() - .5) * this.cell * .9 * spread, y: y + (Math.random() - .3) * this.cell * .35, vx: (Math.random() - .5) * 40 * spread,
-        vy: -(70 + Math.random() * 130), life: -Math.random() * 120, max: 520 + Math.random() * 420, size: this.cell * (.30 + Math.random() * .26), ph: Math.random() * 6 });
+        vy: -(70 + Math.random() * 130), life: -Math.random() * 120, max: 520 + Math.random() * 420, size: this.cell * (.42 + Math.random() * .34), ph: Math.random() * 6 });
     }
   }
   /** Bức tường lửa dọc đáy bàn khi combo cao. */
@@ -3570,17 +3570,18 @@ class Renderer {
     const p = f.life / f.max;
     ctx.save();
     switch (f.t) {
-      case 'ember':
-        ctx.globalCompositeOperation = Perf.q >= 1 ? 'lighter' : 'source-over'; ctx.globalAlpha = (1 - p) * .9;
-        if (Perf.q >= 1) Glow.draw(ctx, '#ff6a1a', f.x, f.y, f.size * 3.2); else circ(ctx, f.x, f.y, f.size, '#ff9a2a');
-        break;
+      case 'ember': {
+        const sp = Renderer.flameSprite(), w = f.size * 3.2 * (1 - p * .6), h = w * 1.5;
+        ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = (1 - p) * .95;
+        ctx.drawImage(sp, f.x - w / 2, f.y - h * .85, w, h);
+        break; }
       case 'flame': {
         if (f.life < 0) break;
-        ctx.globalCompositeOperation = Perf.q >= 1 ? 'lighter' : 'source-over';
-        const k = 1 - p, col = p < .25 ? '#fff0a0' : p < .6 ? '#ff9a2a' : '#e8261a', sz = f.size * (.35 + k * .85);
-        ctx.globalAlpha = Math.min(1, k * 1.5) * (Perf.q >= 1 ? .85 : .6);
-        Glow.draw(ctx, col, f.x, f.y, sz * 1.6);
-        if (p < .45) { ctx.globalAlpha = (.45 - p) * 1.6; Glow.draw(ctx, '#fff7c8', f.x, f.y + sz * .15, sz * .6); }
+        const sp = Renderer.flameSprite(), k = p < .2 ? .55 + p * 2.25 : 1 - (p - .2) * 1.05, fl = 1 + Math.sin(f.life / 70 + f.ph) * .08;
+        const w = f.size * Math.max(.2, k) * 1.15, h = w * 1.5 * fl;
+        ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = p > .72 ? Math.max(0, (1 - p) / .28) : 1;
+        ctx.translate(f.x, f.y); ctx.rotate(Math.sin(f.life / 130 + f.ph) * .12);
+        ctx.drawImage(sp, -w / 2, -h * .85, w, h);
         break; }
       case 'puff':
         ctx.globalAlpha = (1 - p) * .55; circ(ctx, f.x, f.y - p * this.cell * .3, f.size * (.5 + p * 1.1), f.color);
@@ -3650,6 +3651,26 @@ class Renderer {
     ctx.restore();
   }
 }
+
+/** Ngọn lửa vẽ sẵn 1 lần (giọt lửa 4 lớp: đỏ - cam - vàng - lõi sáng), mọi hạt lửa chỉ drawImage ảnh này. */
+Renderer.flameSprite = function () {
+  if (Renderer._fs) return Renderer._fs;
+  const W = 64, H = 96, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const g = cv.getContext('2d');
+  const path = (k) => {
+    g.save(); g.translate(32, 94); g.scale(k, k); g.translate(-32, -94);
+    g.beginPath(); g.moveTo(34, 2);
+    g.bezierCurveTo(38, 24, 60, 40, 58, 66); g.bezierCurveTo(57, 84, 46, 94, 32, 94);
+    g.bezierCurveTo(18, 94, 6, 84, 6, 66); g.bezierCurveTo(6, 50, 16, 42, 20, 28);
+    g.bezierCurveTo(24, 38, 28, 40, 30, 44); g.bezierCurveTo(28, 30, 30, 14, 34, 2); g.closePath(); g.restore();
+  };
+  path(1); let gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, '#ff5a1a'); gr.addColorStop(1, '#d81a12');
+  g.fillStyle = gr; g.fill(); g.lineWidth = 3; g.strokeStyle = '#a3100c'; g.stroke();
+  path(.74); gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, '#ff9a2a'); gr.addColorStop(1, '#ff6a1a'); g.fillStyle = gr; g.fill();
+  path(.5); g.fillStyle = '#ffd23a'; g.fill();
+  path(.27); g.fillStyle = '#fff6c4'; g.fill();
+  return (Renderer._fs = cv);
+};
 
 </script>
 <script>
@@ -5966,9 +5987,9 @@ class Game {
   /** Món bị dây buộc / ô thùng / ô khuyết không hoán đổi được: lắc nhẹ báo hiệu. */
   swappable(a, b) {
     const ga = this.grid.get(a.r, a.c), gb = this.grid.get(b.r, b.c);
-    if (!ga || !gb || ga.lock || gb.lock || ga.fixed || gb.fixed) {
+    if (!ga || !gb || ga.lock || gb.lock || ga.fixed || gb.fixed || ga.type === -2 || gb.type === -2) {
       Sfx.bad();
-      [ga, gb].forEach(x => { if (x && (x.lock || x.fixed)) { x.rot = .25; Tween.to(x, { rot: 0 }, 260, Ease.outBack); } });
+      [ga, gb].forEach(x => { if (x && (x.lock || x.fixed || x.type === -2)) { x.rot = .25; Tween.to(x, { rot: 0 }, 260, Ease.outBack); } });
       return false;
     }
     return true;
@@ -6043,8 +6064,8 @@ class Game {
         R.floatText(cx, cy, '+' + pts, col, 26 + Math.min(combo, 5) * 4);
         if (combo >= 2) R.floatText(cx, cy - R.cell * .75, 'x' + combo, '#ff3b1f', 22 + combo * 3);
         R.burst(cx, cy, combo >= 2 ? [fc, '#ffb02e', '#ff5a1f'][(Math.random() * 3) | 0] : '#ffb02e', 6 + combo * 3); R.ring(cx, cy, R.cell * (.9 + combo * .12), combo >= 2 ? fc : '#ff8a1c');
-        if (combo >= 2) R.flame(cx, cy, 3 + combo * 2, 1 + combo * .15);
-        if (combo >= 4) R.fireWall(combo - 3);
+        R.flame(cx, cy, combo >= 2 ? 5 + combo * 3 : 3, 1 + combo * .15);
+        if (combo >= 3) R.fireWall(combo - 2);
         try { const sc = document.getElementById('score'); sc.classList.remove('bump'); void sc.offsetWidth; sc.classList.add('bump'); } catch (e) {} }
       Sfx.match(combo);
 
