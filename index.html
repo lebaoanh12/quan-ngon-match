@@ -1587,6 +1587,7 @@ const CONFIG = {
   SIDE_GAP: 10,   // chừa lề 2 bên bàn chơi (px)
   ROWS: 8,
   COLS: 8,
+  SEVEN_COLS: true,                  // bàn 7 cột x 8 hàng: ô to hơn ~14% (bỏ 1 cột ít chướng ngại nhất)
   SQUEEZE7: false,                   // thu gọn các màn 8x8 thành 7x7 (icon to hơn)
 
   GEM_SCORE: 20,                       // điểm mỗi món bị phá (nhân với combo)
@@ -1945,7 +1946,7 @@ class Grid {
     //   gem.type -3: XE ĐẨY (gem.fixed, gem.hp) — không ghép/hoán đổi được, tự trượt ngang mỗi lượt, phá bằng ghép/nổ kề bên
     this.pot = Array.from({ length: rows }, () => Array(cols).fill(false));
     this.belts = [];
-    this.n = rows; this.off = 0; this.dropsPending = 0;                 // số dừa còn phải sinh ra từ trên xuống
+    this.n = rows; this.nc = cols; this.off = 0; this.dropsPending = 0;                 // số dừa còn phải sinh ra từ trên xuống
     this._id = 0;
   }
 
@@ -2298,7 +2299,7 @@ class Grid {
 
   /** Băng chuyền: dịch cả hàng 1 ô theo dir (vòng lại ở mép). Trả về danh sách di chuyển hoặc null nếu hàng bị kẹt. */
   beltShift(belt) {
-    const r = belt.row, n = this.cols;
+    const r = belt.row, n = this.nc || this.cols;   // chỉ trượt trong phần cột hiển thị (cột khuyết cuối bàn 7 cột đứng yên)
     for (let c = 0; c < n; c++) {
       const g = this.cells[r][c];
       if (this.blocks[r][c] !== 0 || !g || g.lock || g.fixed || g.type === -2) return null;
@@ -2558,6 +2559,22 @@ const Levels = (() => {
    *  Trả về bản đồ 8x8 mới (7x7 ở góc trên-trái, phần còn lại là ô khuyết 'x'), hoặc null nếu không thu được an toàn. */
   const OB = 'iIr#=D';
   const cntOb = rows => { const o = {}; rows.join('').split('').forEach(ch => { if (OB.includes(ch)) o[ch] = (o[ch] || 0) + 1; }); return o; };
+  /** Bỏ 1 cột (ít chướng ngại nhất; ưu tiên cột đã toàn ô khuyết), cột cuối thành ô khuyết 'x'. Trả null nếu mất quá nhiều. */
+  function dropCol(map) {
+    if (map.length !== 8 || map.some(r => r.length !== 8)) return null;
+    const before = cntOb(map), tot = Object.values(before).reduce((a, b) => a + b, 0);
+    let best = null;
+    for (let cc = 0; cc < 8; cc++) {
+      const rows = map.map(row => row.slice(0, cc) + row.slice(cc + 1));
+      const after = cntOb(rows); let ok = true;
+      for (const k in before) { if (!(after[k] > 0) || after[k] < before[k] * .6) ok = false; }
+      if (!ok) continue;
+      const allX = map.every(r => r[cc] === 'x'), lost = tot - Object.values(after).reduce((a, b) => a + b, 0);
+      const score = (allX ? -100 : 0) + lost * 10 + Math.abs(cc - 3.5) * -0.5 + (map.filter(r => r[cc] === 'x').length ? 0 : 0);
+      if (!best || score < best.score) best = { score, rows };
+    }
+    return best ? best.rows.map(r => r + 'x') : null;
+  }
   function squeeze7(map) {
     if (map.length !== 8 || map.some(r => r.length !== 8)) return null;
     const before = cntOb(map), tot = Object.values(before).reduce((a, b) => a + b, 0);
@@ -2604,7 +2621,9 @@ const Levels = (() => {
     });
     let size = d.size || 8, map = d.map;
     if (size === 8 && CONFIG.SQUEEZE7) { const m7 = squeeze7(map); if (m7) { size = 7; map = m7; } }   // thu gọn 7x7 nếu an toàn
-    return { n, moves: Math.max(14, Math.round(d.moves * k.moves)), colors: d.colors, size, goals, map, belts: d.belts, timer: d.timer };
+    let cols = size;
+    if (size === 8 && CONFIG.SEVEN_COLS ) { const m = dropCol(map); if (m) { map = m; cols = 7; } }   // 7 cột x 8 hàng (màn băng chuyền / xe đẩy / dây giữ 8 cột)
+    return { n, moves: Math.max(14, Math.round(d.moves * k.moves)), colors: d.colors, size, cols, goals, map, belts: d.belts, timer: d.timer };
   };
 
   /** Dựng bàn từ định nghĩa màn. Trả về danh sách mục tiêu đã tính số lượng cụ thể. */
@@ -3009,17 +3028,18 @@ class Renderer {
     this.shake = 0;
     this.time = 0;
     this.sprites = {};
-    this.size = 0; this.H = 0; this.ch = 0; this.cell = 0; this.pad = 6; this.n = CONFIG.COLS; this.off = 0;
+    this.size = 0; this.H = 0; this.ch = 0; this.cell = 0; this.pad = 6; this.n = CONFIG.COLS; this.nc = CONFIG.COLS; this.off = 0;
     this.punch = 0; this.fever = false;
   }
 
   /** size = bề rộng bàn; maxH = chiều cao tối đa (ô được kéo dài theo chiều dọc tới 1.28 lần nếu còn chỗ). */
   resize(size, maxH) {
     if (maxH) this.maxH = maxH; else maxH = this.maxH || size;
-    this.size = size;
+    this.reqSize = size;
     this.dpr = Math.min(window.devicePixelRatio || 1, (typeof Perf !== 'undefined' && Perf.q === 0) ? 2 : 2.5);
     const d = this.dpr;
-    this.cell = (size - this.pad * 2) / this.n;
+    this.cell = Math.min((size - this.pad * 2) / this.nc, (maxH - this.pad * 2) / this.n);   // bàn 7 cột x 8 hàng: ô to hơn nhưng không vượt chiều cao
+    size = Math.round(this.cell * this.nc + this.pad * 2); this.size = size;
     this.ch = Math.min(this.cell * 1.28, Math.max(this.cell, (maxH - this.pad * 2) / this.n));
     this.H = Math.round(this.ch * this.n + this.pad * 2);
     this.cv.style.width = size + 'px';
@@ -3031,9 +3051,10 @@ class Renderer {
   }
 
   /** Bàn nhỏ ở các màn đầu: chỉ phóng to vùng n x n ở giữa (phần ngoài là ô khuyết). */
-  setView(n) {
+  setView(n, nc) {
     n = Math.max(3, Math.min(CONFIG.COLS, n | 0)); this.n = n; this.off = ((CONFIG.COLS - n) / 2) | 0;
-    if (this.size) this.resize(this.size, this.maxH);
+    this.nc = Math.max(3, Math.min(n, (nc || n) | 0));   // số cột hiển thị (7 cột x 8 hàng: cột cuối là ô khuyết)
+    if (this.reqSize || this.size) this.resize(this.reqSize || this.size, this.maxH);
   }
   cellX(c) { return this.pad + (c - this.off) * this.cell + this.cell / 2; }
   cellY(r) { return this.pad + (r - this.off) * this.ch + this.ch / 2; }
@@ -3451,13 +3472,13 @@ class Renderer {
     for (const b of grid.belts || []) {
       const y = this.pad + (b.row - this.off) * ch;
       ctx.save();
-      ctx.fillStyle = 'rgba(80,80,90,.18)'; ctx.fillRect(this.pad, y, cell * grid.cols, ch);
+      ctx.fillStyle = 'rgba(80,80,90,.18)'; ctx.fillRect(this.pad, y, cell * (grid.nc || grid.cols), ch);
       ctx.strokeStyle = 'rgba(60,60,70,.6)'; ctx.lineWidth = 2.5; ctx.setLineDash([8, 6]); ctx.lineDashOffset = -b.dir * t * 24;
-      ctx.beginPath(); ctx.moveTo(this.pad, y + 2); ctx.lineTo(this.pad + cell * grid.cols, y + 2);
-      ctx.moveTo(this.pad, y + ch - 2); ctx.lineTo(this.pad + cell * grid.cols, y + ch - 2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(this.pad, y + 2); ctx.lineTo(this.pad + cell * (grid.nc || grid.cols), y + 2);
+      ctx.moveTo(this.pad, y + ch - 2); ctx.lineTo(this.pad + cell * (grid.nc || grid.cols), y + ch - 2); ctx.stroke();
       ctx.setLineDash([]); ctx.fillStyle = 'rgba(40,40,50,.8)'; ctx.font = 'bold ' + Math.round(cell * .3) + 'px sans-serif';
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      const a = b.dir > 0 ? '»' : '«'; ctx.fillText(a, this.pad + cell * .18, y + ch / 2); ctx.fillText(a, this.pad + cell * (grid.cols - .18), y + ch / 2);
+      const a = b.dir > 0 ? '»' : '«'; ctx.fillText(a, this.pad + cell * .18, y + ch / 2); ctx.fillText(a, this.pad + cell * ((grid.nc || grid.cols) - .18), y + ch / 2);
       ctx.restore();
     }
     for (let r = 0; r < grid.rows; r++) for (let c = 0; c < grid.cols; c++) {
@@ -5743,12 +5764,12 @@ class Game {
     this.order = { type: (Math.random() * def.colors) | 0, need: 10 + n, have: 0, done: false };
     this.mode = null; this.selected = null; this.hint = null; this.tut = null; { const tt = $('#tutTip'); if (tt) tt.classList.remove('show'); }
     this.setActiveItem();
-    this.renderer.setView(def.size || CONFIG.COLS);
+    this.renderer.setView(def.size || CONFIG.COLS, def.cols || def.size || CONFIG.COLS);
     this._finale = false; this._starK = 0; this._pre = {}; this._streakGot = '';
     try { this.renderer.setRegion(WorldMap.regionOn(n) ? WorldMap.regionItems(n) : null); } catch (e) {}
     try { const th = WorldMap.theme(n); this.renderer.setDrop(th.ic); Levels.TIPS.drop = [th.ic, th.food, 'Đặc sản không ghép được. Hãy phá món bên dưới để đặc sản rơi xuống hàng đáy.']; } catch (e) {}
     this.grid = new Grid(CONFIG.ROWS, CONFIG.COLS, def.colors);
-    this.grid.n = this.renderer.n; this.grid.off = this.renderer.off;
+    this.grid.n = this.renderer.n; this.grid.off = this.renderer.off; this.grid.nc = this.renderer.nc;
     this.goals = Levels.build(def, this.grid);
     const sg = this.goals.find(g => g.t === 'score'); this.target = sg ? sg.n : 0;
     if (!this.grid.findHint()) this.grid.shuffle();
@@ -6525,7 +6546,7 @@ class Game {
       g.cells.forEach((row, r) => row.forEach((x, c) => { if (x && x.type === best) { seeds.push({ r, c }); R.zap(R.size / 2, 0, R.cellX(c), R.cellY(r), '#ffd0f0'); } }));
     } else if (id === 'tiger') {                          // 5 vùng nổ 3x3
       for (let i = 0; i < 5; i++) {
-        const cr = g.off + 1 + rnd(g.n - 2), cc = g.off + 1 + rnd(g.n - 2);
+        const cr = g.off + 1 + rnd(g.n - 2), cc = g.off + 1 + rnd((g.nc || g.n) - 2);
         R.ring(R.cellX(cc), R.cellY(cr), R.cell * 2.4, '#ffb347');
         for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) seeds.push({ r: cr + dr, c: cc + dc });
       }
@@ -6538,7 +6559,7 @@ class Game {
       const all = []; for (let r = g.off; r < g.off + g.n; r++) for (let c = g.off; c < g.off + g.n; c++) if (g.get(r, c)) all.push({ r, c });
       for (let i = 0; i < 10 && all.length; i++) { const p = all.splice(rnd(all.length), 1)[0]; seeds.push(p); R.ring(R.cellX(p.c), R.cellY(p.r), R.cell * 1.1, '#cfc8e0'); }
     } else if (id === 'ox') {                             // Cày ruộng: 2 cột
-      const cols = new Set(); while (cols.size < Math.min(2, g.n)) cols.add(g.off + rnd(g.n));
+      const cols = new Set(); while (cols.size < Math.min(2, g.n)) cols.add(g.off + rnd(g.nc || g.n));
       cols.forEach(c => { R.beam('v', 0, c); for (let r = 0; r < g.rows; r++) seeds.push({ r, c }); });
     } else if (id === 'rooster') {                        // Gáy sáng: ưu tiên chướng ngại (băng, thùng, dây)
       const ob = [], rest = [];
@@ -6551,11 +6572,11 @@ class Game {
       for (let i = ob.length; i < 6 && rest.length; i++) seeds.push(rest.splice(rnd(rest.length), 1)[0]);
       seeds.forEach(p => R.ring(R.cellX(p.c), R.cellY(p.r), R.cell * 1.1, '#e8267a'));
     } else if (id === 'horse') {                          // Phi nước đại: 2 đường chéo
-      const cr = g.off + rnd(g.n), cc = g.off + rnd(g.n), lo = g.off, hi = g.off + g.n - 1;
-      for (let d = -g.n; d <= g.n; d++) for (const [r, c] of [[cr + d, cc + d], [cr + d, cc - d]]) if (r >= lo && r <= hi && c >= lo && c <= hi) { seeds.push({ r, c }); R.ring(R.cellX(c), R.cellY(r), R.cell * .9, '#ffb36b'); }
+      const cr = g.off + rnd(g.n), cc = g.off + rnd(g.nc || g.n), lo = g.off, hi = g.off + g.n - 1, hc = g.off + (g.nc || g.n) - 1;
+      for (let d = -g.n; d <= g.n; d++) for (const [r, c] of [[cr + d, cc + d], [cr + d, cc - d]]) if (r >= lo && r <= hi && c >= lo && c <= hc) { seeds.push({ r, c }); R.ring(R.cellX(c), R.cellY(r), R.cell * .9, '#ffb36b'); }
     } else if (id === 'goat') {                           // Húc vòng ngoài: viền bàn
-      const lo = g.off, hi = g.off + g.n - 1;
-      for (let r = lo; r <= hi; r++) for (let c = lo; c <= hi; c++) if (r === lo || r === hi || c === lo || c === hi) { seeds.push({ r, c }); R.ring(R.cellX(c), R.cellY(r), R.cell * .9, '#e8e0cf'); }
+      const lo = g.off, hi = g.off + g.n - 1, hc = g.off + (g.nc || g.n) - 1;
+      for (let r = lo; r <= hi; r++) for (let c = lo; c <= hc; c++) if (r === lo || r === hi || c === lo || c === hc) { seeds.push({ r, c }); R.ring(R.cellX(c), R.cellY(r), R.cell * .9, '#e8e0cf'); }
     } else if (id === 'snake') {                          // Nọc độc: 2 loại nhiều nhất
       const cnt = {}; g.cells.forEach(row => row.forEach(x => { if (x && x.type >= 0) cnt[x.type] = (cnt[x.type] || 0) + 1; }));
       const top = Object.keys(cnt).sort((a, b) => cnt[b] - cnt[a]).slice(0, 2).map(Number);
@@ -6580,7 +6601,7 @@ class Game {
       await this.ensurePlayable(tk); return;
     } else if (id === 'dragon3') {
       for (let i = 0; i < 3; i++) {
-        const cr = g.off + 1 + rnd(g.n - 2), cc = g.off + 1 + rnd(g.n - 2);
+        const cr = g.off + 1 + rnd(g.n - 2), cc = g.off + 1 + rnd((g.nc || g.n) - 2);
         R.ring(R.cellX(cc), R.cellY(cr), R.cell * 2.4, '#ff9f1c');
         for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) seeds.push({ r: cr + dr, c: cc + dc });
       }
