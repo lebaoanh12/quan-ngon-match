@@ -991,6 +991,83 @@ body::before { opacity: 1; inset: 0; mask-image: none; -webkit-mask-image: none;
   .lan.l { left: 22px; } .lan.r { right: 22px; }
 }
 
+/* ===== MENU NGOÀI: MẶT TIỀN QUÁN ĂN VỀ ĐÊM (mái hiên vải, 2 đèn lồng, bảng hiệu gỗ, ô cửa sổ, quầy gỗ) ===== */
+#menu { background: radial-gradient(90% 45% at 50% 38%, rgba(255,170,70,.28), transparent 70%), linear-gradient(180deg, #120d4a 0%, #26186e 40%, #4a1f78 78%, #5a1d62 100%) !important; overflow: hidden; }
+#menu::before { display: none; }
+#menu .awning { position: absolute; left: 0; right: 0; top: 0; height: 40px; z-index: 4; pointer-events: none;
+  background: repeating-linear-gradient(90deg, #ffb52e 0 26px, #ff4d4d 26px 52px); box-shadow: 0 5px 0 #8a1a10, 0 10px 16px rgba(0,0,30,.55); }
+#menu .awning::after { content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 17px; margin-top: 5px;
+  background: radial-gradient(circle at 13px 0, #ffb52e 0 13px, transparent 14px) 0 0 / 52px 17px repeat-x, radial-gradient(circle at 39px 0, #ff4d4d 0 13px, transparent 14px) 0 0 / 52px 17px repeat-x; filter: drop-shadow(0 4px 3px rgba(0,0,30,.5)); }
+#menu .lanterns { top: 44px; height: 120px; z-index: 5; display: block !important; }
+#menu .lanterns u { width: 46px; height: 60px; top: 20px; border-top: 6px solid #ffd77a; border-bottom: 6px solid #ffd77a; transform-origin: 50% -20px; animation: lanSway 3.4s ease-in-out infinite alternate;
+  background: radial-gradient(circle at 35% 28%, #ffa27a, #e0261c 66%, #8a0c18); box-shadow: 0 0 34px 8px rgba(255,160,50,.6), inset 0 -8px 10px rgba(110,0,10,.4); }
+#menu .lanterns u::before { top: -30px; height: 24px; background: #ffd77a; }
+#menu .lanterns u::after { content: ""; position: absolute; left: 50%; bottom: -26px; width: 4px; height: 18px; margin-left: -2px; background: linear-gradient(#ffd77a, #ff4d4d); border-radius: 0 0 4px 4px; }
+#menu .lanterns u:first-child { left: 5%; top: 16px; } #menu .lanterns u:last-child { right: 5%; top: 16px; animation-delay: -1.7s; }
+#menu .counter { position: absolute; left: 0; right: 0; bottom: 0; height: 64px; z-index: 0; pointer-events: none;
+  background: repeating-linear-gradient(90deg, rgba(0,0,0,.12) 0 2px, transparent 2px 46px), linear-gradient(180deg, #a2582a 0, #7a3f1c 18%, #5a2d14 100%); border-top: 5px solid #ffd77a; box-shadow: 0 -8px 20px rgba(0,0,30,.5); }
+.card.menu { padding: 62px 18px 74px; z-index: 3; }
+/* Bảng hiệu gỗ */
+.card.menu .menu-pills { margin-bottom: 4px; }
+.card.menu h1.logo { position: relative; margin: 6px 6px 12px; padding: 12px 10px 14px; border-radius: 18px; text-align: center;
+  background: repeating-linear-gradient(90deg, rgba(0,0,0,.1) 0 2px, transparent 2px 22px), linear-gradient(180deg, #8a4a24, #5a2d14); border: 4px solid #ffd77a; box-shadow: 0 0 0 3px #3a1c0c, 0 8px 0 #2a1308, 0 14px 22px rgba(0,0,30,.55), inset 0 2px 0 rgba(255,255,255,.25); }
+.card.menu h1.logo::before, .card.menu h1.logo::after { content: ""; position: absolute; top: -26px; width: 3px; height: 24px; background: #ffd77a; }
+.card.menu h1.logo::before { left: 22%; } .card.menu h1.logo::after { right: 22%; }
+.card.menu h1.logo .t1 { font-size: 42px; color: #ffe08a; text-shadow: 0 3px 0 #8a1a10, 0 0 22px rgba(255,170,60,.7); letter-spacing: 3px; }
+.card.menu h1.logo .t2 { margin-top: 4px; font-size: 14px; letter-spacing: 6px; background: linear-gradient(180deg, #ff6a4d, #c8201a); box-shadow: 0 3px 0 #5a0e0a; }
+.card.menu .sub { margin: 0 0 12px; font-weight: 800; color: #ffe9b8; text-shadow: 0 2px 4px rgba(0,0,30,.7); }
+.card.menu .btn.primary { animation: playPulse 1.8s ease-in-out infinite; border: 3px solid #fff3c9; }
+@keyframes playPulse { 0%,100% { transform: scale(1); box-shadow: 0 6px 0 #a85a00, 0 0 0 rgba(255,190,60,0); } 50% { transform: scale(1.03); box-shadow: 0 6px 0 #a85a00, 0 0 28px rgba(255,190,60,.8); } }
+/* Ô cửa hàng: khung cửa sổ gỗ */
+.mgrid .btn { background: linear-gradient(180deg, #fff6d6 0%, #ffe39a 100%); border: 4px solid #8a4a24; box-shadow: 0 0 0 2px #ffd77a, 0 5px 0 #3a1c0c, 0 10px 14px rgba(0,0,30,.4), inset 0 3px 0 #fff, inset 0 -10px 14px rgba(255,170,60,.3); }
+.mgrid .btn::after { content: ""; position: absolute; left: 50%; top: 4px; bottom: 4px; width: 2px; margin-left: -1px; background: rgba(138,74,36,.18); pointer-events: none; }
+.mgrid .btn span:not(.badge) { color: #5a2d14; text-shadow: 0 1px 0 #fff; }
+.mgrid .btn i { filter: drop-shadow(0 3px 2px rgba(90,45,20,.35)); }
+.card.menu .btn.ghost { background: linear-gradient(180deg, #a2582a, #6a3418); color: #ffe9b8; border: 3px solid #ffd77a; box-shadow: 0 4px 0 #2a1308, inset 0 2px 0 rgba(255,255,255,.25); text-shadow: 0 1px 2px #000; padding: 11px; }
+.sndrow.icons .btn { background: radial-gradient(circle at 35% 30%, #ffe9b0, #e0a84a) !important; border: 3px solid #8a4a24 !important; box-shadow: 0 3px 0 #2a1308 !important; color: #5a2d14; text-shadow: none !important; }
+.card.menu .btn.danger { background: transparent !important; border: 0 !important; box-shadow: none !important; color: #ffc9bf; }
+@media (max-height: 740px) { #menu .lanterns { display: block !important; } .card.menu { padding-top: 52px; padding-bottom: 66px; } .card.menu h1.logo .t1 { font-size: 34px; } }
+
+#menu .lanterns u { width: 38px; height: 50px; } #menu .lanterns u:first-child { left: 3%; } #menu .lanterns u:last-child { right: 3%; }
+.card.menu .menu-pills { padding: 0 50px; gap: 6px; justify-content: space-between; }
+.card.menu .menu-pills .pill { padding: 3px 9px; font-size: 13px; }
+.card.menu h1.logo { margin-top: 26px; }
+.card.menu h1.logo .t1 { font-size: 36px; display: block; line-height: 1.1; }
+.card.menu h1.logo { padding: 8px 10px 12px; overflow: visible; }
+.card.menu h1.logo .t1 { line-height: 1.25; margin-top: -2px; }
+.card.menu h1.logo { padding: 16px 10px 24px; min-height: 92px; }
+.card.menu h1.logo .t1 { margin-top: 0; line-height: 1.15; }
+.card.menu h1.logo .t2 { position: relative; top: 4px; }
+
+/* ===== QUÁN VIỆT FOOD: cảnh cửa sổ quán — đầu bếp mèo, quầy bày món, hơi nóng bốc lên, bảng thực đơn ===== */
+.card.menu { padding: 58px 16px 70px; }
+.card.menu h1.logo { margin: 20px 6px 8px; padding: 10px 10px 18px; min-height: 0; }
+.card.menu h1.logo .t1 { font-size: 34px; }
+.shopwin { position: relative; margin: 6px 4px 12px; height: 128px; border-radius: 18px; overflow: hidden; border: 4px solid #8a4a24; box-shadow: 0 0 0 2px #ffd77a, 0 6px 0 #3a1c0c, 0 12px 18px rgba(0,0,30,.5), inset 0 0 30px rgba(255,150,40,.45);
+  background: radial-gradient(80% 90% at 50% 100%, #ffc56a 0%, #ff9a4a 38%, #b8461f 75%, #6a2418 100%); }
+.shopwin::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 12px; background: repeating-linear-gradient(90deg, #ffb52e 0 14px, #ff4d4d 14px 28px); opacity: .9; }
+.shopwin .logo { position: absolute; left: 0; right: 0; bottom: 30px; display: flex; justify-content: center; z-index: 2; transform: scale(.92); transform-origin: 50% 100%; }
+.shopwin .shopcounter { position: absolute; left: 0; right: 0; bottom: 0; height: 34px; z-index: 3; background: repeating-linear-gradient(90deg, rgba(0,0,0,.12) 0 2px, transparent 2px 38px), linear-gradient(180deg, #b8662f, #7a3f1c 30%, #4a2410); border-top: 4px solid #ffd77a; }
+.shopwin .sub { position: absolute; left: 0; right: 0; bottom: 6px; margin: 0; z-index: 4; font-size: 13px; font-weight: 900; text-align: center; color: #fff3c9; text-shadow: 0 2px 3px #2a1308; letter-spacing: .5px; }
+.shopwin .menuboard { position: absolute; right: 8px; top: 18px; z-index: 1; width: 86px; padding: 5px 4px 6px; border-radius: 8px; transform: rotate(3deg); text-align: center; line-height: 1.25;
+  background: linear-gradient(180deg, #2a3a2a, #16241a); border: 3px solid #c8884a; box-shadow: 0 3px 0 #2a1308; color: #fff; font-size: 10.5px; font-weight: 800; }
+.shopwin .menuboard b { display: block; color: #ffe27a; font-size: 11px; letter-spacing: 1px; margin-bottom: 1px; } .shopwin .menuboard span { display: block; }
+.shopwin .chef { position: absolute; left: 8px; bottom: 28px; z-index: 1; font-size: 52px; line-height: 1; filter: drop-shadow(0 3px 2px rgba(0,0,0,.4)); animation: chefBob 2.2s ease-in-out infinite; }
+.shopwin .chef em { position: absolute; left: 50%; top: -14px; width: 34px; height: 22px; margin-left: -17px; background: #fff; border-radius: 16px 16px 4px 4px; box-shadow: inset 0 -4px 0 #e0d8c8, -9px 6px 0 -2px #fff, 9px 6px 0 -2px #fff; }
+@keyframes chefBob { 0%,100% { transform: translateY(0) rotate(-3deg); } 50% { transform: translateY(-4px) rotate(3deg); } }
+.shopwin .steam { position: absolute; left: 0; right: 0; bottom: 70px; height: 40px; z-index: 2; pointer-events: none; }
+.shopwin .steam i { position: absolute; bottom: 0; width: 10px; height: 26px; border-radius: 50%; background: rgba(255,255,255,.55); filter: blur(5px); animation: steamUp 2.6s ease-in infinite; }
+.shopwin .steam i:nth-child(1) { left: 30%; } .shopwin .steam i:nth-child(2) { left: 48%; animation-delay: .9s; } .shopwin .steam i:nth-child(3) { left: 62%; animation-delay: 1.7s; }
+@keyframes steamUp { 0% { transform: translateY(8px) scale(.6); opacity: 0; } 30% { opacity: .8; } 100% { transform: translateY(-34px) scale(1.5); opacity: 0; } }
+.rowacct { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; } .rowacct .btn { margin: 0 !important; padding: 11px 6px; font-size: 15px; }
+.mgrid .btn { height: 84px; }
+.card.menu .btn.primary { margin-bottom: 12px; }
+.shopwin .logo > :nth-child(n+5) { display: none !important; }
+.shopwin .logo { left: 62px; right: 98px; transform: scale(.9); gap: 0; }
+.shopwin .steam { left: 62px; right: 98px; }
+.shopwin .menuboard { top: 20px; }
+.card.menu h1.logo { margin-top: 30px; }
+
 </style>
 </head>
 <body>
@@ -1051,12 +1128,20 @@ body::before { opacity: 1; inset: 0; mask-image: none; -webkit-mask-image: none;
 
   <!-- MENU CHÍNH (hub) -->
   <section class="overlay show" id="menu">
+    <div class="awning"></div>
     <div class="lanterns"><u></u><u></u></div>
+    <div class="counter"></div>
     <div class="card menu">
       <div class="menu-pills"><span class="pill">⭐ <b id="menuStars">0</b></span><span class="pill lifepill" id="menuLivesPill"><b id="menuLives">❤️ 5</b></span><span class="pill">💰 <b id="menuCoins">0</b></span></div>
-      <div class="logo" id="logo"></div>
       <h1 class="logo"><span class="t1">VIET FOOD</span><span class="t2">MATCH PUZZLE</span></h1>
-      <p class="sub">Xếp món ngon – Xây quán xịn</p>
+      <div class="shopwin">
+        <div class="menuboard"><b>THỰC ĐƠN</b><span>🍜 Phở · Bún</span><span>🥖 Bánh mì</span><span>🧋 Trà sữa</span></div>
+        <div class="chef"><em></em>😺</div>
+        <div class="steam"><i></i><i></i><i></i></div>
+        <div class="logo" id="logo"></div>
+        <div class="shopcounter"></div>
+        <p class="sub">Xếp món ngon – Xây quán xịn</p>
+      </div>
       <button class="btn primary" id="btnPlay">CHƠI · Màn <span id="menuLevel">1</span></button>
       <div class="mgrid">
         <button class="btn secondary mtile" id="btnShopMenu"><i>🏮</i><span>Quán</span><span class="badge" id="shopBadge"></span></button>
@@ -1067,8 +1152,7 @@ body::before { opacity: 1; inset: 0; mask-image: none; -webkit-mask-image: none;
         <button class="btn secondary mtile" id="btnRankMenu"><i>🏆</i><span>Xếp hạng</span><span class="badge hot" id="rankBadge"></span></button>
       </div>
       <button class="evbanner" id="evBanner" hidden>🎉 CUỐI TUẦN: XU x2! Bấm vào chơi màn Tiệc thưởng x3</button>
-      <button class="btn ghost" id="btnRename">✏️ Đổi tên</button>
-      <button class="btn ghost" id="btnAccount">👤 Tài khoản</button>
+      <div class="rowacct"><button class="btn ghost" id="btnRename">✏️ Đổi tên</button><button class="btn ghost" id="btnAccount">👤 Tài khoản</button></div>
       <div class="sndrow icons"><button class="btn ghost" id="btnMusic" title="Nhạc">🎵</button><button class="btn ghost" id="btnSound" title="Tiếng">🔊</button><button class="btn ghost" id="btnVoice" title="Giọng nói">🗣️</button><button class="btn ghost" id="btnVib" title="Rung">📳</button><button class="btn ghost" id="btnNotify" title="Nhắc nhở">🔔</button></div>
       <button class="btn ghost danger" id="btnDelAcct">🗑 Xóa tài khoản</button>
     </div>
