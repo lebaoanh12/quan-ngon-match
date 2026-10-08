@@ -1146,6 +1146,12 @@ body::before { opacity: 1; inset: 0; mask-image: none; -webkit-mask-image: none;
 #guideList{width:100%;max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:8px}
 #guideList .gtitle{margin-bottom:2px}
 
+.gchip{cursor:pointer}
+#goalTip{position:fixed;z-index:400;background:#fff8e6;color:#4a2a10;border:2px solid #f0b040;border-radius:14px;padding:9px 12px;box-shadow:0 8px 22px rgba(0,0,0,.35);font:600 13px/1.4 system-ui,sans-serif;opacity:0;pointer-events:none;transform:translateY(-6px);transition:opacity .15s,transform .15s}
+#goalTip.show{opacity:1;pointer-events:auto;transform:none}
+#goalTip b{display:block;font-size:14px;font-weight:900;margin-bottom:2px;color:#b3470e}
+#goalTip span{display:block}
+
 </style>
 <style>
 /* ===== V13 – Chợ đêm Việt Food: gọn, một tâm điểm, dock đáy ===== */
@@ -4016,6 +4022,37 @@ const UI = {
     box.innerHTML = (g.goals || []).map(x => UI._chipHtml(x, g)).join('');
     box.dataset.n = (g.goals || []).length;
   },
+  /** Giải thích mục tiêu: bấm vào ô mục tiêu (trong màn, màn giới thiệu, màn thua) hiện bong bóng chú thích. */
+  goalText(x, gm) {
+    const T = (typeof Levels !== 'undefined' && Levels.TIPS) || {}, tip = k => (T[k] ? T[k][2] : '');
+    switch (x.t) {
+      case 'score': return ['⭐ Điểm', 'Đạt ít nhất ' + x.n + ' điểm trước khi hết lượt. Ghép nhiều món cùng lúc và tạo combo để lên điểm nhanh.'];
+      case 'collect': { const nm = (CONFIG.TYPES[x.type] || {}).name || 'món này'; return ['🎯 Thu thập ' + nm, 'Ghép đủ ' + x.n + ' món "' + nm + '" (ghép từ 3 món giống nhau trở lên). Số trên ô là số còn thiếu.']; }
+      case 'drop': { const th = (typeof WorldMap !== 'undefined') ? WorldMap.theme(gm.level) : { ic: '🥥', food: 'Dừa' }; return ['⬇️ Đưa ' + th.food + ' xuống đáy', 'Có ' + x.n + ' ' + th.ic + ' ' + th.food + ' trên bàn, không ghép được. Hãy phá các món bên dưới để nó rơi xuống hàng cuối cùng.']; }
+      case 'special': return x.kind === 'rainbow' ? ['🌈 Ngũ sắc', 'Tạo ' + x.n + ' Ngũ sắc: ghép 5 món thẳng hàng.'] : x.kind === 'bomb' ? ['💣 Bom', 'Tạo ' + x.n + ' Bom: ghép 5 món theo hình chữ L hoặc T.'] : ['✨ Món đặc biệt', 'Tạo ' + x.n + ' món đặc biệt: ghép 4 món thẳng hàng sẽ có Chiêu dọc/ngang.'];
+      case 'combo': return ['🔥 Combo', 'Tạo chuỗi combo x' + x.n + ': món rơi xuống tự ghép tiếp liên hoàn trong một lượt.'];
+      case 'ice': return ['❄️ Phá băng', 'Phá ' + x.n + ' lớp băng. ' + tip('ice')];
+      case 'crate': return ['📦 Phá thùng gỗ', 'Phá ' + x.n + ' thùng. ' + tip('crate')];
+      case 'rope': return ['🔗 Cắt dây', 'Cắt ' + x.n + ' dây buộc. ' + tip('rope')];
+      case 'pot': return ['🍲 Nồi nước lèo', 'Phá ' + x.n + ' nồi. ' + tip('pot')];
+      case 'cart': return ['🛒 Xe đẩy', 'Phá ' + x.n + ' xe đẩy. ' + tip('cart')];
+    }
+    return null;
+  },
+  goalTip(chip) {
+    try {
+      const gm = window.game; if (!gm || !gm.goals) return;
+      const ty = chip.dataset.ty, k = chip.dataset.k;
+      const x = gm.goals.find(o => ty !== undefined ? (o.t === 'collect' && String(o.type) === ty) : o.t === k); if (!x) return;
+      const info = UI.goalText(x, gm); if (!info) return;
+      let el = document.getElementById('goalTip');
+      if (!el) { el = document.createElement('div'); el.id = 'goalTip'; document.body.appendChild(el); el.onclick = () => el.classList.remove('show'); }
+      el.innerHTML = '<b>' + info[0] + '</b><span>' + info[1] + '</span>';
+      const r = chip.getBoundingClientRect(), w = Math.min(300, window.innerWidth - 24);
+      el.style.width = w + 'px'; el.style.left = Math.max(12, Math.min(window.innerWidth - w - 12, r.left + r.width / 2 - w / 2)) + 'px'; el.style.top = (r.bottom + 10) + 'px';
+      el.classList.add('show'); clearTimeout(UI._gtT); UI._gtT = setTimeout(() => el.classList.remove('show'), 4200);
+    } catch (e) {}
+  },
   intro(g) {
     const d = g.levelDef;
     $('#introTitle').textContent = 'Màn ' + g.level + (typeof WorldMap !== 'undefined' ? ' · ' + WorldMap.theme(g.level).sh : '');
@@ -6747,6 +6784,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   };
   $('#btnAlbum').onclick = () => WorldMap.album(game);
   $('#btnAlbumBack').onclick = () => UI.hide('album');
+  document.addEventListener('click', e => { const c = e.target.closest && e.target.closest('.gchip'); if (c) UI.goalTip(c); else { const t = document.getElementById('goalTip'); if (t) t.classList.remove('show'); } });
   $('#btnGuide').onclick = () => UI.guide();
   $('#btnGuideBack').onclick = () => UI.hide('guide');
   // đổi tên hiển thị (hiện trên bảng xếp hạng)
