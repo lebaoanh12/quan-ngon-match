@@ -1106,6 +1106,27 @@ body::before { opacity: 1; inset: 0; mask-image: none; -webkit-mask-image: none;
 .mgrid .btn span:not(.badge) { color: #3a2208 !important; }
 .card.menu h1.logo { margin-bottom: 26px; }
 .card.menu .btn.danger, #menu .btn.ghost.danger { background: transparent !important; border: 0 !important; box-shadow: none !important; }
+/* ===== Menu: dàn đều theo chiều cao, các ô cùng cỡ, tên dài thì cắt bớt ===== */
+#btnShopMenu.notify, .mgrid .btn.notify { animation: notifyglow 1.6s ease-in-out infinite !important; transform: none !important; }
+#menu { align-items: stretch; }
+.card.menu { display: flex; flex-direction: column; justify-content: space-evenly; align-items: stretch; height: 100%; max-height: 100%; padding: 60px 16px 66px; margin: 0 auto; gap: 0; }
+.card.menu > * { margin-top: 0 !important; margin-bottom: 0 !important; flex: none; }
+.card.menu h1.logo { margin: 14px 2px 22px !important; }
+.card.menu .shopwin { margin: 0 4px !important; }
+.card.menu .btn.primary { margin: 0 !important; }
+.card.menu .mgrid { margin: 0 !important; gap: 12px; }
+.rowacct .btn { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.card.menu .sndrow.icons { margin: 0 !important; }
+@media (max-height: 720px) {
+  .card.menu { padding: 52px 14px 54px; }
+  .card.menu h1.logo { margin: 8px 2px 14px !important; padding: 6px 8px 16px; } .card.menu h1.logo .t1 { font-size: 36px; }
+  .shopwin { height: 104px; } .shopwin .chef { font-size: 42px; } .shopwin .logo { transform: scale(.78); bottom: 24px; } .shopwin .steam { bottom: 52px; } .shopwin .shopcounter { height: 28px; }
+  .card.menu .btn.primary { padding: 12px 8px; font-size: 24px; }
+  .mgrid .btn { height: 66px; } .mgrid .btn i { font-size: 26px; line-height: 28px; }
+  .rowacct .btn { padding: 8px 4px; font-size: 14px; } .sndrow.icons .btn { width: 40px; height: 40px; font-size: 18px; }
+  #menu .counter { height: 44px; } .card.menu .btn.danger { display: none; }
+  .card.menu .menu-pills { padding: 0 40px; } .card.menu .menu-pills .pill { padding: 2px 6px; font-size: 12px; }
+}
 
 </style>
 </head>
