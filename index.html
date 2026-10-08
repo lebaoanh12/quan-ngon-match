@@ -3950,7 +3950,7 @@ const UI = {
       case 'collect': { const pend = (gm._flyPend && gm._flyPend[g.type]) || 0; return { ic: 'T' + g.type, txt: rem + pend > 0 ? rem + pend : '✔', rem: rem + pend }; }   // số trên chip chỉ giảm khi món bay tới nơi
       case 'drop':    return { ic: (typeof WorldMap !== 'undefined' ? WorldMap.theme(gm.level).ic : '🥥'), txt: rem > 0 ? rem : '✔', rem };
       case 'special': return { ic: g.kind === 'rainbow' ? '🌈' : g.kind === 'bomb' ? '💣' : '✨', txt: rem > 0 ? rem : '✔', rem };
-      case 'combo':   return { ic: '🔥', txt: rem > 0 ? 'x' + g.n : '✔', rem };
+      case 'combo':   return { ic: '🔥', txt: rem > 0 ? Math.max(0, g.n - rem) + '/' + g.n : '✔', rem };   // hiện tiến độ combo tốt nhất (vd 3/5)
       case 'ice':     return { ic: '❄️', txt: rem > 0 ? rem : '✔', rem };
       case 'crate':   return { ic: '📦', txt: rem > 0 ? rem : '✔', rem };
       case 'rope':    return { ic: '🔗', txt: rem > 0 ? rem : '✔', rem };
@@ -4048,7 +4048,7 @@ const UI = {
       case 'collect': { const nm = (CONFIG.TYPES[x.type] || {}).name || 'món này'; return ['🎯 Thu thập ' + nm, 'Ghép đủ ' + x.n + ' món "' + nm + '" (ghép từ 3 món giống nhau trở lên). Số trên ô là số còn thiếu.']; }
       case 'drop': { const th = (typeof WorldMap !== 'undefined') ? WorldMap.theme(gm.level) : { ic: '🥥', food: 'Dừa' }; return ['⬇️ Đưa ' + th.food + ' xuống đáy', 'Có ' + x.n + ' ' + th.ic + ' ' + th.food + ' trên bàn, không ghép được. Hãy phá các món bên dưới để nó rơi xuống hàng cuối cùng.']; }
       case 'special': return x.kind === 'rainbow' ? ['🌈 Ngũ sắc', 'Tạo ' + x.n + ' Ngũ sắc: ghép 5 món thẳng hàng.'] : x.kind === 'bomb' ? ['💣 Bom', 'Tạo ' + x.n + ' Bom: ghép 5 món theo hình chữ L hoặc T.'] : ['✨ Món đặc biệt', 'Tạo ' + x.n + ' món đặc biệt: ghép 4 món thẳng hàng sẽ có Chiêu dọc/ngang.'];
-      case 'combo': return ['🔥 Combo', 'Tạo chuỗi combo x' + x.n + ': món rơi xuống tự ghép tiếp liên hoàn trong một lượt.'];
+      case 'combo': return ['🔥 Combo', 'Tạo chuỗi combo x' + x.n + ' trong MỘT lượt: sau khi ghép, món rơi xuống tự ghép tiếp liên hoàn. Số trên ô là combo cao nhất bạn đã đạt (vd 3/' + x.n + ').'];
       case 'ice': return ['❄️ Phá băng', 'Phá ' + x.n + ' lớp băng. ' + tip('ice')];
       case 'crate': return ['📦 Phá thùng gỗ', 'Phá ' + x.n + ' thùng. ' + tip('crate')];
       case 'rope': return ['🔗 Cắt dây', 'Cắt ' + x.n + ' dây buộc. ' + tip('rope')];
