@@ -376,7 +376,7 @@ body::before { opacity: .5; inset: -60%; background: repeating-conic-gradient(fr
 #app::after { content: ""; position: absolute; left: -2px; right: -2px; top: 12px; height: 14px; z-index: 6; pointer-events: none;
   background: radial-gradient(circle at 14px 0, var(--chili) 13px, transparent 14px) 0 0 / 56px 14px repeat-x, radial-gradient(circle at 42px 0, var(--cream) 13px, transparent 14px) 0 0 / 56px 14px repeat-x;
   filter: drop-shadow(0 3px 0 rgba(120,40,10,.35)); }
-#hud { padding-top: 30px; }
+#hud { padding-top: 42px; }
 
 /* HUD */
 .pill { color: var(--ink); background: var(--paper); border: 2.5px solid var(--wood); box-shadow: 0 3px 0 var(--wood2); font-weight: 800; }
@@ -966,11 +966,37 @@ body::before { opacity: 1; inset: 0; mask-image: none; -webkit-mask-image: none;
 .gchip.hit{animation:chipHit .5s cubic-bezier(.2,1.6,.4,1)}
 @keyframes chipHit{0%{transform:scale(1)}35%{transform:scale(1.4);box-shadow:0 0 18px #ffd77a}100%{transform:scale(1)}}
 
+/* khung viền game rõ trên màn rộng (web/máy tính bảng) */
+@media (min-width: 560px) {
+  body { background: radial-gradient(120% 90% at 50% 40%, #12104a 0%, #070624 100%) !important; }
+  #app { background: linear-gradient(180deg, rgba(60,40,150,.55), rgba(20,10,80,.7)); border-left: 5px solid #ffd77a; border-right: 5px solid #ffd77a; border-radius: 0 0 22px 22px;
+    box-shadow: 0 0 0 2px #1a1450, 0 0 0 7px rgba(255,215,122,.35), 0 0 60px rgba(255,170,60,.45), 0 0 140px rgba(120,60,255,.35); }
+  #menu .card.menu, #menu { max-width: 520px; margin: 0 auto; }
+}
+
+/* ===== MẶT TIỀN QUÁN ĂN: mái hiên sọc + 2 đèn lồng treo + khung gỗ viền vàng ===== */
+#app::before { height: 22px; border-radius: 0 0 16px 16px; background: repeating-linear-gradient(90deg, #ffb52e 0 26px, #ff4d4d 26px 52px); box-shadow: 0 4px 0 #8a1a10, 0 7px 10px rgba(0,0,30,.5); z-index: 6; }
+.lan { position: absolute; top: 4px; width: 24px; height: 31px; border-radius: 50% / 42%; z-index: 7; pointer-events: none; transform-origin: 50% -16px;
+  background: radial-gradient(circle at 35% 30%, #ff9a6a, #e0261c 70%, #9a0f1a); border-top: 5px solid #ffd77a; border-bottom: 5px solid #ffd77a;
+  box-shadow: 0 0 22px 5px rgba(255,170,60,.6), inset 0 -6px 8px rgba(120,0,10,.35); animation: lanSway 3.2s ease-in-out infinite alternate; }
+.lan::before { content: ""; position: absolute; left: 50%; top: -22px; width: 2px; height: 17px; background: #ffd77a; }
+.lan::after { content: ""; position: absolute; left: 50%; bottom: -17px; width: 3px; height: 12px; margin-left: -1px; background: linear-gradient(#ffd77a, #ff4d4d); border-radius: 0 0 3px 3px; }
+.lan.l { left: 10px; } .lan.r { right: 10px; animation-delay: -1.6s; }
+@keyframes lanSway { from { transform: rotate(-5deg); } to { transform: rotate(5deg); } }
+#hud { padding-top: 30px; }
+@media (min-width: 560px) {
+  #app { height: calc(100dvh - 28px); margin: 14px auto; border-radius: 26px; background: rgba(6,8,52,.4);
+    box-shadow: 0 0 0 5px #7a3f1c, 0 0 0 8px #ffd77a, 0 0 0 13px #4a2410, 0 0 80px rgba(255,170,60,.55), 0 22px 50px rgba(0,0,30,.65); overflow: hidden; }
+  #app::before { border-radius: 22px 22px 16px 16px; }
+  .lan.l { left: 22px; } .lan.r { right: 22px; }
+}
+
 </style>
 </head>
 <body>
 <canvas id="bgfx"></canvas>
 <div id="app">
+  <i class="lan l"></i><i class="lan r"></i>
 
   <!-- HUD phía trên lưới -->
   <header id="hud">
@@ -2106,6 +2132,7 @@ if (typeof module !== 'undefined') module.exports = Grid;
  * ========================================================================== */
 const Levels = (() => {
   const E = '........';
+  const cols = h => Array.from({ length: 8 }, (_, r) => h.map(v => (r < 8 - v ? 'x' : '.')).join(''));   // bản đồ theo độ cao từng cột
   const P = {
     plain:      [E, E, E, E, E, E, E, E],
     iceBottom:  [E, E, E, E, E, E, 'iiiiiiii', 'iiiiiiii'],
@@ -2115,6 +2142,16 @@ const Levels = (() => {
     pillars:    [E, E, '.#....#.', '...##...', E, '.#....#.', E, E],
     wall:       [E, E, E, '..####..', E, E, E, E],
     wall2:      [E, E, E, '..====..', E, E, E, E],
+    cape:       [E, E, E, 'x......x', 'xx....xx', 'xxx..xxx', 'xxx..xxx', 'xxx..xxx'],
+    mountain:   ['xxx..xxx', 'xx....xx', 'xx....xx', 'x......x', E, E, E, E],
+    river:      ['..xx....', '..xx....', '...xx...', E, '....xx..', '...xx...', '...xx...', '..xx....'],
+    islands:    ['...xx...', '...xx...', '...xx...', E, 'xx....xx', 'xx....xx', '...xx...', '...xx...'],
+    terrace:    ['xxxxxx..', 'xxxxx...', 'xxxx....', 'xxx.....', 'xx......', 'x.......', E, E],
+    river:      ['..x.....', '..xx....', '...xx...', '....xx..', '.....xx.', '......xx', '.......x', E],                // sông chảy chéo (ĐBSCL, sông Hồng)
+    mountain:   ['xxx..xxx', 'xx....xx', 'xx....xx', 'x......x', 'x......x', E, E, E],                                    // núi (Tây Bắc, Việt Bắc)
+    coast:      ['......xx', '.....xxx', '.....xxx', '......xx', '.......x', '......xx', '.....xxx', '.....xxx'],            // bờ biển cong chữ S (miền Trung)
+    karst:      cols([6, 8, 4, 8, 5, 7, 3, 8]),                                                                                // đảo đá vôi (Hạ Long, Tam Cốc, Lý Sơn)
+    terrace:    cols([4, 4, 6, 6, 8, 8, 6, 6]),                                                                                // cao nguyên bậc thang (Tây Nguyên)
     heart:      ['x..xx..x', E, E, 'x......x', 'xx....xx', 'xxx..xxx', 'xxx..xxx', 'xxx..xxx'],
     hourglass:  [E, 'x......x', 'xx....xx', 'xxx..xxx', 'xxx..xxx', 'xx....xx', 'x......x', E],
     twin:       ['...xx...', '...xx...', '...xx...', '...xx...', '...xx...', '...xx...', '...xx...', '...xx...'],
@@ -2198,11 +2235,14 @@ const Levels = (() => {
     const r = rng(n * 7919 + 13), pick = a => a[(r() * a.length) | 0];
     const shapes = [P.plain, P.diamond, P.cross, P.hole4, P.heart, P.hourglass, P.twin, P.donut, P.ladder, P.heart, P.donut];
     const obst = [P.iceBottom, P.iceChecker, P.iceRing, P.iceCenter2, P.pillars, P.wall, P.wall2, P.ropes4, P.ropes8, P.iceZig, P.iceX, P.crateTwin, P.crateRows, P.ropeRing, P.iceSides];
-    let map = pick(shapes);
+    const tn = (typeof WorldMap !== 'undefined' && WorldMap.terrain) ? WorldMap.terrain(n) : null, terr = tn && P[tn] && r() < .7 ? P[tn] : null;   // 70% màn dùng địa hình đặc trưng của tỉnh
+    let map = terr ? P.plain : pick(shapes);
+    { const c = (((n - 1) / 10) | 0) % 34, tn = (typeof WorldMap !== 'undefined' && WorldMap.TERR) ? WorldMap.TERR[c] : null, ov = r(); if (tn && P[tn] && ov < .78) map = P[tn]; }   // địa hình theo tỉnh thành
     const k = 1 + (n > 40 ? 1 : 0) + (r() < .35 ? 1 : 0);
     for (let i = 0; i < k; i++) map = mix(map, pick(obst));
     const useDrop = r() < .3;
     if (useDrop) map = mix(map, pick([P.drop2, P.drop3, P.drop4]));
+    if (terr) map = map.map((row, rr) => [...row].map((ch, cc) => (terr[rr][cc] === 'x' ? 'x' : ch)).join(''));
     const txt = map.join('');
     const goals = [];
     if (/[iI]/.test(txt)) goals.push(I());
@@ -5046,6 +5086,11 @@ const WorldMap = {
     ['Lai Châu', '🥩', 'Thịt trâu gác bếp', 'Sâm Lai Châu, gà đen'],
     ['Điện Biên', '🌾', 'Gạo Điện Biên', 'Xôi nếp nương, pa pỉnh tộp']
   ],
+  /* địa hình bàn chơi theo địa lý từng tỉnh (khớp tên khuôn trong Levels.P): mũi đất, núi, sông, biển đảo, ruộng bậc thang... */
+  TERR: ['cape', 'mountain', 'river', 'river', 'river', 'mountain', 'donut', 'ladder', 'terrace', 'terrace', 'islands', 'mountain', 'islands', 'mountain',
+    'river', 'hourglass', 'mountain', 'terrace', 'mountain', 'mountain', 'donut', 'plain', 'islands', 'islands', 'heart', 'terrace', 'mountain', 'mountain',
+    'terrace', 'twin', 'terrace', 'terrace', 'mountain', 'donut'],
+  TERRN: { cape: 'Mũi đất', mountain: 'Núi', river: 'Sông ngòi', islands: 'Biển đảo', terrace: 'Ruộng bậc thang', donut: 'Hồ & thung lũng', hourglass: 'Eo đất', ladder: 'Đồng bằng', heart: 'Làng quê', twin: 'Hai bờ sông', plain: 'Đồng bằng' },
   /* đặc sản của TẤT CẢ tỉnh cũ hợp nhất vào mỗi tỉnh mới: mỗi màn trong chặng rơi một đặc sản khác nhau, màn cuối (trùm) là đặc sản chính */
   SPEC: [
     '🦀 Cua Cà Mau|🍯 Mật ong U Minh|🍤 Tôm khô Rạch Gốc|🧂 Muối Bạc Liêu|🐟 Cá lóc nướng trui',
@@ -5083,6 +5128,9 @@ const WorldMap = {
     '🥩 Thịt trâu gác bếp|🌿 Sâm Lai Châu|🐔 Gà đen|🍚 Gạo Tam Đường',
     '🌾 Gạo Điện Biên|🍚 Xôi nếp nương|🐟 Pa pỉnh tộp|🍖 Thịt gác bếp'
   ],
+  /* địa hình đặc trưng của từng tỉnh (theo thứ tự PROV): river = sông ngòi, coast = bờ biển, karst = đảo đá vôi, mountain = núi, terrace = cao nguyên */
+  TERR: ['river', 'river', 'river', 'river', 'river', 'mountain', 'plain', 'terrace', 'terrace', 'terrace', 'coast', 'terrace', 'karst', 'coast', 'coast', 'coast', 'coast', 'coast', 'coast', 'karst', 'river', 'river', 'coast', 'karst', 'plain', 'terrace', 'mountain', 'mountain', 'mountain', 'terrace', 'mountain', 'terrace', 'mountain', 'terrace'],
+  terrain(n) { return this.TERR[(this.chapter(n) - 1) % this.TERR.length]; },
   /* bảng màu pastel xoay vòng cho các chặng */
   PAL: [
     { top: '#d4f7e6', bot: '#7fe0b8', hill: '#2fbf8a', deco: ['🏮', '⛵', '🛵', '🌴', '🥥'] },
