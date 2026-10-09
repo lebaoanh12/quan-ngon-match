@@ -6358,6 +6358,7 @@ class Game {
 
   /** Mục tiêu tạo Bom/Ngũ sắc: nếu trên bàn không còn nước nào tạo được thì bố trí sẵn 1 thế (không tự ghép). */
   plantGoal() {
+    return;   // không can thiệp bàn chơi: để người chơi tự khám phá
     try {
       const g = this.grid, goal = this.goals.find(x => (x.t === 'special' || x.t === 'big' || x.t === 'boom') && this.goalRemaining(x) > 0);
       if (!goal) return;
