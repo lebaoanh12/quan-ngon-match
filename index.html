@@ -1180,6 +1180,23 @@ body::before { opacity: 1; inset: 0; mask-image: none; -webkit-mask-image: none;
 #team .ebar { height: 14px !important; margin: 0 !important; }
 #btnSkill.skill { padding: 4px 12px !important; font-size: 13px !important; border-radius: 10px !important; }
 
+/* 1.0.27 (b): gộp Đơn VIP + Lửa lên hàng trên cùng, dành chỗ cho bàn chơi */
+#hud { padding: 28px 0 0 !important; }
+#hud .row { align-items: center; gap: 5px !important; margin-bottom: 3px !important; }
+#hud .row #extra { flex: 1; min-width: 0; margin: 0 !important; gap: 5px !important; }
+#hud .pill { flex: none; white-space: nowrap; }
+#order { padding: 0 7px 0 2px !important; font-size: 11px !important; flex: none; white-space: nowrap; }
+#order small { font-size: 10px; opacity: .85; }
+#order em { display: none !important; }
+#order img { width: 20px !important; height: 20px !important; }
+.fever { flex: 1; min-width: 0; height: 17px !important; }
+.fever #ftext { font-size: 10px !important; line-height: 14px !important; }
+.progress { margin: 1px 0 3px !important; height: 11px !important; }
+.stats { margin-bottom: 2px !important; }
+#team { margin: 2px 0 3px !important; padding: 1px 8px !important; }
+#teamPortrait { width: 28px !important; height: 28px !important; }
+#btnSkill.skill { padding: 3px 12px !important; }
+
 </style>
 <style>
 /* ===== V13 – Chợ đêm Việt Food: gọn, một tâm điểm, dock đáy ===== */
@@ -1266,6 +1283,10 @@ body::before { opacity: 1; inset: 0; mask-image: none; -webkit-mask-image: none;
   <header id="hud">
     <div class="row">
       <div class="pill">Màn <b id="lvl">1</b></div>
+      <div id="extra">
+        <div id="order" title="Đơn hàng VIP"><img id="orderImg" alt=""><span><small>VIP</small> <b id="orderCount">0/0</b></span></div>
+        <div class="fever"><div id="ffill"></div><span id="ftext">🔥 0%</span></div>
+      </div>
       <div class="pill">⭐ <b id="stars">0</b></div>
       <div class="pill">💰 <b id="coins">0</b></div>
     </div>
@@ -1275,10 +1296,6 @@ body::before { opacity: 1; inset: 0; mask-image: none; -webkit-mask-image: none;
       <div class="stat moves"><span>LƯỢT</span><b id="moves">0</b></div>
     </div>
     <div class="progress"><div id="pfill"></div><span id="ptext"></span><div id="pstars"><i>★</i><i>★★</i><i>★★★</i></div></div>
-    <div id="extra">
-      <div id="order" title="Đơn hàng VIP"><img id="orderImg" alt=""><span>Đơn VIP <b id="orderCount">0/0</b></span><em>+⭐</em></div>
-      <div class="fever"><div id="ffill"></div><span id="ftext">🔥 0%</span></div>
-    </div>
   </header>
 
   <!-- Đồng đội: chân dung + năng lượng + nút tung chiêu -->
@@ -3217,7 +3234,7 @@ class Renderer {
   }
   /** Ô đặc sản không có vòng tròn: hình đặc sản to, viền trắng + viền màu nhận diện (xanh lá / xanh dương / tím) kiểu nhãn dán. */
   drawRegional(g, R, LW, T, emoji) {
-    if (Ico.has(emoji)) { g.save(); g.translate(0, -.02 * R); Ico.draw(g, R * .98, T, LW); g.restore(); return; }
+    if (Ico.has(emoji)) { g.save(); g.translate(0, -.02 * R); Ico.draw(g, R * .98, T, LW, emoji); g.restore(); return; }
     g.fillStyle = '#000';   // alpha của fillStyle ảnh hưởng cả emoji màu: phải đặt đục
     g.font = Math.round(R * 1.36) + 'px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
     const y = -.02 * R;
@@ -3242,7 +3259,7 @@ class Renderer {
     g.strokeStyle = '#e0a21c'; g.lineWidth = 3 * d; g.stroke();
     g.beginPath(); g.arc(0, .02 * R, .74 * R, 0, Math.PI * 2); g.strokeStyle = 'rgba(224,162,28,.45)'; g.lineWidth = 1.5 * d; g.stroke();
     g.font = Math.round(R * 1.15) + 'px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
-    if (Ico.has(emoji)) { g.save(); g.translate(0, R * .05); Ico.draw(g, R * .62, null, 0); g.restore(); return; }
+    if (Ico.has(emoji)) { g.save(); g.translate(0, R * .05); Ico.draw(g, R * .62, null, 0, emoji); g.restore(); return; }
     g.fillText(emoji, 0, R * .08);
   }
 
@@ -3749,11 +3766,51 @@ Renderer.flameSprite = function () {
 
 /* Icon vẽ tay cho món không có emoji (thanh long). Ico.has(e) / Ico.html(e) / Ico.txt(e) */
 const Ico = {
-  CUSTOM: { '🐉': 'dragon' },
+  /* biểu tượng tự vẽ (emoji hệ thống không có hoặc dễ nhầm): khoá = chuỗi nhận diện, v = loại, fb = emoji thay thế khi chỉ hiện được chữ */
+  CUSTOM: { '🐉': { v: 'dragon', fb: '🌸' }, '🍈#sr': { v: 'durian', fb: '🍈' }, '🍈#mc': { v: 'custard', fb: '🍏' }, '🍈#vs': { v: 'starapple', fb: '🍇' }, '🧄#': { v: 'garlic', fb: '🥔' } },
   has(e) { return !!this.CUSTOM[e]; },
-  txt(e) { return this.has(e) ? '🌸' : e; },
-  /** Vẽ thanh long tâm (0,0), bán kính s; T = {dark,base} để vẽ viền nhãn dán (bỏ qua = không viền). */
-  draw(g, s, T, LW) {
+  txt(e) { return this.has(e) ? this.CUSTOM[e].fb : e; },
+  /** Vẽ tâm (0,0), bán kính s; T = {dark,base} để vẽ viền nhãn dán (bỏ qua = không viền). */
+  draw(g, s, T, LW, e) {
+    const v = (this.CUSTOM[e] || { v: 'dragon' }).v;
+    if (v !== 'dragon') return this.fruit(g, s, T, LW, v);
+    return this.dragon(g, s, T, LW);
+  },
+  fruit(g, s, T, LW, v) {
+    g.lineJoin = 'round';
+    if (v === 'garlic') {
+      const body = new Path2D(); body.moveTo(0, -.9 * s); body.bezierCurveTo(.2 * s, -.5 * s, .85 * s, -.35 * s, .8 * s, .25 * s); body.bezierCurveTo(.75 * s, .8 * s, .3 * s, .9 * s, 0, .88 * s); body.bezierCurveTo(-.3 * s, .9 * s, -.75 * s, .8 * s, -.8 * s, .25 * s); body.bezierCurveTo(-.85 * s, -.35 * s, -.2 * s, -.5 * s, 0, -.9 * s); body.closePath();
+      if (T) { g.strokeStyle = T.dark; g.lineWidth = LW * 3.4; g.stroke(body); g.strokeStyle = T.base; g.lineWidth = LW * 2.4; g.stroke(body); g.strokeStyle = '#fff'; g.lineWidth = LW * 1.4; g.stroke(body); }
+      const gr = g.createRadialGradient(-.3 * s, -.1 * s, .1 * s, 0, .2 * s, 1 * s); gr.addColorStop(0, '#ffffff'); gr.addColorStop(.7, '#f1e6e9'); gr.addColorStop(1, '#c9b4c4');
+      g.fillStyle = gr; g.fill(body); g.lineWidth = Math.max(1.5, s * .05); g.strokeStyle = '#8c6f86'; g.stroke(body);
+      g.strokeStyle = '#b79bb0'; g.lineWidth = Math.max(1.2, s * .04); [-.4, 0, .4].forEach(x => { g.beginPath(); g.moveTo(x * .5 * s, -.45 * s); g.quadraticCurveTo(x * 1.5 * s, .2 * s, x * .9 * s, .82 * s); g.stroke(); });
+      return;
+    }
+    const body = new Path2D();
+    if (v === 'durian') body.ellipse(0, .08 * s, .72 * s, .8 * s, 0, 0, Math.PI * 2);
+    else if (v === 'custard') { body.moveTo(0, -.72 * s); body.bezierCurveTo(.95 * s, -.9 * s, .95 * s, .45 * s, 0, .85 * s); body.bezierCurveTo(-.95 * s, .45 * s, -.95 * s, -.9 * s, 0, -.72 * s); body.closePath(); }
+    else body.arc(0, .1 * s, .74 * s, 0, Math.PI * 2);
+    if (T) { g.strokeStyle = T.dark; g.lineWidth = LW * 3.4; g.stroke(body); g.strokeStyle = T.base; g.lineWidth = LW * 2.4; g.stroke(body); g.strokeStyle = '#fff'; g.lineWidth = LW * 1.4; g.stroke(body); }
+    const cols = v === 'durian' ? ['#e6ee7a', '#9bb02c', '#4f6b12'] : v === 'custard' ? ['#d6f58a', '#7fc43a', '#2f6d14'] : ['#e7b6ff', '#a24fd6', '#5a1a85'];
+    const gr = g.createRadialGradient(-.3 * s, -.3 * s, .1 * s, 0, .1 * s, .95 * s); gr.addColorStop(0, cols[0]); gr.addColorStop(.55, cols[1]); gr.addColorStop(1, cols[2]);
+    g.fillStyle = gr; g.fill(body);
+    g.lineWidth = Math.max(1.5, s * .05); g.strokeStyle = cols[2]; g.stroke(body);
+    g.save(); g.clip(body);
+    if (v === 'durian') {                                   // gai nhọn
+      g.fillStyle = '#5d7a14';
+      for (let r = 0; r < 6; r++) for (let c = 0; c < 5; c++) { const x = (c - 2 + (r % 2) * .5) * .3 * s, y = (r - 2.3) * .3 * s + .08 * s; g.beginPath(); g.moveTo(x - .11 * s, y + .09 * s); g.lineTo(x, y - .12 * s); g.lineTo(x + .11 * s, y + .09 * s); g.closePath(); g.fill(); }
+    } else if (v === 'custard') {                           // vảy mắt na
+      g.strokeStyle = '#3f8a1c'; g.lineWidth = Math.max(1, s * .04);
+      for (let r = 0; r < 6; r++) for (let c = 0; c < 5; c++) { const x = (c - 2 + (r % 2) * .5) * .32 * s, y = (r - 2.3) * .3 * s + .1 * s; g.beginPath(); g.arc(x, y, .13 * s, 0, Math.PI * 2); g.stroke(); }
+    } else {                                                // vú sữa: bóng + rãnh
+      g.strokeStyle = 'rgba(70,10,100,.35)'; g.lineWidth = Math.max(1.5, s * .05); g.beginPath(); g.moveTo(0, -.6 * s); g.bezierCurveTo(.25 * s, 0, .25 * s, .4 * s, 0, .85 * s); g.stroke();
+    }
+    g.restore();
+    g.fillStyle = 'rgba(255,255,255,.5)'; g.beginPath(); g.ellipse(-.3 * s, -.28 * s, .1 * s, .22 * s, .6, 0, Math.PI * 2); g.fill();
+    if (v !== 'durian') { g.fillStyle = '#3fbf4a'; g.strokeStyle = '#1d7a2a'; g.lineWidth = Math.max(1, s * .04); g.beginPath(); g.ellipse(.22 * s, -.82 * s, .3 * s, .13 * s, -.5, 0, Math.PI * 2); g.fill(); g.stroke(); }
+    g.strokeStyle = '#6b4a1a'; g.lineWidth = Math.max(2, s * .09); g.lineCap = 'round'; g.beginPath(); g.moveTo(0, -.66 * s); g.lineTo(-.04 * s, -.86 * s); g.stroke();
+  },
+  dragon(g, s, T, LW) {
     const sil = new Path2D();
     sil.ellipse(0, .06 * s, .62 * s, .78 * s, 0, 0, Math.PI * 2);
     [[-.5, -.25, -.82, -.5], [.5, -.25, .82, -.5], [-.58, .22, -.86, .22], [.58, .22, .86, .22], [-.25, -.68, -.42, -.94], [.25, -.68, .42, -.94], [-.3, .7, -.52, .94], [.3, .7, .52, .94]].forEach(a => {
@@ -3776,8 +3833,9 @@ const Ico = {
   },
   html(e) {
     if (!this.has(e)) return e;
-    if (!this._u) { const c = document.createElement('canvas'); c.width = c.height = 96; const g = c.getContext('2d'); g.translate(48, 50); this.draw(g, 32, null, 0); this._u = c.toDataURL(); }
-    return '<img class="ico" src="' + this._u + '" style="height:1.1em;width:1.1em;vertical-align:-.2em">';
+    this._u = this._u || {};
+    if (!this._u[e]) { const c = document.createElement('canvas'); c.width = c.height = 96; const g = c.getContext('2d'); g.translate(48, 50); this.draw(g, 32, null, 0, e); this._u[e] = c.toDataURL(); }
+    return '<img class="ico" src="' + this._u[e] + '" style="height:1.1em;width:1.1em;vertical-align:-.2em">';
   }
 };
 
@@ -5680,7 +5738,7 @@ const WorldMap = {
   chapter(n) { return ((n - 1) / this.CH | 0) + 1; },
   theme(n) {
     const c = this.chapter(n) - 1, p = this.PROV[c % this.PROV.length], pal = this.PAL[c % this.PAL.length];
-    const sp = (this.SPEC[c % this.PROV.length] || '').split('|').map(s => { const i = s.indexOf(' '); return [s.slice(0, i), s.slice(i + 1)]; }).filter(x => x[0]);
+    const sp = (this.SPEC[c % this.PROV.length] || '').split('|').map(s => { const i = s.indexOf(' '); return [this.fix(s.slice(0, i), s.slice(i + 1)), s.slice(i + 1)]; }).filter(x => x[0]);
     const rg = this.regionOn(n) ? this.regionItems(n) : null, pool = rg ? sp.filter(x => !rg.some(y => y[0] === x[0])) : sp, use = pool.length ? pool : sp;   // đặc sản rơi không trùng ô ghép
     const k = (n - 1) % this.CH, it = (k === this.CH - 1 || !sp.length) ? [p[1], p[2]] : use[k % use.length];
     return { name: p[0], sh: p[0], ic: it[0], food: it[1], main: [p[1], p[2]], all: sp, more: p[3], lap: (c / this.PROV.length | 0) + 1, top: pal.top, bot: pal.bot, hill: pal.hill, deco: [p[1]].concat(pal.deco.slice(0, 3), [p[1]]) };
@@ -5692,9 +5750,16 @@ const WorldMap = {
     return k % 2 === 1 || k === this.CH - 1;
   },
   /** 3 đặc sản của tỉnh dùng làm ô ghép trên bàn (bỏ món trùng dáng với phở / bánh mì / trà sữa). */
+  /** Chuẩn hoá biểu tượng theo tên món: món có emoji dễ nhầm/không hiện được trên Android cũ thì đổi sang hình tự vẽ hoặc emoji rõ hơn. */
+  fix(e, name) {
+    if (/Sầu riêng/.test(name)) return '🍈#sr';
+    if (/Mãng cầu/.test(name)) return '🍈#mc';
+    if (/Vú sữa/.test(name)) return '🍈#vs';
+    return ({ '🪷': '🌸', '🪺': '🥚', '🧄': '🧄#' })[e] || e;
+  },
   regionItems(n) {
-    const c = (this.chapter(n) - 1) % this.PROV.length, bad = { '🍜': 1, '🥖': 1, '🧋': 1, '☕': 1, '🥢': 1, '🍲': 1, '🧂': 1 }, ovr = { '🍢': '🍖', '🍘': '🍚', '🥫': '🍯' }, seen = {}, out = [];
-    (this.SPEC[c] || '').split('|').forEach(s => { const i = s.indexOf(' '), e0 = s.slice(0, i), e = ovr[e0] || e0; if (e0 && !bad[e0] && !seen[e] && out.length < 3) { seen[e] = 1; out.push([e, s.slice(i + 1)]); } });
+    const c = (this.chapter(n) - 1) % this.PROV.length, bad = { '🍜': 1, '🥖': 1, '🧋': 1, '☕': 1, '🥢': 1, '🍲': 1, '🧂': 1 }, ovr = { '🍢': '🍖', '🍘': '🍚', '🥫': '🍯' }, fx = this.fix.bind(this), seen = {}, out = [];
+    (this.SPEC[c] || '').split('|').forEach(s => { const i = s.indexOf(' '), e0 = s.slice(0, i), e = fx(ovr[e0] || e0, s.slice(i + 1)); if (e0 && !bad[e0] && !seen[e] && out.length < 3) { seen[e] = 1; out.push([e, s.slice(i + 1)]); } });
     return out.length === 3 ? out : null;
   },
   /** Mở đặc sản khi qua màn cuối của chặng lần đầu: thưởng xu + hiện trên màn thắng. */
