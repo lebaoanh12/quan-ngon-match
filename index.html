@@ -1613,7 +1613,7 @@ body::before { opacity: 1; inset: 0; mask-image: none; -webkit-mask-image: none;
 const WAND_IC = (() => { try { const c = document.createElement('canvas').getContext('2d'); c.font = '32px sans-serif'; const a = c.measureText('🪄').width, b = c.measureText('\uFFFF').width, d = c.measureText('🎇').width; return (a > 0 && Math.abs(a - b) > .5 && a > 8) ? '🪄' : '🎇'; } catch (e) { return '🎇'; } })();
 const CONFIG = {
   SIDE_GAP: 10,   // chừa lề 2 bên bàn chơi (px)
-  ROWS: 10,                        // bàn cao 10 hàng (màn cỡ đầy đủ); màn nhỏ vẫn đặt ở giữa
+  ROWS: 9,                         // bàn cao 10 hàng (màn cỡ đầy đủ); màn nhỏ vẫn đặt ở giữa
   COLS: 8,
   SEVEN_COLS: true,                  // bàn 7 cột x 8 hàng: ô to hơn ~14% (bỏ 1 cột ít chướng ngại nhất)
   SQUEEZE7: false,                   // thu gọn các màn 8x8 thành 7x7 (icon to hơn)
