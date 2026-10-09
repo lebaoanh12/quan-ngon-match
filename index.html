@@ -1159,6 +1159,27 @@ body::before { opacity: 1; inset: 0; mask-image: none; -webkit-mask-image: none;
 #announce.l5{background-image:linear-gradient(180deg,#ffd9a0,#ff3b1f 55%,#c20f12);text-shadow:0 4px 0 rgba(60,0,0,.9),0 0 32px rgba(255,50,20,1)}
 #announce.l6{background-image:linear-gradient(90deg,#ffd24a,#ff6a1a,#e8160f,#ff6a1a,#ffd24a);background-size:200% 100%;text-shadow:0 4px 0 rgba(60,0,0,.9),0 0 38px rgba(255,60,10,1);animation:ann 1s ease-out forwards,rainbowtxt .7s linear infinite}
 
+/* 1.0.27: HUD gọn hơn để nhường chỗ cho bàn 10 hàng */
+#hud { padding: 30px 0 2px !important; }
+#hud .row { margin-bottom: 2px !important; }
+#hud .pill { padding: 0 9px !important; font-size: 12px !important; line-height: 18px; border-width: 2px !important; box-shadow: 0 2px 0 var(--wood2) !important; }
+.stats { gap: 6px; margin-bottom: 3px; }
+.stat { padding: 2px 4px !important; border-radius: 12px !important; border-width: 2px !important; box-shadow: 0 2px 0 var(--wood2) !important; }
+.stat span { font-size: 9px !important; letter-spacing: 1px; line-height: 11px; }
+.stat b#score { font-size: 17px !important; line-height: 20px; }
+.stat.moves b { font-size: 22px !important; line-height: 24px; }
+.stat.goals #goalChips { min-height: 22px !important; }
+.progress { margin: 2px 0 !important; height: 12px !important; }
+#extra { margin: 2px 0 !important; gap: 6px; }
+#order { padding: 0 8px 0 3px !important; font-size: 11px !important; }
+#order img { width: 20px !important; height: 20px !important; }
+.fever { height: 18px !important; }
+#team { margin: 3px 0 3px !important; padding: 2px 8px !important; gap: 6px !important; border-radius: 12px !important; box-shadow: 0 2px 0 #b4791a !important; }
+#teamPortrait { width: 30px !important; height: 30px !important; }
+#team .tname { display: none !important; }
+#team .ebar { height: 14px !important; margin: 0 !important; }
+#btnSkill.skill { padding: 4px 12px !important; font-size: 13px !important; border-radius: 10px !important; }
+
 </style>
 <style>
 /* ===== V13 – Chợ đêm Việt Food: gọn, một tâm điểm, dock đáy ===== */
@@ -1592,7 +1613,7 @@ body::before { opacity: 1; inset: 0; mask-image: none; -webkit-mask-image: none;
 const WAND_IC = (() => { try { const c = document.createElement('canvas').getContext('2d'); c.font = '32px sans-serif'; const a = c.measureText('🪄').width, b = c.measureText('\uFFFF').width, d = c.measureText('🎇').width; return (a > 0 && Math.abs(a - b) > .5 && a > 8) ? '🪄' : '🎇'; } catch (e) { return '🎇'; } })();
 const CONFIG = {
   SIDE_GAP: 10,   // chừa lề 2 bên bàn chơi (px)
-  ROWS: 8,
+  ROWS: 10,                        // bàn cao 10 hàng (màn cỡ đầy đủ); màn nhỏ vẫn đặt ở giữa
   COLS: 8,
   SEVEN_COLS: true,                  // bàn 7 cột x 8 hàng: ô to hơn ~14% (bỏ 1 cột ít chướng ngại nhất)
   SQUEEZE7: false,                   // thu gọn các màn 8x8 thành 7x7 (icon to hơn)
@@ -1953,7 +1974,7 @@ class Grid {
     //   gem.type -3: XE ĐẨY (gem.fixed, gem.hp) — không ghép/hoán đổi được, tự trượt ngang mỗi lượt, phá bằng ghép/nổ kề bên
     this.pot = Array.from({ length: rows }, () => Array(cols).fill(false));
     this.belts = [];
-    this.n = rows; this.nc = cols; this.off = 0; this.dropsPending = 0;                 // số dừa còn phải sinh ra từ trên xuống
+    this.n = rows; this.nr = rows; this.roff = 0; this.nc = cols; this.off = 0; this.dropsPending = 0;                 // số dừa còn phải sinh ra từ trên xuống
     this._id = 0;
   }
 
@@ -2182,7 +2203,7 @@ class Grid {
         const empty = w - top + 1;
         for (let k = w; k >= top; k--) {
           let g;
-          if (top === this.off && this.dropsPending > 0 && Math.random() < .12) { g = this.makeGem(-2, 'drop'); this.dropsPending--; }
+          if (top === this.roff && this.dropsPending > 0 && Math.random() < .12) { g = this.makeGem(-2, 'drop'); this.dropsPending--; }
           else g = this.makeGem(this.randType());
           this.cells[k][c] = g;
           spawns.push({ gem: g, r: k, c, from: k - empty, fade: top > 0 });
@@ -2197,7 +2218,7 @@ class Grid {
   takeDrops() {
     const out = [];
     for (let c = 0; c < this.cols; c++) {
-      const br = this.off + this.n - 1, g = this.cells[br][c];
+      const br = this.roff + this.nr - 1, g = this.cells[br][c];
       if (g && g.type === -2) { out.push({ r: br, c, gem: g }); this.cells[br][c] = null; }
     }
     return out;
@@ -2663,6 +2684,10 @@ const Levels = (() => {
   /** Dựng bàn từ định nghĩa màn. Trả về danh sách mục tiêu đã tính số lượng cụ thể. */
   function build(def, grid) {
     const ropes = [], drops = [], carts = [], timers = [];
+    const pad = Math.max(0, grid.rows - def.map.length), full = !(def.size && def.size < 8), nc = def.cols || def.size || 8;
+    const top = Array.from({ length: pad }, () => full ? '.'.repeat(nc) + 'x'.repeat(8 - nc) : 'x'.repeat(8));
+    const mp = top.concat(def.map);
+    def.map.length; def = { ...def, map: mp, belts: (def.belts || []).map(b => ({ ...b, row: b.row + pad })) };
     def.map.forEach((row, r) => [...row].forEach((ch, c) => {
       if (ch === '#') grid.blocks[r][c] = 1;
       else if (ch === '=') grid.blocks[r][c] = 2;
@@ -3064,7 +3089,7 @@ class Renderer {
     this.shake = 0;
     this.time = 0;
     this.sprites = {};
-    this.size = 0; this.H = 0; this.ch = 0; this.cell = 0; this.pad = 6; this.n = CONFIG.COLS; this.nc = CONFIG.COLS; this.off = 0;
+    this.size = 0; this.H = 0; this.ch = 0; this.cell = 0; this.pad = 6; this.n = CONFIG.COLS; this.nr = CONFIG.ROWS; this.roff = 0; this.nc = CONFIG.COLS; this.off = 0;
     this.punch = 0; this.fever = false;
   }
 
@@ -3074,10 +3099,10 @@ class Renderer {
     this.reqSize = size;
     this.dpr = Math.min(window.devicePixelRatio || 1, (typeof Perf !== 'undefined' && Perf.q === 0) ? 1.5 : 2);   // 1.0.26: hạ trần độ phân giải để mượt (ít điểm ảnh hơn ~36%)
     const d = this.dpr;
-    this.cell = Math.min((size - this.pad * 2) / this.nc, (maxH - this.pad * 2) / this.n);   // bàn 7 cột x 8 hàng: ô to hơn nhưng không vượt chiều cao
+    this.cell = Math.min((size - this.pad * 2) / this.nc, (maxH - this.pad * 2) / this.nr);   // bàn 7 cột x 8 hàng: ô to hơn nhưng không vượt chiều cao
     size = Math.round(this.cell * this.nc + this.pad * 2); this.size = size;
-    this.ch = Math.min(this.cell * 1.28, Math.max(this.cell, (maxH - this.pad * 2) / this.n));
-    this.H = Math.round(this.ch * this.n + this.pad * 2);
+    this.ch = Math.min(this.cell * 1.28, Math.max(this.cell, (maxH - this.pad * 2) / this.nr));
+    this.H = Math.round(this.ch * this.nr + this.pad * 2);
     this.cv.style.width = size + 'px';
     this.cv.style.height = this.H + 'px';
     this.cv.width = Math.round(size * d);
@@ -3089,11 +3114,12 @@ class Renderer {
   /** Bàn nhỏ ở các màn đầu: chỉ phóng to vùng n x n ở giữa (phần ngoài là ô khuyết). */
   setView(n, nc) {
     n = Math.max(3, Math.min(CONFIG.COLS, n | 0)); this.n = n; this.off = ((CONFIG.COLS - n) / 2) | 0;
+    if (n >= CONFIG.COLS) { this.nr = CONFIG.ROWS; this.roff = 0; } else { this.nr = n; this.roff = this.off + (CONFIG.ROWS - CONFIG.COLS); }   // màn đầy đủ: 10 hàng; màn nhỏ: vùng n x n ở giữa
     this.nc = Math.max(3, Math.min(n, (nc || n) | 0));   // số cột hiển thị (7 cột x 8 hàng: cột cuối là ô khuyết)
     if (this.reqSize || this.size) this.resize(this.reqSize || this.size, this.maxH);
   }
   cellX(c) { return this.pad + (c - this.off) * this.cell + this.cell / 2; }
-  cellY(r) { return this.pad + (r - this.off) * this.ch + this.ch / 2; }
+  cellY(r) { return this.pad + (r - this.roff) * this.ch + this.ch / 2; }
 
   /* ------------------------------ SPRITES ------------------------------ */
   buildSprites() {
@@ -3410,8 +3436,8 @@ class Renderer {
     ctx.save();
     this.rr(ctx, 0, 0, S, H, 18); ctx.clip();
     for (let r = 0; r < CONFIG.ROWS; r++) for (let c = 0; c < CONFIG.COLS; c++) {
-      if (grid && grid.blocks[r][c] === -1) { ctx.clearRect(this.pad + (c - this.off) * cell - 1, this.pad + (r - this.off) * ch - 1, cell + 2, ch + 2); continue; }   // ô khuyết
-      if ((r + c) % 2) { ctx.fillStyle = 'rgba(214,160,90,.2)'; ctx.fillRect(this.pad + (c - this.off) * cell, this.pad + (r - this.off) * ch, cell, ch); }
+      if (grid && grid.blocks[r][c] === -1) { ctx.clearRect(this.pad + (c - this.off) * cell - 1, this.pad + (r - this.roff) * ch - 1, cell + 2, ch + 2); continue; }   // ô khuyết
+      if ((r + c) % 2) { ctx.fillStyle = 'rgba(214,160,90,.2)'; ctx.fillRect(this.pad + (c - this.off) * cell, this.pad + (r - this.roff) * ch, cell, ch); }
     }
     if (view.exit) {                                   // vạch xanh ở đáy: nơi dừa rơi ra
       ctx.fillStyle = 'rgba(90,230,130,.55)'; ctx.fillRect(this.pad, H - this.pad + 1, S - this.pad * 2, 4);
@@ -3437,7 +3463,7 @@ class Renderer {
   drawObstacles(ctx, grid) {
     const cell = this.cell, ch = this.ch;
     for (let r = 0; r < grid.rows; r++) for (let c = 0; c < grid.cols; c++) {
-      const x = this.pad + (c - this.off) * cell, y = this.pad + (r - this.off) * ch;
+      const x = this.pad + (c - this.off) * cell, y = this.pad + (r - this.roff) * ch;
       const ice = grid.ice[r][c];
       if (ice > 0) {                                    // băng phủ lên ô (nhìn xuyên thấy món bên dưới)
         this.rr(ctx, x + 1.5, y + 1.5, cell - 3, ch - 3, 7);
@@ -3540,7 +3566,7 @@ class Renderer {
   drawLive(ctx, grid) {
     const cell = this.cell, ch = this.ch, t = this.time;
     for (const b of grid.belts || []) {
-      const y = this.pad + (b.row - this.off) * ch;
+      const y = this.pad + (b.row - this.roff) * ch;
       ctx.save();
       ctx.fillStyle = 'rgba(80,80,90,.18)'; ctx.fillRect(this.pad, y, cell * (grid.nc || grid.cols), ch);
       ctx.strokeStyle = 'rgba(60,60,70,.6)'; ctx.lineWidth = 2.5; ctx.setLineDash([8, 6]); ctx.lineDashOffset = -b.dir * t * 24;
@@ -3553,7 +3579,7 @@ class Renderer {
     }
     for (let r = 0; r < grid.rows; r++) for (let c = 0; c < grid.cols; c++) {
       if (!grid.pot[r][c]) continue;
-      const x = this.pad + (c - this.off + .5) * cell, y = this.pad + (r - this.off + .5) * ch, ph = .5 + .5 * Math.sin(t * 4 + c);
+      const x = this.pad + (c - this.off + .5) * cell, y = this.pad + (r - this.roff + .5) * ch, ph = .5 + .5 * Math.sin(t * 4 + c);
       ctx.save();
       ctx.fillStyle = 'rgba(255,110,40,' + (.35 + .2 * ph) + ')'; ctx.beginPath(); ctx.arc(x, y, cell * .46, 0, 7); ctx.fill();
       this.drawEmo(ctx, '🍲', cell * .56, x, y + 1);
@@ -5897,6 +5923,7 @@ class Game {
     this.moves = sn.moves; this.score = sn.score; this.shownScore = sn.score; this.collected = sn.collected || {}; this.dropsGot = sn.dropsGot || 0; this.specMade = sn.specMade || {};
     this.bestCombo = sn.bestCombo; this.comboTotal = sn.comboTotal; this.revives = sn.revives; this.energy = sn.energy || 0; this.party = !!sn.party;
     const R = this.renderer;
+    if (!sn.cells || sn.cells.length !== g.rows) throw new Error('snap-old');   // lưu từ bản bàn 8 hàng: bỏ, chơi lại từ đầu
     g.blocks = sn.blocks; g.ice = sn.ice; g.pot = sn.pot; g.belts = sn.belts || []; g.dropsPending = sn.dropsPending || 0; g._id = sn._id || g._id;
     g.cells = sn.cells.map(row => row.map(x => x ? Object.assign({ x: 0, y: 0, scale: 1, alpha: 1, rot: 0 }, x) : null));
     this.save.run = 4; this.save.runAt = Date.now(); this._resumed = true;
@@ -5932,7 +5959,7 @@ class Game {
     try { this.renderer.setRegion(WorldMap.regionOn(n) ? WorldMap.regionItems(n) : null); } catch (e) {}
     try { const th = WorldMap.theme(n); this.renderer.setDrop(th.ic); Levels.TIPS.drop = [Ico.txt(th.ic), th.food, 'Đặc sản không ghép được. Hãy phá món bên dưới để đặc sản rơi xuống hàng đáy.']; } catch (e) {}
     this.grid = new Grid(CONFIG.ROWS, CONFIG.COLS, def.colors);
-    this.grid.n = this.renderer.n; this.grid.off = this.renderer.off; this.grid.nc = this.renderer.nc;
+    this.grid.n = this.renderer.n; this.grid.nr = this.renderer.nr; this.grid.roff = this.renderer.roff; this.grid.off = this.renderer.off; this.grid.nc = this.renderer.nc;
     this.goals = Levels.build(def, this.grid);
     const sg = this.goals.find(g => g.t === 'score'); this.target = sg ? sg.n : 0;
     if (!this.grid.findHint()) this.grid.shuffle();
@@ -6018,7 +6045,7 @@ class Game {
   pt(e) { const b = this.canvas.getBoundingClientRect(); return { x: e.clientX - b.left, y: e.clientY - b.top }; }
   cellAt(p) {
     const R = this.renderer;
-    const c = Math.floor((p.x - R.pad) / R.cell) + R.off, r = Math.floor((p.y - R.pad) / R.ch) + R.off;
+    const c = Math.floor((p.x - R.pad) / R.cell) + R.off, r = Math.floor((p.y - R.pad) / R.ch) + R.roff;
     return this.grid && this.grid.inb(r, c) ? { r, c } : null;
   }
 
@@ -6746,7 +6773,7 @@ class Game {
     const rnd = n => (Math.random() * n) | 0;
     const seeds = [];
     if (id === 'cat') {                                   // phá 2 hàng ngẫu nhiên
-      const rows = new Set(); while (rows.size < Math.min(2, g.n)) rows.add(g.off + rnd(g.n));
+      const rows = new Set(); while (rows.size < Math.min(2, g.nr)) rows.add(g.roff + rnd(g.nr));
       rows.forEach(r => { R.beam('h', r, 0); for (let c = 0; c < g.cols; c++) seeds.push({ r, c }); });
     } else if (id === 'rabbit') {                         // phá hết loại món nhiều nhất
       const cnt = {}; let best = 0;
@@ -6754,24 +6781,24 @@ class Game {
       g.cells.forEach((row, r) => row.forEach((x, c) => { if (x && x.type === best) { seeds.push({ r, c }); R.zap(R.size / 2, 0, R.cellX(c), R.cellY(r), '#ffd0f0'); } }));
     } else if (id === 'tiger') {                          // 5 vùng nổ 3x3
       for (let i = 0; i < 5; i++) {
-        const cr = g.off + 1 + rnd(g.n - 2), cc = g.off + 1 + rnd((g.nc || g.n) - 2);
+        const cr = g.roff + 1 + rnd(g.nr - 2), cc = g.off + 1 + rnd((g.nc || g.n) - 2);
         R.ring(R.cellX(cc), R.cellY(cr), R.cell * 2.4, '#ffb347');
         for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) seeds.push({ r: cr + dr, c: cc + dc });
       }
     } else if (id === 'dragon') {                         // Long thần giáng: phá 40% bàn + quà
-      const all = []; for (let r = g.off; r < g.off + g.n; r++) for (let c = g.off; c < g.off + g.n; c++) if (g.get(r, c)) all.push({ r, c });
+      const all = []; for (let r = g.roff; r < g.roff + g.nr; r++) for (let c = g.off; c < g.off + g.n; c++) if (g.get(r, c)) all.push({ r, c });
       const k = Math.ceil(all.length * .4);
       for (let i = 0; i < k && all.length; i++) { const p = all.splice(rnd(all.length), 1)[0]; seeds.push(p); R.zap(R.size / 2, 0, R.cellX(p.c), R.cellY(p.r), '#7dffb0'); }
       this.giftItem('dragon', true);
     } else if (id === 'mouse') {                          // Đào hầm: 10 món ngẫu nhiên
-      const all = []; for (let r = g.off; r < g.off + g.n; r++) for (let c = g.off; c < g.off + g.n; c++) if (g.get(r, c)) all.push({ r, c });
+      const all = []; for (let r = g.roff; r < g.roff + g.nr; r++) for (let c = g.off; c < g.off + g.n; c++) if (g.get(r, c)) all.push({ r, c });
       for (let i = 0; i < 10 && all.length; i++) { const p = all.splice(rnd(all.length), 1)[0]; seeds.push(p); R.ring(R.cellX(p.c), R.cellY(p.r), R.cell * 1.1, '#cfc8e0'); }
     } else if (id === 'ox') {                             // Cày ruộng: 2 cột
-      const cols = new Set(); while (cols.size < Math.min(2, g.n)) cols.add(g.off + rnd(g.nc || g.n));
+      const cols = new Set(); while (cols.size < Math.min(2, g.nc || g.n)) cols.add(g.off + rnd(g.nc || g.n));
       cols.forEach(c => { R.beam('v', 0, c); for (let r = 0; r < g.rows; r++) seeds.push({ r, c }); });
     } else if (id === 'rooster') {                        // Gáy sáng: ưu tiên chướng ngại (băng, thùng, dây)
       const ob = [], rest = [];
-      for (let r = g.off; r < g.off + g.n; r++) for (let c = g.off; c < g.off + g.n; c++) {
+      for (let r = g.roff; r < g.roff + g.nr; r++) for (let c = g.off; c < g.off + g.n; c++) {
         const gm = g.get(r, c);
         if (g.blocks[r][c] > 0 || g.ice[r][c] > 0 || (gm && gm.lock)) ob.push({ r, c }); else if (gm) rest.push({ r, c });
       }
@@ -6780,11 +6807,11 @@ class Game {
       for (let i = ob.length; i < 6 && rest.length; i++) seeds.push(rest.splice(rnd(rest.length), 1)[0]);
       seeds.forEach(p => R.ring(R.cellX(p.c), R.cellY(p.r), R.cell * 1.1, '#e8267a'));
     } else if (id === 'horse') {                          // Phi nước đại: 2 đường chéo
-      const cr = g.off + rnd(g.n), cc = g.off + rnd(g.nc || g.n), lo = g.off, hi = g.off + g.n - 1, hc = g.off + (g.nc || g.n) - 1;
-      for (let d = -g.n; d <= g.n; d++) for (const [r, c] of [[cr + d, cc + d], [cr + d, cc - d]]) if (r >= lo && r <= hi && c >= lo && c <= hc) { seeds.push({ r, c }); R.ring(R.cellX(c), R.cellY(r), R.cell * .9, '#ffb36b'); }
+      const cr = g.roff + rnd(g.nr), cc = g.off + rnd(g.nc || g.n), lo = g.roff, hi = g.roff + g.nr - 1, hc = g.off + (g.nc || g.n) - 1;
+      for (let d = -g.nr; d <= g.nr; d++) for (const [r, c] of [[cr + d, cc + d], [cr + d, cc - d]]) if (r >= lo && r <= hi && c >= g.off && c <= hc) { seeds.push({ r, c }); R.ring(R.cellX(c), R.cellY(r), R.cell * .9, '#ffb36b'); }
     } else if (id === 'goat') {                           // Húc vòng ngoài: viền bàn
-      const lo = g.off, hi = g.off + g.n - 1, hc = g.off + (g.nc || g.n) - 1;
-      for (let r = lo; r <= hi; r++) for (let c = lo; c <= hc; c++) if (r === lo || r === hi || c === lo || c === hc) { seeds.push({ r, c }); R.ring(R.cellX(c), R.cellY(r), R.cell * .9, '#e8e0cf'); }
+      const lo = g.roff, hi = g.roff + g.nr - 1, clo = g.off, hc = g.off + (g.nc || g.n) - 1;
+      for (let r = lo; r <= hi; r++) for (let c = clo; c <= hc; c++) if (r === lo || r === hi || c === clo || c === hc) { seeds.push({ r, c }); R.ring(R.cellX(c), R.cellY(r), R.cell * .9, '#e8e0cf'); }
     } else if (id === 'snake') {                          // Nọc độc: 2 loại nhiều nhất
       const cnt = {}; g.cells.forEach(row => row.forEach(x => { if (x && x.type >= 0) cnt[x.type] = (cnt[x.type] || 0) + 1; }));
       const top = Object.keys(cnt).sort((a, b) => cnt[b] - cnt[a]).slice(0, 2).map(Number);
@@ -6809,7 +6836,7 @@ class Game {
       await this.ensurePlayable(tk); return;
     } else if (id === 'dragon3') {
       for (let i = 0; i < 3; i++) {
-        const cr = g.off + 1 + rnd(g.n - 2), cc = g.off + 1 + rnd((g.nc || g.n) - 2);
+        const cr = g.roff + 1 + rnd(g.nr - 2), cc = g.off + 1 + rnd((g.nc || g.n) - 2);
         R.ring(R.cellX(cc), R.cellY(cr), R.cell * 2.4, '#ff9f1c');
         for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) seeds.push({ r: cr + dr, c: cc + dc });
       }
