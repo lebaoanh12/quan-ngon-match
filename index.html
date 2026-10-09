@@ -6341,25 +6341,18 @@ class Game {
     await this.ensurePlayable(tk);
   }
 
-  /** Xong mục tiêu mà còn lượt: mỗi lượt thừa biến một món thành món đặc biệt rồi nổ liên hoàn (như Candy Crush), cộng điểm thưởng. */
+  /** Xong mục tiêu mà còn lượt: KHÔNG tự sinh món đặc biệt (để người chơi tự khám phá), chỉ quy lượt thừa ra điểm thưởng. */
   async finale(tk) {
     this._finale = true; this.state = 'busy'; this.selected = null; this.mode = null; this.setActiveItem();
-    const g = this.grid, R = this.renderer, kinds = ['line_h', 'line_v', 'bomb'], seeds = [];
-    this.announce('XUẤT SẮC! Còn ' + this.moves + ' lượt', 6); Sfx.special(); Voice.say('rainbow', 3);
-    await Tween.wait(650); if (tk !== this.token) return;
-    let made = 0;
-    while (this.moves > 0 && made < 14) {
-      const cand = []; g.cells.forEach((row, r) => row.forEach((x, c) => { if (x && x.type >= 0 && !x.special && !x.lock && !(g.blocks[r][c] > 0)) cand.push({ r, c, x }); }));
-      if (!cand.length) break;
-      const p = cand[(Math.random() * cand.length) | 0]; p.x.special = kinds[made % 3]; seeds.push({ r: p.r, c: p.c });
-      this.moves--; made++; UI.hud(this);
-      const px = R.cellX(p.c), py = R.cellY(p.r); R.burst(px, py, '#ff9f1c', 12); R.ring(px, py, R.cell * 1.2, '#ff7a00'); Sfx.match(Math.min(made + 1, 6)); Sfx.vib(20);
-      await Tween.wait(150); if (tk !== this.token) return;
+    const left = this.moves;
+    this.announce('XUẤT SẮC! Còn ' + left + ' lượt', 6); Sfx.special(); Voice.say('rainbow', 3);
+    const per = CONFIG.GEM_SCORE * 5;
+    for (let i = 0; i < left; i++) {
+      this.moves--; this.score += per; UI.hud(this); Sfx.match(Math.min(i + 2, 6));
+      await Tween.wait(Math.max(60, 220 - i * 15)); if (tk !== this.token) return;
     }
-    if (this.moves > 0) { this.score += this.moves * CONFIG.GEM_SCORE * 5; this.moves = 0; UI.hud(this); }   // lượt thừa không biến được: quy ra điểm
-    await Tween.wait(350); if (tk !== this.token) return;
-    if (seeds.length) { await this.resolve({ seeds, noTrigger: new Set() }, [], tk); if (tk !== this.token) return; }
-    UI.hud(this);
+    this.moves = 0; UI.hud(this);
+    await Tween.wait(300); if (tk !== this.token) return;
     return this.win();
   }
 
